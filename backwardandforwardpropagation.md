@@ -463,6 +463,7 @@ if __name__ == "__main__":
 ```
 
 ### Explanation of Code:
+-Note that this code is overkill in terms of its usage to fit a function since it is possible to use a faster method to do it with a higher accuracy. 
 
 #### Function Flexibility:
 - The non-linear function is defined using symbolic math via **SymPy**. You can specify any function in terms of input variable $x$ and a set of parameters (e.g., $a$, $b$, $c$).

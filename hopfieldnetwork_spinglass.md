@@ -220,6 +220,9 @@ min_spins, min_energy, energies, spins_list, steps = spin_glass_2d.find_minimum_
 - **Update Rule**: Updates a randomly selected spin using the sign of the local field.
 - **Energy Minimization Loop**: Repeats the update process and tracks energy over time.
 
+![fig2](https://github.com/user-attachments/assets/b301844d-1b2d-4050-92fc-0f66ac538c96)
+
+
 ## Conclusion
 By leveraging the dynamics of Hopfield networks, we can effectively minimize the energy of disordered spin glass systems. The mathematical derivations show that the asynchronous update rule based on the local field leads the system towards lower energy states.
 

@@ -436,3 +436,14 @@ if __name__ == "__main__":
     plt.show()
 ```
 
+## Summary of Key Mathematical Differences
+
+| Model                         | Energy Function                                                                                  | Interaction Type                      | Key Property                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------- |
+| **Boltzmann Machine (BM)**     | $E(v) = -\sum_{i < j} w_{ij} v_i v_j - \sum_{i} b_i v_i$                                          | Learnable weights $w_{ij}$            | Probabilistic learning of distributions        |
+| **Sherrington-Kirkpatrick (SK) Spin Glass** | $H(\sigma) = -\sum_{i < j} J_{ij} \sigma_i \sigma_j$                                           | Random interactions $J_{ij}$          | Models frustration in disordered magnetic systems |
+| **Hopfield Network**           | $E(\sigma) = -\sum_{i < j} J_{ij} \sigma_i \sigma_j$                                             | Learned or stored weights $J_{ij}$    | Content-addressable memory, retrieval of patterns |
+| **2D Ising Model**             | $H(\sigma) = -J \sum_{\langle i,j \rangle} \sigma_i \sigma_j - h \sum_{i} \sigma_i$              | Uniform or fixed interactions $J$     | Phase transitions between ordered and disordered phases |
+| **2D Spin Glass**              | $H(\sigma) = -\sum_{\langle i,j \rangle} J_{ij} \sigma_i \sigma_j$                               | Random interactions $J_{ij}$          | Complex energy landscape, frustration           |
+
+Each of these models—Boltzmann Machines, Hopfield Networks, and the Ising model—captures different aspects of spin glass systems, either in their original physics context or as applied to machine learning. The key mathematical differences stem from the nature of the interaction terms: Boltzmann Machines and Hopfield Networks feature learnable interactions, while the SK model and 2D spin glasses introduce randomness and frustration, leading to more complex behavior. The Ising model provides a foundational structure but lacks the disorder that defines spin glasses

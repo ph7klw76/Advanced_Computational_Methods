@@ -1,0 +1,17 @@
+title: SQA7018
+description: >- 
+  A blog about SIF3008 Condensed Matter Physics.
+baseurl: "" # Don't change this
+url: "https://ph7klw76.github.io/SQA7018"
+
+theme: jekyll-theme-cayman
+
+markdown: kramdown
+kramdown:
+  math_engine: mathjax
+  input: GFM
+
+plugins:
+  - jekyll-feed
+
+mathjax: true

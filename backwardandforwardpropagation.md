@@ -353,7 +353,7 @@ def forward_propagation(X, param_values, func, params):
     subs = {params[i]: param_values[i] for i in range(len(params))}
     
     # Evaluate the function using the current parameter values
-    y_hat = np.array([func.subs(subs).evalf(subs={x: X[i, 0]}) for i in range(X.shape[0])])
+    y_hat = np.array([func.subs(subs).evalf(subs={x: X[i, 0]}) for i in range(X.shape[0])], dtype=np.float64)
     return y_hat.reshape(-1, 1)
 
 # Generalized backward propagation to compute gradients
@@ -417,6 +417,9 @@ def calculate_uncertainty(X, y, param_values, func, params):
         for j, param in enumerate(params):
             d_func_d_param = sp.diff(func, param)
             X_design[i, j] = d_func_d_param.subs({x: X[i, 0]}).evalf()
+    
+    # Convert X_design to a float matrix for NumPy compatibility
+    X_design = np.array(X_design, dtype=np.float64)
     
     # Variance-covariance matrix: (X^T X)^-1 * sigma^2
     cov_matrix = sigma_squared * np.linalg.inv(np.dot(X_design.T, X_design))

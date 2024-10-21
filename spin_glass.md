@@ -233,11 +233,14 @@ where $k_B$ is the Boltzmann constant (set to 1 in our code for simplicity).
 ### Temperature Dependence
 At higher temperatures, the system is more likely to accept higher energy states, allowing it to escape local minima.
 
-## Visualization of Spin Configuration and Energy vs Iteration
+### Visualization of Spin Configuration and Energy vs Iteration
+
+![fig1](https://github.com/user-attachments/assets/78254894-dd12-48ba-bc49-b2ce14fc23a0)
+
 The figure above consists of two subplots that illustrate key aspects of the spin glass simulation:
 
-Left Plot (Spin Configuration): This is a visual representation of the spin configuration on a 2D lattice after a number of iterations. Each pixel in the grid represents a spin, where red corresponds to a spin value of $+1$, and blue corresponds to a spin value of $-1$. As the simulation progresses, the spins evolve, and patterns emerge due to the interaction dynamics of the spin glass model. The randomness and disorder inherent in spin glasses are reflected in the irregular patterns formed by the spins.
+- **Left Plot (Spin Configuration)**: This is a visual representation of the spin configuration on a 2D lattice after a number of iterations. Each pixel in the grid represents a spin, where red corresponds to a spin value of $+1$, and blue corresponds to a spin value of $-1$. As the simulation progresses, the spins evolve, and patterns emerge due to the interaction dynamics of the spin glass model. The randomness and disorder inherent in spin glasses are reflected in the irregular patterns formed by the spins.
 
-Right Plot (Energy vs Iteration): This graph shows the total energy of the system plotted against the number of iterations. Initially, the energy decreases rapidly, indicating that the system is quickly finding lower energy configurations. As the iterations continue, the rate of energy decrease slows down, and the system approaches a more stable, minimal energy state. The small fluctuations toward the end of the simulation reflect the stochastic nature of the Metropolis algorithm and thermal fluctuations.
+- **Right Plot (Energy vs Iteration)**: This graph shows the total energy of the system plotted against the number of iterations. Initially, the energy decreases rapidly, indicating that the system is quickly finding lower energy configurations. As the iterations continue, the rate of energy decrease slows down, and the system approaches a more stable, minimal energy state. The small fluctuations toward the end of the simulation reflect the stochastic nature of the Metropolis algorithm and thermal fluctuations.
 
 

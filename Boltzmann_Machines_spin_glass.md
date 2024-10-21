@@ -436,6 +436,8 @@ if __name__ == "__main__":
     plt.show()
 ```
 
+![fig3](https://github.com/user-attachments/assets/eb014177-019b-4129-b9bb-91f48c8d3439)
+
 ## Summary of Key Mathematical Differences
 
 | Model                         | Energy Function                                                                                  | Interaction Type                      | Key Property                                   |
@@ -447,6 +449,14 @@ if __name__ == "__main__":
 | **2D Spin Glass**              | $H(\sigma) = -\sum_{\langle i,j \rangle} J_{ij} \sigma_i \sigma_j$                               | Random interactions $J_{ij}$          | Complex energy landscape, frustration           |
 
 Each of these models—Boltzmann Machines, Hopfield Networks, and the Ising model—captures different aspects of spin glass systems, either in their original physics context or as applied to machine learning. The key mathematical differences stem from the nature of the interaction terms: Boltzmann Machines and Hopfield Networks feature learnable interactions, while the SK model and 2D spin glasses introduce randomness and frustration, leading to more complex behavior. The Ising model provides a foundational structure but lacks the disorder that defines spin glasses
+
+## Why the Energy Minimization Curves Differ
+
+- **Boltzmann Machine (SK model)**: The fully connected random interactions lead to a rugged energy landscape with many local minima. As a result, the energy curve fluctuates significantly, and convergence is slow.
+
+- **Hopfield Network**: The system is designed to minimize energy toward specific memory states. The energy minimization is smoother and more predictable as the system converges toward one of the attractor states.
+
+- **Ising Model (2D spin glass)**: The random nearest-neighbor interactions create frustration, but the energy landscape is less complex than in the SK model. The system experiences a fast initial minimization due to local interactions, followed by slower convergence as it approaches a metastable or ground state.
 
 ## 6. Conclusion
 The Boltzmann machine, based on the Sherrington–Kirkpatrick model, provides a powerful framework for studying disordered spin systems. By implementing the Metropolis algorithm, we simulate the thermal fluctuations and observe how the system evolves towards lower energy configurations. The mathematical derivations ensure that our simulation accurately reflects the physics of spin glasses.

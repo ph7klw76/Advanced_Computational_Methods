@@ -315,3 +315,172 @@ if __name__ == "__main__":
 #### Result:
 - After the gradient descent process is completed, the final values of $m$ and $b$ will be close to the optimal values that minimize the loss.
 
+### 5. To Generalize the Previous Python Code for Non-Linear Functions
+
+We need to make the following changes:
+
+#### Function Flexibility:
+- Instead of hardcoding a specific function (like a quadratic function), we'll allow the user to input any non-linear function. This function will be used for both forward propagation and backpropagation.
+
+####  Gradient Calculation:
+- The gradients with respect to the unknown parameters must be calculated dynamically based on the given non-linear function. We'll use **automatic differentiation**, specifically with a library like **SymPy** for symbolic differentiation.
+
+#### General Framework:
+We'll create a general framework where the user can input any non-linear function and specify which parameters are unknown. The code will:
+1. Calculate the gradients.
+2. Perform backpropagation for parameter optimization.
+3. Calculate uncertainties.
+
+---
+
+### Generalized Code for Non-Linear Function Optimization
+
+Below is the Python code that implements this generalization:
+```python
+# Python code implementation for generalized non-linear function optimization will go here
+import numpy as np
+import sympy as sp
+
+# Mean Squared Error (MSE) loss function
+def compute_loss(y, y_hat):
+    m = y.shape[0]
+    loss = (1 / (2 * m)) * np.sum((y_hat - y) ** 2)
+    return loss
+
+# Generalized forward propagation
+def forward_propagation(X, param_values, func, params):
+    # Substitute the parameter values into the non-linear function
+    subs = {params[i]: param_values[i] for i in range(len(params))}
+    
+    # Evaluate the function using the current parameter values
+    y_hat = np.array([func.subs(subs).evalf(subs={x: X[i, 0]}) for i in range(X.shape[0])])
+    return y_hat.reshape(-1, 1)
+
+# Generalized backward propagation to compute gradients
+def backward_propagation(X, y, y_hat, func, params):
+    m = X.shape[0]
+    
+    # Initialize gradients dictionary
+    gradients = {param: 0 for param in params}
+    
+    # Calculate each gradient using the chain rule and symbolic differentiation
+    for param in params:
+        # Differentiate the function with respect to each parameter
+        d_func_d_param = sp.diff(func, param)
+        
+        # Compute the gradient (sum over all data points)
+        gradient_sum = np.sum([(-2 / m) * (y[i, 0] - y_hat[i, 0]) * d_func_d_param.subs({x: X[i, 0]}).evalf() for i in range(m)])
+        
+        # Store the gradient
+        gradients[param] = gradient_sum
+    
+    return gradients
+
+# Gradient Descent algorithm to update parameters
+def gradient_descent(X, y, param_values, func, params, learning_rate, num_iterations):
+    for i in range(num_iterations):
+        # Forward propagation to calculate predictions
+        y_hat = forward_propagation(X, param_values, func, params)
+        
+        # Compute loss
+        loss = compute_loss(y, y_hat)
+        
+        # Backward propagation to compute gradients
+        gradients = backward_propagation(X, y, y_hat, func, params)
+        
+        # Update parameter values using the gradients
+        for j in range(len(param_values)):
+            param_values[j] -= learning_rate * gradients[params[j]]
+        
+        # Print the loss every 100 iterations
+        if i % 100 == 0:
+            print(f"Iteration {i}, Loss: {loss}, Params: {param_values}")
+    
+    return param_values
+
+# Function to calculate the variance-covariance matrix and standard deviation of parameters
+def calculate_uncertainty(X, y, param_values, func, params):
+    m = X.shape[0]
+    
+    # Forward propagate to get the predictions
+    y_hat = forward_propagation(X, param_values, func, params)
+    residuals = y - y_hat
+    
+    # Estimate the variance of the residuals
+    sigma_squared = (1 / (m - len(params))) * np.sum(residuals ** 2)
+    
+    # Design matrix for the model
+    X_design = np.zeros((m, len(params)))
+    
+    # Fill in the design matrix with partial derivatives of the function with respect to each parameter
+    for i in range(m):
+        for j, param in enumerate(params):
+            d_func_d_param = sp.diff(func, param)
+            X_design[i, j] = d_func_d_param.subs({x: X[i, 0]}).evalf()
+    
+    # Variance-covariance matrix: (X^T X)^-1 * sigma^2
+    cov_matrix = sigma_squared * np.linalg.inv(np.dot(X_design.T, X_design))
+    
+    # Standard deviations (uncertainties) are the square root of the diagonal elements
+    std_errors = np.sqrt(np.diag(cov_matrix))
+    
+    return cov_matrix, std_errors
+
+# Example usage
+if __name__ == "__main__":
+    # Define the symbolic variables (inputs and parameters)
+    x = sp.symbols('x')  # Input variable
+    a, b, c = sp.symbols('a b c')  # Parameters to be estimated
+    
+    # Define a non-linear function (you can change this to any non-linear equation)
+    func = a * x**2 + b * sp.sin(x) + c
+    
+    # Generate some synthetic non-linear data: y = 3x^2 + 2sin(x) + 1 + noise
+    np.random.seed(0)
+    X = 2 * np.random.rand(100, 1)  # 100 data points (features)
+    y = 3 * X**2 + 2 * np.sin(X) + 1 + np.random.randn(100, 1) * 0.1  # Non-linear relationship with noise
+    
+    # Initial values for parameters a, b, and c
+    param_values_init = [0, 0, 0]
+    
+    # Hyperparameters
+    learning_rate = 0.01
+    num_iterations = 1000
+    
+    # Perform gradient descent to find the optimal parameters
+    optimal_params = gradient_descent(X, y, param_values_init, func, [a, b, c], learning_rate, num_iterations)
+    
+    print(f"\nOptimal Parameters: {optimal_params}")
+    
+    # Calculate the uncertainty (standard deviations) for the parameters
+    cov_matrix, std_errors = calculate_uncertainty(X, y, optimal_params, func, [a, b, c])
+    
+    print(f"\nCovariance Matrix:\n{cov_matrix}")
+    print(f"\nStandard Errors (Uncertainty in parameters):\n{std_errors}")
+```
+
+### Explanation of Code:
+
+#### Function Flexibility:
+- The non-linear function is defined using symbolic math via **SymPy**. You can specify any function in terms of input variable $x$ and a set of parameters (e.g., $a$, $b$, $c$).
+- In the example, we define the function as $f(x) = ax^2 + b\sin(x) + c$, but you can easily change this function to any other non-linear relationship.
+
+#### Forward Propagation:
+- Forward propagation evaluates the non-linear function for the given parameter values to calculate the predicted output $\hat{y}$.
+- This is done using SymPy's substitution feature, which allows us to replace symbolic parameters with their current values and evaluate the function at each data point.
+
+#### Backward Propagation:
+- In backward propagation, we use automatic differentiation via **SymPy** to compute the partial derivatives of the non-linear function with respect to each parameter.
+- The gradients for each parameter are then used to update the parameters using gradient descent.
+
+#### Gradient Descent:
+- The parameter values are updated iteratively using the computed gradients and a specified learning rate. The process is repeated for a fixed number of iterations.
+
+#### Uncertainty Estimation:
+- After finding the optimal parameters, we compute the **variance-covariance matrix** and use it to estimate the uncertainty (standard deviations) of the parameter estimates.
+- This is done by constructing the **design matrix**, where each element is the derivative of the non-linear function with respect to a parameter. The covariance matrix is then calculated using the residuals and design matrix.
+
+## Conclusion:
+This generalized Python code allows you to input any non-linear function and estimate its unknown parameters using forward and backpropagation with gradient descent. The framework also computes the uncertainty in the parameter estimates by calculating the variance-covariance matrix. This approach is versatile and can be used for various types of non-linear regression problems.
+
+

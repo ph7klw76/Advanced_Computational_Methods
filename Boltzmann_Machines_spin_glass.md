@@ -447,3 +447,6 @@ if __name__ == "__main__":
 | **2D Spin Glass**              | $H(\sigma) = -\sum_{\langle i,j \rangle} J_{ij} \sigma_i \sigma_j$                               | Random interactions $J_{ij}$          | Complex energy landscape, frustration           |
 
 Each of these models—Boltzmann Machines, Hopfield Networks, and the Ising model—captures different aspects of spin glass systems, either in their original physics context or as applied to machine learning. The key mathematical differences stem from the nature of the interaction terms: Boltzmann Machines and Hopfield Networks feature learnable interactions, while the SK model and 2D spin glasses introduce randomness and frustration, leading to more complex behavior. The Ising model provides a foundational structure but lacks the disorder that defines spin glasses
+
+## 6. Conclusion
+The Boltzmann machine, based on the Sherrington–Kirkpatrick model, provides a powerful framework for studying disordered spin systems. By implementing the Metropolis algorithm, we simulate the thermal fluctuations and observe how the system evolves towards lower energy configurations. The mathematical derivations ensure that our simulation accurately reflects the physics of spin glasses.

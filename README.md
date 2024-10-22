@@ -7,9 +7,8 @@
 4. Backpropagation_Algorithm.md (Unsupervised learning)
 
 ## To learn Machine Learning, follow the steps below
-(Supervised learning)
 
-1.Generalized_Linear_Models.md
+1.Generalized_Linear_Models.md (Supervised learning)
 2.
 3.
 4.

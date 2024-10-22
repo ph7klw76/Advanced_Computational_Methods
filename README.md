@@ -7,6 +7,7 @@
 4. Backpropagation_Algorithm.md
 
 ## To learn Machine Learning, follow the steps below
+(Supervised learning)
 1.
 2.
 3.

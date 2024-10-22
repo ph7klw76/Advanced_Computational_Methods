@@ -5,3 +5,10 @@
 2. hopfieldnetwork_spinglass.md
 3. Boltzmann_Machines_spin_glass.md
 4. Backpropagation_Algorithm.md
+
+## To learn Machine Learning, follow the steps below
+1.
+2.
+3.
+4.
+

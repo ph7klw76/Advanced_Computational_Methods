@@ -430,24 +430,34 @@ The K-NN classifier has predicted defects based on the spatial configuration of 
 
 
 ```python
-import numpy as np
+import numpy as np 
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
 from matplotlib.colors import ListedColormap
 
-# Generate synthetic phase data with noise for a more rigorous example
+# Set random seed for reproducibility
 np.random.seed(42)
 
+# Generate synthetic phase data with noise for a more rigorous example
+
 # Temperature and Pressure ranges
-temperature = np.linspace(-100, 200, 1000)  # Temperature range from -100 to 200 degrees
-pressure = np.linspace(0.1, 1000, 1000)     # Pressure range from 0.1 to 1000 units
+temperature = np.linspace(-100, 200, 1000)  # Temperature range from -100 to 200 degrees Celsius
+pressure = np.linspace(0.1, 1000, 1000)     # Pressure range from 0.1 to 1000 atm
 
 # Generate grid of points for temperature and pressure
 T, P = np.meshgrid(temperature, pressure)
 T = T.flatten()
 P = P.flatten()
+
+# Apply noise to temperature and pressure separately to simulate experimental uncertainty
+noise_T = np.random.normal(0, 5, T.shape)  # Noise with standard deviation of 5 degrees
+noise_P = np.random.normal(0, 50, P.shape) # Noise with standard deviation of 50 atm
+
+T_noisy = T + noise_T
+P_noisy = P + noise_P
 
 # Phase classification: Create nonlinear boundaries for solid, liquid, gas phases
 def classify_phase(T, P):
@@ -458,36 +468,69 @@ def classify_phase(T, P):
     else:
         return 2  # Gas
 
-# Apply the phase classification with added noise to simulate experimental uncertainty
-noise = np.random.normal(0, 10, T.shape)
-phases = np.array([classify_phase(t + n, p + n) for t, p, n in zip(T, P, noise)])
+# Apply the phase classification to the original (non-noisy) data
+phases = np.array([classify_phase(t, p) for t, p in zip(T, P)])
 
-# Create a feature matrix (Temperature, Pressure) and labels (Phase)
-X = np.column_stack((T, P))  # Features: Temperature, Pressure
-y = phases                   # Labels: Phase (0 = Solid, 1 = Liquid, 2 = Gas)
+# Create a feature matrix (Noisy Temperature, Noisy Pressure) and labels (Phase)
+X = np.column_stack((T_noisy, P_noisy))  # Features: Noisy Temperature and Pressure
+y = phases                               # Labels: Phase (0 = Solid, 1 = Liquid, 2 = Gas)
 
-# Split the dataset into training and testing sets (80% training, 20% testing)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split the dataset into training and testing sets with stratification
+X_train_raw, X_test_raw, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-# Create the k-nearest neighbors classifier with k=5
-knn = KNeighborsClassifier(n_neighbors=5)
+# Standardize features to have zero mean and unit variance
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train_raw)
+X_test = scaler.transform(X_test_raw)
 
-# Fit the model using the training data
-knn.fit(X_train, y_train)
+# Hyperparameter tuning using GridSearchCV to find the optimal number of neighbors
+param_grid = {'n_neighbors': np.arange(1, 31)}
+knn = KNeighborsClassifier()
+grid_search = GridSearchCV(knn, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+best_k = grid_search.best_params_['n_neighbors']
+print(f"Optimal number of neighbors: {best_k}")
+
+# Create the K-NN classifier with the optimal number of neighbors
+knn_best = KNeighborsClassifier(n_neighbors=best_k)
+knn_best.fit(X_train, y_train)
 
 # Predict the phase for the test set
-y_pred = knn.predict(X_test)
+y_pred = knn_best.predict(X_test)
 
-# Calculate and print accuracy
+# Calculate and print accuracy and other metrics
 accuracy = accuracy_score(y_test, y_pred)
 print(f'Accuracy: {accuracy * 100:.2f}%')
 
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=['Solid', 'Liquid', 'Gas']))
+
+# Confusion matrix
+conf_mat = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_mat)
+
 # Create a fine grid for visualization of decision boundaries
-T_grid, P_grid = np.meshgrid(np.linspace(-100, 200, 200), np.linspace(0.1, 1000, 200))
-X_grid = np.column_stack((T_grid.flatten(), P_grid.flatten()))
+T_grid, P_grid = np.meshgrid(
+    np.linspace(-100, 200, 200), np.linspace(0.1, 1000, 200)
+)
+T_grid_flat = T_grid.flatten()
+P_grid_flat = P_grid.flatten()
+
+# Apply noise to grid data to simulate realistic data points
+noise_T_grid = np.random.normal(0, 5, T_grid_flat.shape)
+noise_P_grid = np.random.normal(0, 50, P_grid_flat.shape)
+T_grid_noisy = T_grid_flat + noise_T_grid
+P_grid_noisy = P_grid_flat + noise_P_grid
+
+# Standardize the grid data using the same scaler
+X_grid_raw = np.column_stack((T_grid_noisy, P_grid_noisy))
+X_grid = scaler.transform(X_grid_raw)
 
 # Predict the phase for each point in the grid
-Z = knn.predict(X_grid)
+Z = knn_best.predict(X_grid)
 Z = Z.reshape(T_grid.shape)
 
 # Plotting the phase diagram and decision boundaries
@@ -496,21 +539,27 @@ cmap = ListedColormap(['#FF9999', '#99FF99', '#9999FF'])
 
 plt.contourf(T_grid, P_grid, Z, cmap=cmap, alpha=0.6)
 
-# Scatter plot the training points
-plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cmap, s=20, edgecolor='k', label='Training Data')
+# Scatter plot the test points
+plt.scatter(
+    X_test_raw[:, 0], X_test_raw[:, 1], c=y_test, cmap=cmap,
+    s=20, edgecolor='k', label='Test Data'
+)
 
 # Add labels and titles
-plt.colorbar()
 plt.title('Phase Classification Using K-NN (Solid, Liquid, Gas)')
 plt.xlabel('Temperature (°C)')
 plt.ylabel('Pressure (atm)')
 plt.legend(loc='upper left')
+plt.colorbar(ticks=[0, 1, 2], format=plt.FuncFormatter(lambda val, loc: ['Solid', 'Liquid', 'Gas'][int(val)]))
 plt.show()
 
 # Predict the phase of a new sample (e.g., T=50°C, P=300 atm)
-new_sample = np.array([[50, 300]])
-predicted_phase = knn.predict(new_sample)
-print(f'Predicted phase for temperature=50°C and pressure=300 atm: {predicted_phase[0]}')
+new_sample_raw = np.array([[50, 300]])
+new_sample = scaler.transform(new_sample_raw)
+predicted_phase = knn_best.predict(new_sample)
+phase_dict = {0: 'Solid', 1: 'Liquid', 2: 'Gas'}
+print(f'Predicted phase for temperature=50°C and pressure=300 atm: {phase_dict[predicted_phase[0]]}')
+
 ```
 
 

@@ -1,4 +1,5 @@
-### The k-Nearest Neighbors (k-NN) algorithm is one of the most well-known algorithms in machine learning due to its simplicity and versatility. However, despite its apparent ease of implementation, a more rigorous understanding reveals deeper implications regarding its mathematical underpinnings, computational complexity, and decision boundaries. 
+### The k-Nearest Neighbors (k-NN) algorithm 
+It is one of the most well-known algorithms in machine learning due to its simplicity and versatility. However, despite its apparent ease of implementation, a more rigorous understanding reveals deeper implications regarding its mathematical underpinnings, computational complexity, and decision boundaries. 
 
 This section delves into the k-NN algorithm with technical precision, discussing:
 

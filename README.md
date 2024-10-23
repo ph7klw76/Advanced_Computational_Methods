@@ -9,8 +9,8 @@
 
 
 ## To learn the evolution of Nobel Physics 2024, follow the steps below:
-1. [spin_glass](spin_glass.md)
-2. [hopfieldnetwork_spinglass](hopfieldnetwork_spinglass.md) (Unsupervised learning)
+1. [Spin_glass](spin_glass.md)
+2. [Hopfieldnetwork_spin glass](hopfieldnetwork_spinglass.md) (Unsupervised learning)
 3. [Boltzmann_Machines_spin_glass](Boltzmann_Machines_spin_glass.md) (Unsupervised learning)
 4. [Backpropagation_Algorithm](backwardandforwardpropagation.md.md) (Unsupervised learning)
 

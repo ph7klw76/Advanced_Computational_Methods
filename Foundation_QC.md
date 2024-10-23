@@ -94,10 +94,6 @@ $$
 \langle \psi_1 | \psi_3 \rangle = \frac{1}{2} - \frac{1}{2} = 0
 $$
 
-### Final Results:
-- First inner product: \(\langle \psi_1 | \psi_2 \rangle = \frac{1}{2}\)
-- Second inner product: \(\langle \psi_1 | \psi_3 \rangle = 0\)
-
 
 
 

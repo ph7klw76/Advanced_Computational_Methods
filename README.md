@@ -25,6 +25,6 @@
 
 ## To learn Quantum Machine Learning, follow the steps below:
 
-## Problem and Solution of PennyLane Tutorials
+## Problems and Solutions of PennyLane Tutorials
 
 

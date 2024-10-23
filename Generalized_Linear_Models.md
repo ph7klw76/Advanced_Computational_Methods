@@ -1,5 +1,5 @@
 # **Generalized Linear Models in Machine Learning: A Technical Guide**
-
+*By Kai Lin Woon*
 ## 1. Introduction to Generalized Linear Models
 
 Generalized Linear Models (GLMs) are a class of flexible models that extend ordinary linear regression to accommodate various types of response variables, including those that are not normally distributed. GLMs generalize linear regression by allowing for:

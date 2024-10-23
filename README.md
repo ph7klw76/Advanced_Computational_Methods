@@ -20,4 +20,6 @@
 3. Ensemble Learning
 4. Artificial Neural Network
 
+## To learn Quantum Optimization, follow the steps below:
+
 ## To learn Quantum Machine Learning, follow the steps below:

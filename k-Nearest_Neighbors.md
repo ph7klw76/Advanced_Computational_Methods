@@ -234,12 +234,89 @@ k-NN must store the entire training set, resulting in a space complexity of:
 $$
 O(N \cdot n)
 $$
+
 This memory requirement can be a limitation when dealing with large datasets.
+
+###  Detecting Defects in a 2D Lattice Using K-Nearest Neighbors (K-NN)
+we will explore a Python program that simulates a 2D square lattice of atoms, introduces random defects (vacancies and displaced atoms), and then classifies the defects using a K-Nearest Neighbors (K-NN) classifier. We will walk through each step of the process, from generating the lattice to applying the machine learning model to detect defects. This simulation has applications in materials science, where detecting defects in a crystalline lattice can provide insights into material properties and behaviors.
+
+## Step 1: Create a 2D Square Lattice of Atoms
+
+The code first creates a perfect 2D square lattice where each atom is arranged in a grid with regular spacing between them.
+
+### Parameters:
+- **rows** and **cols**: These parameters specify the number of rows and columns in the grid.
+- **spacing**: Defines the distance between adjacent atoms.
+- `np.meshgrid`: Creates the grid of \(x\) and \(y\) coordinates, and `np.column_stack` combines them into a list of \((x, y)\) positions.
+
+**Output**: A perfect lattice where every atom has a predefined position in a 2D space.
+
+## Step 2: Introduce Defects (Vacancies and Displacements)
+
+Defects are introduced into the lattice in two forms:
+
+- **Vacancies**: Some atoms are randomly removed from the lattice.
+- **Displacements**: A few atoms are shifted from their original position by a small random amount.
+### Vacancies:
+Random atoms are removed from the lattice using `np.random.choice`, which selects random indices to remove.
+
+### Displacements:
+A few atoms that are not vacancies are slightly displaced. The displacement is applied within a range controlled by `displacement_range`.
+
+**Output**: A modified lattice with missing atoms (vacancies) and some atoms displaced from their original positions.
+
+## Step 3: Label Defects
+
+In this step, the code assigns labels to each atom in the lattice:
+
+- **1** for defective atoms (either vacancies or displaced).
+- **0** for non-defective atoms.
+
+The function initializes a list of zeros (representing non-defective atoms).  
+It then marks the indices corresponding to vacancies and displacements as **1** to represent defects.
+
+**Output**: An array of binary labels where **1** indicates defective atoms, and **0** indicates non-defective atoms.
+
+## Step 4: Compute Features for Each Lattice Point
+
+Instead of directly using the positions of atoms, this step computes features based on the distances between atoms and their nearest neighbors. This is important for the K-NN classifier because it uses this information to identify patterns of defects.
+### NearestNeighbors:
+This computes the nearest neighbors for each atom using a \(k\) value to determine how many neighbors to consider.
+
+- **k+1**: We use \(k+1\) because the closest neighbor will always be the point itself, and we exclude it by flattening the distances and ignoring the first distance.
+- **features**: These are arrays of distances to the nearest neighbors, which will be used as input for the K-NN classifier.
+
+**Output**: A set of features for each atom that captures its spatial relationship with its nearest neighbors.
+
+## Step 5: K-NN Classification
+
+The main part of the script involves training a K-NN classifier to detect defects based on the computed features.
+### Training:
+The data is split into training and test sets using `train_test_split`. The K-NN model is trained on the training set and then tested on the test set.
+
+### Accuracy:
+After training, the model’s accuracy is calculated by comparing its predictions to the actual labels.
+
+**Output**: The K-NN classifier is trained to distinguish defective atoms from non-defective ones. The function returns the classification accuracy, predictions on the test set, and the test data.
+
+## Step 6: Visualization
+
+The code includes visualization functions to plot the lattice and show which atoms are defective.
+### Lattice Plot:
+The atoms are plotted on a 2D grid, color-coded by their labels (**red** for defective and **blue** for non-defective atoms).
+
+### Scatter Plot:
+A scatter plot is generated using `plt.scatter`, and atoms are shown as points.
+
+Two visualizations are created:
+1. The entire lattice with actual defects.
+2. The test set with predicted defects, allowing for a comparison of the model’s predictions against the actual defects.
+
 
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, NearestNeighbors
 from sklearn.model_selection import train_test_split
 
 # Step 1: Create a perfect 2D square lattice of atoms
@@ -250,31 +327,47 @@ def create_lattice(rows, cols, spacing):
     return np.column_stack((X.flatten(), Y.flatten()))
 
 # Step 2: Introduce defects (vacancies and displaced atoms)
-def introduce_defects(lattice, num_vacancies=5, displacement_range=0.2):
+def introduce_defects(lattice, num_vacancies=5, num_displacements=5, displacement_range=0.05):
     lattice_with_defects = lattice.copy()
     
     # Introduce vacancies by randomly removing atoms
-    vacancies = np.random.choice(len(lattice), num_vacancies, replace=False)
-    lattice_with_defects = np.delete(lattice_with_defects, vacancies, axis=0)
+    vacancy_indices = np.random.choice(len(lattice), num_vacancies, replace=False)
+    lattice_with_defects = np.delete(lattice_with_defects, vacancy_indices, axis=0)
     
-    # Randomly displace a few atoms
-    for _ in range(num_vacancies):
-        idx = np.random.choice(len(lattice_with_defects))
-        displacement = np.random.uniform(-displacement_range, displacement_range, 2)
-        lattice_with_defects[idx] += displacement
+    # Keep track of displaced atom indices
+    remaining_indices = np.setdiff1d(np.arange(len(lattice)), vacancy_indices)
+    displacement_indices = np.random.choice(remaining_indices, num_displacements, replace=False)
     
-    return lattice_with_defects, vacancies
+    # Randomly displace selected atoms
+    displacements = np.random.uniform(-displacement_range, displacement_range, (num_displacements, 2))
+    for idx, disp in zip(displacement_indices, displacements):
+        idx_in_defects = idx - np.searchsorted(vacancy_indices, idx)
+        lattice_with_defects[idx_in_defects] += disp
+    
+    return lattice_with_defects, vacancy_indices, displacement_indices
 
-# Step 3: Label the defects (vacancies) as 1 and non-defects as 0
-def label_defects(lattice, defective_indices):
-    labels = np.zeros(len(lattice), dtype=int)
-    labels[defective_indices] = 1  # Mark defective atoms
+# Step 3: Label defects (vacancies and displaced atoms as 1, non-defects as 0)
+def label_defects(lattice_size, vacancy_indices, displacement_indices):
+    labels = np.zeros(lattice_size, dtype=int)
+    labels[vacancy_indices] = 1  # Mark vacancies as defective
+    labels[displacement_indices] = 1  # Mark displaced atoms as defective
     return labels
 
-# Step 4: K-NN classification to identify defects based on neighboring atoms
-def classify_defects(lattice, labels, n_neighbors=5):
+# Step 4: Compute features for each lattice point
+def compute_features(lattice_with_defects, original_lattice, k=4):
+    nbrs = NearestNeighbors(n_neighbors=k+1, algorithm='ball_tree').fit(lattice_with_defects)
+    features = []
+    for point in original_lattice:
+        # Find distances to the nearest neighbors in the defective lattice
+        distances, indices = nbrs.kneighbors([point])
+        distances = distances.flatten()[1:]  # Exclude the point itself
+        features.append(distances)
+    return np.array(features)
+
+# Step 5: K-NN classification to identify defects based on features
+def classify_defects(features, labels, n_neighbors=5):
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
     knn = KNeighborsClassifier(n_neighbors=n_neighbors)
-    X_train, X_test, y_train, y_test = train_test_split(lattice, labels, test_size=0.2, random_state=42)
     knn.fit(X_train, y_train)
     
     # Predict on the test set and return accuracy
@@ -282,37 +375,53 @@ def classify_defects(lattice, labels, n_neighbors=5):
     y_pred = knn.predict(X_test)
     return accuracy, y_pred, X_test, y_test
 
-# Step 5: Visualization function
+# Step 6: Visualization function
 def visualize_lattice(lattice, defective_labels, title):
     plt.figure(figsize=(8, 8))
-    plt.scatter(lattice[:, 0], lattice[:, 1], c=defective_labels, cmap='coolwarm', s=100, edgecolor='k')
+    plt.scatter(lattice[:, 0], lattice[:, 1], c=defective_labels, cmap='coolwarm', s=50, edgecolor='k')
     plt.title(title)
-    plt.xlabel('X position (a.u.)')
-    plt.ylabel('Y position (a.u.)')
+    plt.xlabel('X position')
+    plt.ylabel('Y position')
+    plt.axis('equal')
     plt.show()
 
 # Main part of the script
 # Step 1: Generate a 2D lattice of atoms
-lattice = create_lattice(50, 50, spacing=0.5)
+rows, cols, spacing = 50, 50, 0.2
+lattice = create_lattice(rows, cols, spacing)
 
 # Step 2: Introduce defects (vacancies and displacements)
-lattice_with_defects, vacancies = introduce_defects(lattice, num_vacancies=10)
+num_vacancies = 30
+num_displacements = 30
+lattice_with_defects, vacancy_indices, displacement_indices = introduce_defects(
+    lattice, num_vacancies, num_displacements, displacement_range=0.05
+)
 
-# Step 3: Label defects (vacancies are labeled as 1, non-defects as 0)
-labels = label_defects(lattice_with_defects, vacancies)
+# Step 3: Label defects (vacancies and displaced atoms are labeled as 1)
+labels = label_defects(len(lattice), vacancy_indices, displacement_indices)
 
-# Step 4: Use K-NN to classify defects
-accuracy, y_pred, X_test, y_test = classify_defects(lattice_with_defects, labels)
+# Step 4: Compute features for each lattice point
+features = compute_features(lattice_with_defects, lattice)
+
+# Step 5: Use K-NN to classify defects
+accuracy, y_pred, X_test, y_test = classify_defects(features, labels)
 
 # Print classification accuracy
 print(f'K-NN Classification Accuracy: {accuracy * 100:.2f}%')
 
-# Step 5: Visualize the lattice with color-coded defective and non-defective atoms
-visualize_lattice(lattice_with_defects, labels, 'Lattice with Defects (Red = Defective, Blue = Non-Defective)')
+# Step 6: Visualize the lattice with color-coded defective and non-defective atoms
+visualize_lattice(lattice, labels, 'Lattice with Defects (Red = Defective, Blue = Non-Defective)')
 
 # Optional: Visualize the test set classification results
-visualize_lattice(X_test, y_pred, 'K-NN Predicted Defects on Test Set')
+# Map X_test back to lattice indices for visualization
+test_indices = [np.where(np.all(features == x, axis=1))[0][0] for x in X_test]
+predicted_labels = y_pred
+visualize_lattice(lattice[test_indices], predicted_labels, 'K-NN Predicted Defects on Test Set')
+
 ```
+
+
+
 
 ```python
 import numpy as np

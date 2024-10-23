@@ -1,6 +1,6 @@
-*By Kai Lin Woon*
-# Introduction
 
+# Hopfield Network as applied in spin glass
+*By Kai Lin Woon*
 
 Disordered spin glasses are complex systems in statistical physics characterized by randomness and frustration in their interactions. Understanding these systems is crucial for fields ranging from condensed matter physics to optimization problems in computer science. One powerful approach to study spin glasses is through neural networks, specifically Hopfield networks.
 

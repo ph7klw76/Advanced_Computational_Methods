@@ -99,6 +99,13 @@ $$
 
 ![image](https://github.com/user-attachments/assets/c92f934b-1312-42db-b28f-03d793dc17dd)
 
+### Quantum Gates
+
+- **Identity (I):** Does nothing to the qubit.
+- **Pauli-X (X):** Flips the qubit's state (like a classical NOT gate).
+- **Hadamard (H):** Creates superposition states, combining the $\lvert 0 \rangle$ and $\lvert 1 \rangle$ states.
+- **Controlled-NOT (CNOT):** Flips the second qubit if the first qubit is $\lvert 1 \rangle$.
+- **Toffoli (CCNOT):** Flips the third qubit if both the first and second qubits are $\lvert 1 \rangle$.
 
 
 ## Q2: Pauli-X Gate: Unitarity, Inverse, and Action on a Qubit
@@ -128,11 +135,11 @@ $$
 X^{-1} = X^{\dagger}
 $$
 
-To check this, we need to compute \( X^{\dagger} \) and compare it to \( X^{-1} \).
+To check this, we need to compute $X^{\dagger}$ and compare it to $X^{-1}$.
 
-### Conjugate Transpose \( X^{\dagger} \)
+### Conjugate Transpose $X^{\dagger}$
 
-Since \( X \) is real, its conjugate transpose is the same as its transpose \( X^{T} \):
+Since $X$ is real, its conjugate transpose is the same as its transpose $X^{T}$:
 
 $$
 X^{\dagger} = X^{T} = \begin{pmatrix}
@@ -147,7 +154,7 @@ $$
 X^{\dagger} = X
 $$
 
-### Inverse of \( X \)
+### Inverse of $X$
 
 For a 2x2 matrix, the inverse can be calculated. However, for the Pauli-X gate:
 
@@ -164,11 +171,11 @@ $$
 X^{-1} = X
 $$
 
-Since \( X^{-1} = X^{\dagger} \), the Pauli-X gate is indeed unitary.
+Since $X^{-1} = X^{\dagger}$, the Pauli-X gate is indeed unitary.
 
 ## 2. What is the Inverse of the X Gate?
 
-As we saw above, the inverse of \( X \) is itself:
+As we saw above, the inverse of $X$ is itself:
 
 $$
 X^{-1} = X = \begin{pmatrix}
@@ -179,7 +186,7 @@ $$
 
 ## 3. Action of the X Gate on a General Qubit
 
-To find the action of the \( X \) gate on a general qubit, we apply the matrix \( X \) to the state \( a\lvert 0 \rangle + b\lvert 1 \rangle \).
+To find the action of the $X$ gate on a general qubit, we apply the matrix $X$ to the state $a\lvert 0 \rangle + b\lvert 1 \rangle$.
 
 Let the general qubit state be:
 
@@ -187,7 +194,7 @@ $$
 \lvert \psi \rangle = a \lvert 0 \rangle + b \lvert 1 \rangle = a \begin{pmatrix} 1 \\ 0 \end{pmatrix} + b \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} a \\ b \end{pmatrix}
 $$
 
-Now, apply the \( X \) matrix to this state:
+Now, apply the $X$ matrix to this state:
 
 $$
 X \lvert \psi \rangle = \begin{pmatrix}
@@ -196,7 +203,7 @@ X \lvert \psi \rangle = \begin{pmatrix}
 \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} = \begin{pmatrix} b \\ a \end{pmatrix}
 $$
 
-Thus, the action of \( X \) on the qubit \( a\lvert 0 \rangle + b\lvert 1 \rangle \) is to swap the amplitudes \( a \) and \( b \):
+Thus, the action of $X$ on the qubit $a\lvert 0 \rangle + b\lvert 1 \rangle$ is to swap the amplitudes $a$ and $b$:
 
 $$
 X \left( a \lvert 0 \rangle + b \lvert 1 \rangle \right) = b \lvert 0 \rangle + a \lvert 1 \rangle

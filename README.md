@@ -1,11 +1,11 @@
 # SQA7018
 
 ## To learn the magic of non-linear regression in scipy, follow the steps below:
-1.[Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)
-2.[SciPy's _curve_fit](SciPy's_curve_fit.md)
-3.[Jacobian_Matrix](Jacobian_Matrix.md)
-4.[Levenberg-Marquardt](Levenberg-Marquardt.md)
-5.[Covariance_Matrix](Covariance_Matrix.md)
+1.  [Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)
+2.  [SciPy's _curve_fit](SciPy's_curve_fit.md)
+3.  [Jacobian_Matrix](Jacobian_Matrix.md)
+4.  [Levenberg-Marquardt](Levenberg-Marquardt.md)
+5.  [Covariance_Matrix](Covariance_Matrix.md)
 
 
 ## To learn the evolution of Nobel Physics 2024, follow the steps below:

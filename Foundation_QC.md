@@ -100,3 +100,104 @@ $$
 ![image](https://github.com/user-attachments/assets/c92f934b-1312-42db-b28f-03d793dc17dd)
 
 
+
+## Q2: Pauli-X Gate: Unitarity, Inverse, and Action on a Qubit
+
+### Check that the $X$ matrix is, indeed, unitary. 
+What is the inverse of $X$? What is the action of $X$ on a general qubit in a state of the form:
+
+$$
+a \lvert 0 \rangle + b \lvert 1 \rangle
+$$
+
+
+## A2. Checking if the X Gate is Unitary
+
+The **X gate**, also known as the Pauli-X gate, is defined by the matrix:
+
+$$
+X = \begin{pmatrix}
+0 & 1 \\
+1 & 0
+\end{pmatrix}
+$$
+
+A matrix is unitary if the inverse of the matrix is equal to its conjugate transpose (or Hermitian adjoint), i.e., 
+
+$$
+X^{-1} = X^{\dagger}
+$$
+
+To check this, we need to compute \( X^{\dagger} \) and compare it to \( X^{-1} \).
+
+### Conjugate Transpose \( X^{\dagger} \)
+
+Since \( X \) is real, its conjugate transpose is the same as its transpose \( X^{T} \):
+
+$$
+X^{\dagger} = X^{T} = \begin{pmatrix}
+0 & 1 \\
+1 & 0
+\end{pmatrix}
+$$
+
+Thus, 
+
+$$
+X^{\dagger} = X
+$$
+
+### Inverse of \( X \)
+
+For a 2x2 matrix, the inverse can be calculated. However, for the Pauli-X gate:
+
+$$
+X^{-1} = \begin{pmatrix}
+0 & 1 \\
+1 & 0
+\end{pmatrix} = X
+$$
+
+Thus, 
+
+$$
+X^{-1} = X
+$$
+
+Since \( X^{-1} = X^{\dagger} \), the Pauli-X gate is indeed unitary.
+
+## 2. What is the Inverse of the X Gate?
+
+As we saw above, the inverse of \( X \) is itself:
+
+$$
+X^{-1} = X = \begin{pmatrix}
+0 & 1 \\
+1 & 0
+\end{pmatrix}
+$$
+
+## 3. Action of the X Gate on a General Qubit
+
+To find the action of the \( X \) gate on a general qubit, we apply the matrix \( X \) to the state \( a\lvert 0 \rangle + b\lvert 1 \rangle \).
+
+Let the general qubit state be:
+
+$$
+\lvert \psi \rangle = a \lvert 0 \rangle + b \lvert 1 \rangle = a \begin{pmatrix} 1 \\ 0 \end{pmatrix} + b \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} a \\ b \end{pmatrix}
+$$
+
+Now, apply the \( X \) matrix to this state:
+
+$$
+X \lvert \psi \rangle = \begin{pmatrix}
+0 & 1 \\
+1 & 0
+\end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} = \begin{pmatrix} b \\ a \end{pmatrix}
+$$
+
+Thus, the action of \( X \) on the qubit \( a\lvert 0 \rangle + b\lvert 1 \rangle \) is to swap the amplitudes \( a \) and \( b \):
+
+$$
+X \left( a \lvert 0 \rangle + b \lvert 1 \rangle \right) = b \lvert 0 \rangle + a \lvert 1 \rangle
+$$

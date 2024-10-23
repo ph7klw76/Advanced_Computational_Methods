@@ -599,6 +599,9 @@ print(f'The predicted phase for T=50°C and P=300 atm is: {predicted_phase}')
 ```
 ## Model Results
 
+![phase](https://github.com/user-attachments/assets/89ad68cd-8439-4cea-9b32-0e3b8da0147a)
+
+
 - **Optimal number of neighbors**: 29
 - **Accuracy**: 96.22%
 

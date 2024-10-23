@@ -427,6 +427,232 @@ The original lattice has been altered by introducing defects (**red** points), r
 K-NN Predictions (Right):
 The K-NN classifier has predicted defects based on the spatial configuration of atoms. These predictions are represented as **red** points in the test set visualization.
 
+# Phase Classification Using K-Nearest Neighbors (K-NN)
+
+We will explore a Python program that applies machine learning techniques to classify different phases of matter (solid, liquid, and gas) based on temperature and pressure data. The program uses the K-Nearest Neighbors (K-NN) algorithm to predict the phase of a material under noisy conditions, simulating real-world experimental uncertainty. We will walk through each step of the code and understand the underlying principles, equations, and how machine learning is applied to phase classification.
+
+## Problem Statement
+
+The phase of a material (solid, liquid, or gas) depends on external conditions like temperature and pressure. The program's goal is to:
+
+1. Generate synthetic data representing temperature and pressure with some noise.
+2. Classify the phase of the material (solid, liquid, gas) based on this data.
+3. Apply K-NN classification to predict the phase of new test data points.
+4. Visualize the decision boundaries between phases.
+
+## Step 1: Generating Noisy Synthetic Data
+
+To simulate real-world experimental data, the program generates synthetic temperature and pressure data, along with corresponding phase classifications. Noise is added to simulate experimental uncertainties.
+
+- **Temperature (T)** ranges from -100°C to 200°C.
+- **Pressure (P)** ranges from 0.1 atm to 1000 atm.
+
+Noise is introduced in both temperature and pressure to account for uncertainties:
+
+$$
+T_{\text{noisy}} = T + \text{noise}_T
+$$
+
+$$
+P_{\text{noisy}} = P + \text{noise}_P
+$$
+
+The noise is generated using a normal distribution:
+
+$$
+\text{noise}_T \sim N(0, 5), \quad \text{noise}_P \sim N(0, 50)
+$$
+
+These noises represent small measurement uncertainties in temperature and pressure, which are common in experiments.
+
+```python
+# Noise generation
+noise_T = np.random.normal(0, 5, T.shape)
+noise_P = np.random.normal(0, 50, P.shape)
+T_noisy = T + noise_T
+P_noisy = P + noise_P
+```
+## Step 2: Classifying Phases
+
+The phases (solid, liquid, gas) are classified using the following rules:
+
+- **Solid** if \( T < 0 \) (temperature below freezing point).
+- **Liquid** if \( 0 \leq T \leq 100 \) and \( P > 200 \) (typical for water at high pressure).
+- **Gas** otherwise.
+
+This classification function is applied to the synthetic data to create a label for each data point.
+
+```python
+def classify_phase(T, P):
+    if T < 0:
+        return 0  # Solid
+    elif 0 <= T <= 100 and P > 200:
+        return 1  # Liquid
+    else:
+        return 2  # Gas
+```
+## Step 3: Standardizing Features
+
+Since temperature and pressure have different units and scales, it's important to standardize the features before applying machine learning models. `StandardScaler` is used to transform the data to have zero mean and unit variance:
+
+$$
+X_{\text{scaled}} = \frac{X - \mu}{\sigma}
+$$
+
+Where \( \mu \) is the mean and \( \sigma \) is the standard deviation.
+
+```python
+from sklearn.preprocessing import StandardScaler
+
+# Standardizing the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train_raw)
+X_test = scaler.transform(X_test_raw)
+```
+## Step 4: K-NN Classification
+
+The K-Nearest Neighbors (K-NN) algorithm is used for classification. K-NN is a non-parametric method that classifies data points based on the majority class of their nearest neighbors.
+
+### How K-NN Works:
+
+1. **Distance Calculation**: For each test point, calculate the distance to all training points using the Euclidean distance:
+
+   $$
+   d(x_i, x_j) = \sqrt{(T_i - T_j)^2 + (P_i - P_j)^2}
+   $$
+
+2. **Neighbor Voting**: Select the \( k \)-nearest neighbors based on distance and assign the majority class label.
+
+To find the optimal number of neighbors \( k \), `GridSearchCV` is used to tune the hyperparameter by testing values from 1 to 30 neighbors:
+
+```python
+from sklearn.model_selection import GridSearchCV
+import numpy as np
+
+# Hyperparameter tuning with GridSearchCV
+param_grid = {'n_neighbors': np.arange(1, 31)}
+grid_search = GridSearchCV(knn, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+```
+After tuning, the best number of neighbors is selected and used for classification.
+
+## Step 5: Model Evaluation
+
+Once the model is trained with the optimal \( k \), it is used to predict the phases of the test set. The following metrics are calculated:
+
+### Accuracy:
+The percentage of correctly classified samples is calculated as:
+
+$$
+\text{Accuracy} = \left( \frac{\text{Number of Correct Predictions}}{\text{Total Predictions}} \right) \times 100
+$$
+
+### Confusion Matrix:
+Shows the counts of actual vs. predicted class labels for each phase.
+
+### Classification Report:
+Provides precision, recall, and F1-score for each phase.
+
+```python
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Model evaluation
+accuracy = accuracy_score(y_test, y_pred)
+conf_mat = confusion_matrix(y_test, y_pred)
+print(f'Accuracy: {accuracy * 100:.2f}%')
+print(classification_report(y_test, y_pred, target_names=['Solid', 'Liquid', 'Gas']))
+```
+## Step 6: Visualization
+
+The decision boundaries between solid, liquid, and gas phases are visualized using a contour plot. The classifier's predictions are plotted on a fine grid of temperature and pressure values, with the boundaries between phases clearly visible.
+
+The decision boundaries are shown using `contourf`, and the actual test data points are overlaid on top of the plot.
+
+Each phase is color-coded:
+- **Solid**: Red
+- **Liquid**: Green
+- **Gas**: Blue
+
+```python
+# Visualization of decision boundaries and test data
+plt.contourf(T_grid, P_grid, Z, cmap=cmap, alpha=0.6)
+plt.scatter(X_test_raw[:, 0], X_test_raw[:, 1], c=y_test, cmap=cmap, s=20, edgecolor='k', label='Test Data')
+plt.colorbar(ticks=[0, 1, 2], format=plt.FuncFormatter(lambda val, loc: ['Solid', 'Liquid', 'Gas'][int(val)]))
+plt.xlabel('Temperature (°C)')
+plt.ylabel('Pressure (atm)')
+plt.title('Phase Classification Decision Boundaries')
+plt.show()
+```
+
+## Step 7: Phase Prediction for New Samples
+
+Finally, the model is used to predict the phase for a new temperature and pressure sample. For example, predicting the phase at \( T = 50^\circ C \) and \( P = 300 \, \text{atm} \):
+
+```python
+# Predicting the phase for a new sample
+new_sample_raw = np.array([[50, 300]])
+new_sample = scaler.transform(new_sample_raw)
+predicted_phase = knn_best.predict(new_sample)
+
+# Output the predicted phase
+print(f'The predicted phase for T=50°C and P=300 atm is: {predicted_phase}')
+```
+## Model Results
+
+- **Optimal number of neighbors**: 29
+- **Accuracy**: 96.22%
+
+### Classification Report:
+
+Classification Report:
+              precision    recall  f1-score   support
+
+       Solid       0.98      0.98      0.98     66600
+      Liquid       0.94      0.93      0.93     53440
+         Gas       0.97      0.97      0.97     79960
+
+    accuracy                           0.96    200000
+   macro avg       0.96      0.96      0.96    200000
+weighted avg       0.96      0.96      0.96    200000
+
+
+### Confusion Matrix:
+
+| Actual \ Predicted | Solid | Liquid | Gas   |
+|--------------------|-------|--------|-------|
+| **Solid**           | 65245 | 1110   | 245   |
+| **Liquid**          | 1094  | 49884  | 2462  |
+| **Gas**             | 299   | 2357   | 77304 |
+
+Predicted phase for temperature=50°C and pressure=300 atm: Liquid
+## 4. Confusion Matrix
+
+The confusion matrix shows the number of correct and incorrect predictions for each class:
+
+
+- **Rows**: Represent the actual classes (solid, liquid, gas).
+- **Columns**: Represent the predicted classes (solid, liquid, gas).
+
+### Breaking Down the Matrix:
+
+- **Solid**:
+  - 65,245 solids were correctly classified as solid.
+  - 1,110 solids were incorrectly classified as liquid.
+  - 245 solids were incorrectly classified as gas.
+
+- **Liquid**:
+  - 49,884 liquids were correctly classified as liquid.
+  - 1,094 liquids were incorrectly classified as solid.
+  - 2,462 liquids were incorrectly classified as gas.
+
+- **Gas**:
+  - 77,304 gases were correctly classified as gas.
+  - 299 gases were incorrectly classified as solid.
+  - 2,357 gases were incorrectly classified as liquid.
+
+The confusion matrix shows that the model performs best for the solid and gas phases, with very few misclassifications. However, there are slightly more errors when classifying the liquid phase, which could be due to the overlap between the temperature and pressure ranges of the liquid phase with the other phases.
+
+
 
 
 ```python

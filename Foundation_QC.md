@@ -173,7 +173,7 @@ $$
 
 Since $X^{-1} = X^{\dagger}$, the Pauli-X gate is indeed unitary.
 
-## 2. What is the Inverse of the X Gate?
+## What is the Inverse of the X Gate?
 
 As we saw above, the inverse of $X$ is itself:
 
@@ -184,7 +184,7 @@ X^{-1} = X = \begin{pmatrix}
 \end{pmatrix}
 $$
 
-## 3. Action of the X Gate on a General Qubit
+## Action of the X Gate on a General Qubit
 
 To find the action of the $X$ gate on a general qubit, we apply the matrix $X$ to the state $a\lvert 0 \rangle + b\lvert 1 \rangle$.
 

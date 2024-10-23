@@ -419,7 +419,13 @@ predicted_labels = y_pred
 visualize_lattice(lattice[test_indices], predicted_labels, 'K-NN Predicted Defects on Test Set')
 
 ```
+![defects](https://github.com/user-attachments/assets/c1088ea7-acfc-4e79-9605-755f1eb48b4d)
 
+Lattice with Defects (Left):
+The original lattice has been altered by introducing defects (**red** points), representing vacancies or displacements.
+
+K-NN Predictions (Right):
+The K-NN classifier has predicted defects based on the spatial configuration of atoms. These predictions are represented as **red** points in the test set visualization.
 
 
 

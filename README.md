@@ -24,3 +24,7 @@
 1.  [Foundation of Quantum Computing](Foundation_QC.md)
 
 ## To learn Quantum Machine Learning, follow the steps below:
+
+## Problem and Solution of PennyLane Tutorials
+
+

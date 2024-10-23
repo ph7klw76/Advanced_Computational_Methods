@@ -233,8 +233,172 @@ k-NN must store the entire training set, resulting in a space complexity of:
 $$
 O(N \cdot n)
 $$
-
 This memory requirement can be a limitation when dealing with large datasets.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+# Step 1: Create a perfect 2D square lattice of atoms
+def create_lattice(rows, cols, spacing):
+    x_positions = np.arange(0, cols * spacing, spacing)
+    y_positions = np.arange(0, rows * spacing, spacing)
+    X, Y = np.meshgrid(x_positions, y_positions)
+    return np.column_stack((X.flatten(), Y.flatten()))
+
+# Step 2: Introduce defects (vacancies and displaced atoms)
+def introduce_defects(lattice, num_vacancies=5, displacement_range=0.2):
+    lattice_with_defects = lattice.copy()
+    
+    # Introduce vacancies by randomly removing atoms
+    vacancies = np.random.choice(len(lattice), num_vacancies, replace=False)
+    lattice_with_defects = np.delete(lattice_with_defects, vacancies, axis=0)
+    
+    # Randomly displace a few atoms
+    for _ in range(num_vacancies):
+        idx = np.random.choice(len(lattice_with_defects))
+        displacement = np.random.uniform(-displacement_range, displacement_range, 2)
+        lattice_with_defects[idx] += displacement
+    
+    return lattice_with_defects, vacancies
+
+# Step 3: Label the defects (vacancies) as 1 and non-defects as 0
+def label_defects(lattice, defective_indices):
+    labels = np.zeros(len(lattice), dtype=int)
+    labels[defective_indices] = 1  # Mark defective atoms
+    return labels
+
+# Step 4: K-NN classification to identify defects based on neighboring atoms
+def classify_defects(lattice, labels, n_neighbors=5):
+    knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+    X_train, X_test, y_train, y_test = train_test_split(lattice, labels, test_size=0.2, random_state=42)
+    knn.fit(X_train, y_train)
+    
+    # Predict on the test set and return accuracy
+    accuracy = knn.score(X_test, y_test)
+    y_pred = knn.predict(X_test)
+    return accuracy, y_pred, X_test, y_test
+
+# Step 5: Visualization function
+def visualize_lattice(lattice, defective_labels, title):
+    plt.figure(figsize=(8, 8))
+    plt.scatter(lattice[:, 0], lattice[:, 1], c=defective_labels, cmap='coolwarm', s=100, edgecolor='k')
+    plt.title(title)
+    plt.xlabel('X position (a.u.)')
+    plt.ylabel('Y position (a.u.)')
+    plt.show()
+
+# Main part of the script
+# Step 1: Generate a 2D lattice of atoms
+lattice = create_lattice(50, 50, spacing=0.5)
+
+# Step 2: Introduce defects (vacancies and displacements)
+lattice_with_defects, vacancies = introduce_defects(lattice, num_vacancies=10)
+
+# Step 3: Label defects (vacancies are labeled as 1, non-defects as 0)
+labels = label_defects(lattice_with_defects, vacancies)
+
+# Step 4: Use K-NN to classify defects
+accuracy, y_pred, X_test, y_test = classify_defects(lattice_with_defects, labels)
+
+# Print classification accuracy
+print(f'K-NN Classification Accuracy: {accuracy * 100:.2f}%')
+
+# Step 5: Visualize the lattice with color-coded defective and non-defective atoms
+visualize_lattice(lattice_with_defects, labels, 'Lattice with Defects (Red = Defective, Blue = Non-Defective)')
+
+# Optional: Visualize the test set classification results
+visualize_lattice(X_test, y_pred, 'K-NN Predicted Defects on Test Set')
+```
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from matplotlib.colors import ListedColormap
+
+# Generate synthetic phase data with noise for a more rigorous example
+np.random.seed(42)
+
+# Temperature and Pressure ranges
+temperature = np.linspace(-100, 200, 1000)  # Temperature range from -100 to 200 degrees
+pressure = np.linspace(0.1, 1000, 1000)     # Pressure range from 0.1 to 1000 units
+
+# Generate grid of points for temperature and pressure
+T, P = np.meshgrid(temperature, pressure)
+T = T.flatten()
+P = P.flatten()
+
+# Phase classification: Create nonlinear boundaries for solid, liquid, gas phases
+def classify_phase(T, P):
+    if T < 0:
+        return 0  # Solid
+    elif 0 <= T <= 100 and P > 200:
+        return 1  # Liquid
+    else:
+        return 2  # Gas
+
+# Apply the phase classification with added noise to simulate experimental uncertainty
+noise = np.random.normal(0, 10, T.shape)
+phases = np.array([classify_phase(t + n, p + n) for t, p, n in zip(T, P, noise)])
+
+# Create a feature matrix (Temperature, Pressure) and labels (Phase)
+X = np.column_stack((T, P))  # Features: Temperature, Pressure
+y = phases                   # Labels: Phase (0 = Solid, 1 = Liquid, 2 = Gas)
+
+# Split the dataset into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Create the k-nearest neighbors classifier with k=5
+knn = KNeighborsClassifier(n_neighbors=5)
+
+# Fit the model using the training data
+knn.fit(X_train, y_train)
+
+# Predict the phase for the test set
+y_pred = knn.predict(X_test)
+
+# Calculate and print accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy * 100:.2f}%')
+
+# Create a fine grid for visualization of decision boundaries
+T_grid, P_grid = np.meshgrid(np.linspace(-100, 200, 200), np.linspace(0.1, 1000, 200))
+X_grid = np.column_stack((T_grid.flatten(), P_grid.flatten()))
+
+# Predict the phase for each point in the grid
+Z = knn.predict(X_grid)
+Z = Z.reshape(T_grid.shape)
+
+# Plotting the phase diagram and decision boundaries
+plt.figure(figsize=(10, 6))
+cmap = ListedColormap(['#FF9999', '#99FF99', '#9999FF'])
+
+plt.contourf(T_grid, P_grid, Z, cmap=cmap, alpha=0.6)
+
+# Scatter plot the training points
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cmap, s=20, edgecolor='k', label='Training Data')
+
+# Add labels and titles
+plt.colorbar()
+plt.title('Phase Classification Using K-NN (Solid, Liquid, Gas)')
+plt.xlabel('Temperature (°C)')
+plt.ylabel('Pressure (atm)')
+plt.legend(loc='upper left')
+plt.show()
+
+# Predict the phase of a new sample (e.g., T=50°C, P=300 atm)
+new_sample = np.array([[50, 300]])
+predicted_phase = knn.predict(new_sample)
+print(f'Predicted phase for temperature=50°C and pressure=300 atm: {predicted_phase[0]}')
+```
+
+
+
 
 
   

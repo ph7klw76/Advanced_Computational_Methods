@@ -9,3 +9,7 @@
 ## To learn Machine Learning, follow the steps below:
 1. [Generalized_Linear_Models.md](Generalized_Linear_Models.md) (Supervised learning)
 2. [k-Nearest_Neighbors.md](k-Nearest_Neighbors.md) (Supervised learning)
+3. Ensemble Learning
+4. Artificial Neural Network
+
+## To learn Quantum Machine Learning, follow the steps below:

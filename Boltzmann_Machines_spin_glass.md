@@ -1,5 +1,6 @@
 # Minimizing Energy in Disordered Spin Glasses using Boltzmann Machines and the Metropolis Algorithm  
-*By Kai Lin Woon *
+
+*By Kai Lin Woon*
 
 ## Introduction  
 Disordered spin glasses are fascinating and complex systems in statistical physics that exhibit rich behavior due to the presence of randomness and frustration in their interactions. Understanding these systems is crucial not only in physics but also in fields like neural networks, optimization, and computational neuroscience.

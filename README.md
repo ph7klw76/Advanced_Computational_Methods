@@ -9,7 +9,7 @@
 ## To learn Machine Learning, follow the steps below
 
 1.Generalized_Linear_Models.md (Supervised learning)
-2.
+2.k-Nearest_Neighbors.md (Supervised learning)
 3.
 4.
 

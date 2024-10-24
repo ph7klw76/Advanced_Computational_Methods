@@ -322,4 +322,28 @@ plt.ylabel('Features')
 plt.grid(True)
 plt.show()
 ```
+### Results and Discussions
+
+![image](https://github.com/user-attachments/assets/23ed103c-3a37-49de-815a-7e9e6b54eaaf)
+
+### Random Forest Prediction of Temperature Anomalies with Uncertainty (Left Plot)
+
+**Observed Temperature Anomalies (Black Line):**  
+The black line represents the observed temperature anomalies from 1900 to 1999. These are synthetic observations based on the linear combination of the three climate models, plus some noise, which mimics real-world uncertainty in climate observations.
+
+**Predicted Temperature Anomalies (Blue Line):**  
+The blue line represents the temperature anomalies predicted by the Random Forest model. The model was trained on the first 80% of the data and tested on the remaining 20% (roughly from 1980 onward). The predictions follow the observed anomalies fairly closely in the test period, indicating that the model is capturing the trend and variations in the temperature data.
+
+**Uncertainty Bounds (Shaded Area):**  
+The light blue shaded region around the predicted values represents the uncertainty in the model’s predictions, quantified by the standard deviation of the predictions across all the trees in the Random Forest ensemble. The wider the shaded region, the greater the uncertainty. The uncertainty increases toward the later years, which is a typical outcome in time-series forecasting because predictions further into the future are usually more uncertain. This is a valuable feature of the Random Forest model—it not only provides predictions but also indicates how confident it is in those predictions.
+
+### Feature Importance (Right Plot)
+
+The bar chart on the right shows the feature importance for the three climate models (Model1, Model2, and Model3):  
+- **Model3** has the highest importance, followed closely by **Model2**, while **Model1** has very low importance.
+
+**Interpretation of Feature Importance:**  
+Model3 and Model2 contribute most significantly to the Random Forest’s predictions, as indicated by their high mean decrease in impurity. This means that the decision trees in the Random Forest rely heavily on the predictions from Model3 and Model2 when making splits, indicating that these models contain the most relevant information for predicting temperature anomalies.  
+Model1, on the other hand, contributes very little, suggesting that it may not provide much additional information beyond what is already captured by Model2 and Model3. This might be due to high correlation with the other models or because its predictions are less relevant to the observed temperature anomalies.
+
 

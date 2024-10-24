@@ -355,4 +355,254 @@ $$
 3. **Backpropagation** to calculate the gradients.
 4. **Gradient descent** to update the weights and biases iteratively.
 
+```python
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+
+# Matminer for materials data and featurization
+from matminer.datasets import load_dataset
+from matminer.featurizers.composition import ElementProperty
+
+# Scikit-learn for data splitting and preprocessing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error
+
+# TensorFlow Keras for building neural network models
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# Suppress warnings for cleaner output
+import warnings
+warnings.filterwarnings('ignore')
+
+# Load the dielectric constant dataset from matminer
+df = load_dataset('dielectric_constant')
+print("Dataset loaded with {} entries.".format(len(df)))
+
+# Extract composition from the structure
+df['composition'] = df['structure'].apply(lambda x: x.composition)
+
+# Initialize the ElementProperty featurizer with "magpie" preset
+ep_featurizer = ElementProperty.from_preset(preset_name="magpie")
+
+# Featurize the compositions
+df = ep_featurizer.featurize_dataframe(df, col_id='composition', ignore_errors=True)
+print("Featurization complete. Number of features: {}.".format(len(ep_featurizer.feature_labels())))
+
+# Define features (X) and target variable (y)
+X = df[ep_featurizer.feature_labels()]
+y = df['n']  # Refractive index
+
+# Drop any rows with missing values
+X = X.dropna()
+y = y.loc[X.index]
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+print("Data split into training and testing sets.")
+
+# Standardize the feature data
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+print("Feature scaling complete.")
+
+# Build the artificial neural network model
+model = Sequential()
+model.add(Dense(128, input_dim=X_train_scaled.shape[1], activation='relu'))
+model.add(Dense(64, activation='relu'))
+model.add(Dense(1))  # Output layer for regression
+print("Neural network model constructed.")
+
+# Compile the model
+model.compile(loss='mean_squared_error', optimizer='adam')
+
+# Train the model
+history = model.fit(
+    X_train_scaled, y_train,
+    epochs=100,
+    batch_size=32,
+    validation_split=0.1,
+    verbose=1  # Set to 1 to see training progress
+)
+print("Model training complete.")
+
+# Evaluate the model on the test set
+y_pred = model.predict(X_test_scaled)
+mae = mean_absolute_error(y_test, y_pred)
+print("Model evaluation complete.")
+print(f"Test Mean Absolute Error (MAE): {mae:.4f}")
+
+# Plotting the predicted vs actual values
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(8, 6))
+plt.scatter(y_test, y_pred, alpha=0.7)
+plt.xlabel('Actual Refractive Index')
+plt.ylabel('Predicted Refractive Index')
+plt.title('Actual vs Predicted Refractive Index')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
+plt.show()
+```
+
+This Python code demonstrates a real-world application of Artificial Neural Networks (ANNs) for predicting the refractive index of materials based on their composition. The dataset and feature engineering is done using matminer, a materials data mining library, and the machine learning model is built using TensorFlow/Keras.
+
+Let’s go step by step through the code:
+
+###  Importing Libraries
+
+```python
+import numpy as np
+import pandas as pd
+from matminer.datasets import load_dataset
+from matminer.featurizers.composition import ElementProperty
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+import warnings
+warnings.filterwarnings('ignore')
+```
+
+- **numpy** and **pandas**: These libraries are used for handling data and numerical computations.
+- **matminer**: A data mining toolkit for materials science. It provides access to datasets and tools for extracting features from material compositions.
+- **scikit-learn**: This library provides tools for splitting data, scaling features, and evaluating the model using Mean Absolute Error (MAE).
+- **TensorFlow Keras**: Used for building and training an artificial neural network.
+- **warnings**: Warnings are suppressed to make the output cleaner.
+
+### Loading Data
+
+The load_dataset('dielectric_constant') function loads a materials dataset related to the dielectric constant from the matminer library.
+The dataset includes structural data for various materials, which we will use to predict their refractive index (a measure of how light propagates through the material).
+
+```python
+df = load_dataset('dielectric_constant')
+print("Dataset loaded with {} entries.".format(len(df)))
+```
+### Extracting Material Composition
+```python
+df['composition'] = df['structure'].apply(lambda x: x.composition)
+```
+The column 'structure' in the dataset contains atomic structures of the materials.
+The code extracts the composition of each material using the apply function. This composition is crucial for generating features (descriptors) that will be used to train the neural network.
+
+### Featurization using ElementProperty
+
+```python
+ep_featurizer = ElementProperty.from_preset(preset_name="magpie")
+df = ep_featurizer.featurize_dataframe(df, col_id='composition', ignore_errors=True)
+print("Featurization complete. Number of features: {}.".format(len(ep_featurizer.feature_labels())))
+```
+
+Featurization refers to the process of converting the material’s composition into numerical features that can be used for machine learning.
+The ElementProperty featurizer from matminer generates descriptors for the chemical composition using a preset called magpie (Materials Agnostic Platform for Informatics and Exploration). These features could include atomic radii, electronegativity, and other elemental properties.
+The featurize_dataframe method applies this featurizer to the dataset and appends the features as new columns in the dataframe.
+The line print("Featurization complete...") confirms the process and tells us how many features (descriptors) were generated.
+### Defining Features and Target Variable
+
+```python
+X = df[ep_featurizer.feature_labels()]
+y = df['n']  # Refractive index
+```
+
+X: The features matrix containing the featurized composition (numerical descriptors of the material's atomic structure).
+y: The target variable, which is the refractive index (denoted as 'n' in the dataset).
+
+### Handling Missing Data and Data Splitting
+
+```python
+X = X.dropna()
+y = y.loc[X.index]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print("Data split into training and testing sets.")
+```
+
+X.dropna(): Removes rows with missing values in the feature matrix.
+The dataset is split into training (80%) and testing (20%) sets using train_test_split. The training set is used to fit the model, and the testing set is used to evaluate the model’s performance.
+
+### Feature Scaling
+
+```python
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+print("Feature scaling complete.")
+```
+Standardization is applied to the features using StandardScaler, which ensures that each feature has a mean of 0 and a standard deviation of 1. This is crucial for neural networks to ensure faster convergence and more stable training.
+The scaler is first fit on the training data and then applied to both the training and test data.
+
+### Building the Artificial Neural Network
+
+```python
+model = Sequential()
+model.add(Dense(128, input_dim=X_train_scaled.shape[1], activation='relu'))
+model.add(Dense(64, activation='relu'))
+model.add(Dense(1))  # Output layer for regression
+print("Neural network model constructed.")
+```
+
+A Sequential model from Keras is used to define the neural network.
+The input layer has 128 neurons with ReLU activation.
+A second hidden layer with 64 neurons and ReLU activation is added.
+The output layer consists of 1 neuron (since this is a regression task, where the network predicts a continuous value: the refractive index).
+ReLU (Rectified Linear Unit) is a commonly used activation function that helps the network learn non-linear relationships between features.
+
+### Compiling the Model
+
+```python
+model.compile(loss='mean_squared_error', optimizer='adam')
+The model is compiled with the Mean Squared Error (MSE) as the loss function, which is appropriate for regression tasks.
+The Adam optimizer is used, which is a variant of stochastic gradient descent that adapts the learning rate during training and generally performs well in practice.
+
+
+### Training the Model
+
+```python
+history = model.fit(
+    X_train_scaled, y_train,
+    epochs=100,
+    batch_size=32,
+    validation_split=0.1,
+    verbose=0  # Set to 1 to see training progress
+)
+print("Model training complete.")
+```
+
+The model is trained using the training data for 100 epochs with a batch size of 32. Each epoch consists of a complete pass over the training data.
+Validation split: 10% of the training data is used for validation during training to monitor the model’s performance on unseen data.
+verbose=0 suppresses the output, but you can set verbose=1 to see the training progress.
+
+### Evaluating the Model
+
+```python
+y_pred = model.predict(X_test_scaled)
+mae = mean_absolute_error(y_test, y_pred)
+print("Model evaluation complete.")
+print(f"Test Mean Absolute Error (MAE): {mae:.4f}")
+```
+
+After training, the model is evaluated on the test set.
+The predictions (y_pred) are generated using the test features.
+The Mean Absolute Error (MAE) between the predicted and actual refractive indices is computed as the evaluation metric. MAE is a commonly used regression metric that measures the average magnitude of the prediction errors.
+
+### Plotting the Results
+
+```python
+plt.figure(figsize=(8, 6))
+plt.scatter(y_test, y_pred, alpha=0.7)
+plt.xlabel('Actual Refractive Index')
+plt.ylabel('Predicted Refractive Index')
+plt.title('Actual vs Predicted Refractive Index')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
+plt.show()
+```
+
+A scatter plot is generated to compare the actual refractive index (on the x-axis) with the predicted refractive index (on the y-axis).
+The diagonal dashed line represents the ideal case where the predicted values match the true values perfectly. The closer the points are to this line, the better the model’s predictions.
+
 

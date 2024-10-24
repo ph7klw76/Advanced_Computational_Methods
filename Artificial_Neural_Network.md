@@ -605,4 +605,185 @@ plt.show()
 A scatter plot is generated to compare the actual refractive index (on the x-axis) with the predicted refractive index (on the y-axis).
 The diagonal dashed line represents the ideal case where the predicted values match the true values perfectly. The closer the points are to this line, the better the model’s predictions.
 
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import regularizers
+from sklearn.metrics import mean_squared_error
+
+# For reproducibility
+np.random.seed(42)
+
+# Import functions to draw shapes
+from skimage.draw import disk, ellipse, rectangle
+
+### STEP 1: Generate Physically Realistic Data ###
+
+# Simulate a simple optical tomography system (e.g., 2D grid of 32x32 pixels)
+image_size = 32  # 32x32 pixel internal structure
+
+# Let's assume we have 1000 different internal structures to simulate
+n_samples = 1000
+
+def generate_internal_structures(n_samples, image_size):
+    """
+    Generate physically realistic internal structures with a background medium and random inclusions.
+    Inclusions are randomly placed shapes (disks, ellipses, rectangles) with different absorption coefficients.
+    """
+    structures = []
+    for _ in range(n_samples):
+        # Start with a background absorption coefficient (e.g., soft tissue)
+        background_absorption = 0.01  # Low absorption coefficient
+        image = np.ones((image_size, image_size)) * background_absorption
+
+        # Randomly decide the number of inclusions (e.g., tumors or anomalies)
+        n_inclusions = np.random.randint(1, 6)  # Between 1 and 5 inclusions
+
+        for _ in range(n_inclusions):
+            # Randomly choose a shape
+            shape_type = np.random.choice(['disk', 'ellipse', 'rectangle'])
+            # Randomly choose size and position
+            if shape_type == 'disk':
+                radius = np.random.randint(3, image_size // 4)
+                center_x = np.random.randint(radius, image_size - radius)
+                center_y = np.random.randint(radius, image_size - radius)
+                rr, cc = disk((center_y, center_x), radius, shape=image.shape)
+            elif shape_type == 'ellipse':
+                center_x = np.random.randint(image_size // 4, 3 * image_size // 4)
+                center_y = np.random.randint(image_size // 4, 3 * image_size // 4)
+                major_axis = np.random.randint(5, image_size // 3)
+                minor_axis = np.random.randint(3, major_axis)
+                orientation = np.random.uniform(0, np.pi)
+                rr, cc = ellipse(center_y, center_x, minor_axis, major_axis, shape=image.shape, rotation=orientation)
+            elif shape_type == 'rectangle':
+                start_x = np.random.randint(0, image_size - 5)
+                start_y = np.random.randint(0, image_size - 5)
+                end_x = np.random.randint(start_x + 5, min(start_x + image_size // 4, image_size))
+                end_y = np.random.randint(start_y + 5, min(start_y + image_size // 4, image_size))
+                rr, cc = rectangle(start=(start_y, start_x), end=(end_y, end_x), shape=image.shape)
+
+            # Randomly choose absorption coefficient for the inclusion (e.g., higher than background)
+            inclusion_absorption = np.random.uniform(0.05, 0.1)
+            # Add the inclusion to the image
+            image[rr, cc] = inclusion_absorption
+
+        structures.append(image)
+
+    return np.array(structures)
+
+# Generate physically realistic internal structures
+absorption_coefficients = generate_internal_structures(n_samples, image_size)
+
+# Simulate the detector readings using a simple optical tomography model
+# Here we use a simplified Beer-Lambert law model for light absorption
+
+def simulate_light_propagation(internal_structure):
+    """
+    Simulate light propagation through the medium using Beer-Lambert Law.
+    This simulates light being absorbed as it passes through the material.
+    We simulate a 'detector' that collects light after passing through the medium.
+
+    This is a simplified model assuming light passes through in straight lines and is absorbed exponentially.
+    """
+    # Simulate detector readings based on absorption using Beer-Lambert Law
+    # Light travels from one side of the grid to the opposite side
+    readings = []
+    for i in range(image_size):
+        # Sum over rows to simulate light passing through the material in a straight line (1D integration along y-axis)
+        total_absorption = np.sum(internal_structure[i, :])
+        transmission = np.exp(-total_absorption)
+        readings.append(transmission)
+    return np.array(readings)
+
+# Generate detector readings for all samples
+X_detector = np.array([simulate_light_propagation(absorption_coefficients[i]) for i in range(n_samples)])
+
+# Reshape the true internal structure (flatten 2D images) for training (32x32 = 1024 features)
+X_true_flatten = absorption_coefficients.reshape(n_samples, -1)
+
+### STEP 2: Train-Test Split ###
+
+# Split the data into training and testing sets (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X_detector, X_true_flatten, test_size=0.2, random_state=42)
+
+### STEP 3: Neural Network Architecture ###
+
+# Build a neural network to reconstruct the 32x32 internal structure from the detector readings (32 features)
+model = Sequential()
+
+# Input is the detector readings (32 features)
+model.add(Dense(128, input_dim=X_detector.shape[1], activation='relu'))
+
+# Fully connected layers with regularization to avoid overfitting
+model.add(Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.01)))
+model.add(Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.01)))
+
+# Output layer: 32x32 pixels (flattened to 1024 neurons)
+model.add(Dense(image_size * image_size, activation='linear'))
+
+# Compile the model using MSE loss and Adam optimizer
+model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
+
+### STEP 4: Training the Model ###
+
+# Train the model with the training data (detector readings -> internal structure)
+history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test), verbose=1)
+
+### STEP 5: Evaluation and Prediction ###
+
+# Predict the internal structures from the test set
+y_pred = model.predict(X_test)
+
+# Reshape the predictions back to 32x32 images
+y_pred_images = y_pred.reshape(-1, image_size, image_size)
+y_test_images = y_test.reshape(-1, image_size, image_size)
+
+# Calculate MSE on the test set
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error (MSE) on Test Set: {mse:.6f}")
+
+### STEP 6: Visualize the Results ###
+
+# Plot original vs reconstructed internal structures for a random test sample
+sample_index = np.random.randint(0, X_test.shape[0])
+
+plt.figure(figsize=(12, 5))
+
+# Plot the true internal structure
+plt.subplot(1, 3, 1)
+plt.imshow(y_test_images[sample_index], cmap='viridis', origin='lower')
+plt.title('True Internal Structure')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+# Plot the reconstructed internal structure
+plt.subplot(1, 3, 2)
+plt.imshow(y_pred_images[sample_index], cmap='viridis', origin='lower')
+plt.title('Reconstructed Internal Structure (ANN)')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+# Plot the difference between true and reconstructed structures
+plt.subplot(1, 3, 3)
+difference = np.abs(y_test_images[sample_index] - y_pred_images[sample_index])
+plt.imshow(difference, cmap='hot', origin='lower')
+plt.title('Absolute Difference')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+plt.tight_layout()
+plt.show()
+
+# Plot the training and validation loss over epochs
+plt.figure(figsize=(8,6))
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (MSE)')
+plt.title('Training and Validation Loss Over Epochs')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
 

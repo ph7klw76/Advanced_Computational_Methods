@@ -12,7 +12,7 @@
 1. [Spin_glass](spin_glass.md)
 2. [Hopfieldnetwork_spin glass](hopfieldnetwork_spinglass.md) (Unsupervised learning)
 3. [Boltzmann_Machines_spin_glass](Boltzmann_Machines_spin_glass.md) (Unsupervised learning)
-4. [Backpropagation_Algorithm](backwardandforwardpropagation.md.md) (Unsupervised learning)
+4. [Backpropagation_Algorithm](backwardandforwardpropagation.md) (Unsupervised learning)
 
 ## To learn Machine Learning, follow the steps below:
 1. [Generalized_Linear_Models](Generalized_Linear_Models.md) (Supervised learning)

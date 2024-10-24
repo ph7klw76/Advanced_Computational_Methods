@@ -177,7 +177,149 @@ $$
 
 However, if the models are not independent (which is often the case), we must account for the covariance between models: 
 
-
+![image](https://github.com/user-attachments/assets/91604c9c-7454-4022-a5fe-1c443aaab9dc)
 
 #### Explanation of Terms:
 - **$\text{Cov}(f_i(x), f_j(x))$**: The covariance between the predictions of models $f_i$ and $f_j$. If the models are highly correlated, the benefit of bagging is reduced because the errors made by different models are more likely to align.
+
+- ### Random Forests for Climate Prediction and Uncertainty Quantification
+
+In climate science, combining multiple models to improve the accuracy and reliability of predictions is a common approach. Random Forests, a popular machine learning algorithm, can play a key role in this process. In this blog, we'll proive a Python implementation that uses Random Forests to predict climate temperature anomalies, assess model performance, quantify uncertainties, and determine feature importance. 
+
+
+
+```python
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+# Generate synthetic data representing years
+years = np.arange(1900, 2000)
+n_years = len(years)
+
+# Simulate outputs from three different climate models
+# These are synthetic and for demonstration purposes
+model1 = np.sin(0.02 * np.pi * years) + np.random.normal(0, 0.1, n_years)
+model2 = np.cos(0.02 * np.pi * years) + np.random.normal(0, 0.1, n_years)
+model3 = np.sin(0.02 * np.pi * years + np.pi/4) + np.random.normal(0, 0.1, n_years)
+
+# Generate synthetic observed temperature anomalies
+observed = (
+    0.3 * model1 +
+    0.5 * model2 +
+    0.2 * model3 +
+    np.random.normal(0, 0.05, n_years)
+)
+
+# Create a DataFrame to hold the data
+data = pd.DataFrame({
+    'Year': years,
+    'Model1': model1,
+    'Model2': model2,
+    'Model3': model3,
+    'Observed': observed
+})
+
+# Split the data into features (X) and target variable (y)
+X = data[['Model1', 'Model2', 'Model3']]
+y = data['Observed']
+
+# Since we're dealing with time series data, use TimeSeriesSplit for cross-validation
+tscv = TimeSeriesSplit(n_splits=5)
+
+# Define parameter grid for hyperparameter tuning
+param_grid = {
+    'n_estimators': [100, 200],
+    'max_depth': [None, 10, 20],
+    'min_samples_split': [2, 5],
+    'min_samples_leaf': [1, 2]
+}
+
+# Initialize the Random Forest Regressor
+rf = RandomForestRegressor(random_state=42)
+
+# Initialize GridSearchCV with TimeSeriesSplit
+grid_search = GridSearchCV(
+    estimator=rf,
+    param_grid=param_grid,
+    cv=tscv,
+    scoring='neg_mean_squared_error',
+    n_jobs=-1
+)
+
+# Fit GridSearchCV to find the best hyperparameters
+grid_search.fit(X, y)
+
+# Get the best estimator
+best_rf = grid_search.best_estimator_
+print("Best Parameters:", grid_search.best_params_)
+
+# Use the last 20% of data as a test set to evaluate performance
+split_index = int(n_years * 0.8)
+X_train, X_test = X.iloc[:split_index], X.iloc[split_index:]
+y_train, y_test = y.iloc[:split_index], y.iloc[split_index:]
+
+# Fit the best Random Forest model on the training data
+best_rf.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = best_rf.predict(X_test)
+
+# Calculate Mean Squared Error to evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error: {mse:.4f}")
+
+# Quantify uncertainties by computing the standard deviation of predictions from all trees
+all_tree_predictions = np.array([
+    tree.predict(X_test.values) for tree in best_rf.estimators_
+])
+
+# Standard deviation across all trees for each prediction
+prediction_std = np.std(all_tree_predictions, axis=0)
+
+# Plot the observed vs. predicted values along with uncertainty bounds
+plt.figure(figsize=(12, 6))
+plt.plot(data['Year'], data['Observed'], label='Observed', color='black')
+plt.plot(
+    data['Year'][split_index:],
+    y_pred,
+    label='Predicted',
+    color='blue'
+)
+plt.fill_between(
+    data['Year'][split_index:],
+    y_pred - prediction_std,
+    y_pred + prediction_std,
+    color='blue',
+    alpha=0.2,
+    label='Uncertainty'
+)
+plt.xlabel('Year')
+plt.ylabel('Temperature Anomaly')
+plt.title('Random Forest Prediction of Temperature Anomalies with Uncertainty')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Feature Importance Analysis
+importances = best_rf.feature_importances_
+feature_names = X.columns
+forest_importances = pd.Series(importances, index=feature_names)
+
+# Plot feature importances
+plt.figure(figsize=(8, 6))
+forest_importances.sort_values().plot(kind='barh')
+plt.title('Feature Importances')
+plt.xlabel('Mean Decrease in Impurity')
+plt.ylabel('Features')
+plt.grid(True)
+plt.show()
+```
+

@@ -787,3 +787,331 @@ plt.grid(True)
 plt.show()
 ```
 
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+import tensorflow as tf
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Concatenate
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import os
+
+# For reproducibility
+np.random.seed(42)
+tf.random.set_seed(42)
+
+# Import functions to draw shapes
+from skimage.draw import disk, ellipse, rectangle
+
+### STEP 1: Generate Physically Realistic Data ###
+
+# Simulate a 2D grid of 64x64 pixels for higher resolution
+image_size = 64  # Increased from 32 to 64 pixels
+
+# Let's assume we have 2000 different internal structures to simulate
+n_samples = 2000  # Increased sample size for better training
+
+def generate_internal_structures(n_samples, image_size):
+    """
+    Generate physically realistic internal structures with a background medium and random inclusions.
+    Inclusions are randomly placed shapes (disks, ellipses, rectangles) with different absorption coefficients.
+    """
+    structures = []
+    for _ in range(n_samples):
+        # Start with a background absorption coefficient (e.g., soft tissue)
+        background_absorption = 0.01  # Low absorption coefficient
+        image = np.ones((image_size, image_size)) * background_absorption
+
+        # Randomly decide the number of inclusions (e.g., tumors or anomalies)
+        n_inclusions = np.random.randint(1, 6)  # Between 1 and 5 inclusions
+
+        for _ in range(n_inclusions):
+            # Randomly choose a shape
+            shape_type = np.random.choice(['disk', 'ellipse', 'rectangle'])
+            # Randomly choose size and position
+            if shape_type == 'disk':
+                radius = np.random.randint(3, image_size // 8)
+                center_x = np.random.randint(radius, image_size - radius)
+                center_y = np.random.randint(radius, image_size - radius)
+                rr, cc = disk((center_y, center_x), radius, shape=image.shape)
+            elif shape_type == 'ellipse':
+                center_x = np.random.randint(image_size // 8, 7 * image_size // 8)
+                center_y = np.random.randint(image_size // 8, 7 * image_size // 8)
+                major_axis = np.random.randint(5, image_size // 6)
+                minor_axis = np.random.randint(3, major_axis)
+                orientation = np.random.uniform(0, np.pi)
+                rr, cc = ellipse(center_y, center_x, minor_axis, major_axis, shape=image.shape, rotation=orientation)
+            elif shape_type == 'rectangle':
+                start_x = np.random.randint(0, image_size - 5)
+                start_y = np.random.randint(0, image_size - 5)
+                end_x = np.random.randint(start_x + 5, min(start_x + image_size // 4, image_size))
+                end_y = np.random.randint(start_y + 5, min(start_y + image_size // 4, image_size))
+                rr, cc = rectangle(start=(start_y, start_x), end=(end_y, end_x), shape=image.shape)
+
+            # Randomly choose absorption coefficient for the inclusion (e.g., higher than background)
+            inclusion_absorption = np.random.uniform(0.05, 0.15)
+            # Add the inclusion to the image
+            image[rr, cc] = inclusion_absorption
+
+        structures.append(image)
+
+    return np.array(structures)
+
+# Generate physically realistic internal structures
+absorption_coefficients = generate_internal_structures(n_samples, image_size)
+
+# Normalize absorption coefficients to [0, 1]
+absorption_coefficients = (absorption_coefficients - absorption_coefficients.min()) / (absorption_coefficients.max() - absorption_coefficients.min())
+
+# Simulate the detector readings using a more realistic optical tomography model
+# Using Diffusion Approximation for light propagation
+
+def simulate_light_propagation(internal_structure):
+    """
+    Simulate light propagation through the medium using a simplified diffusion approximation model.
+    """
+    # For simplicity, we'll simulate measurements from multiple sources and detectors around the boundary
+    num_sources = 16  # Number of sources placed uniformly around the boundary
+    readings = []
+
+    # Generate source positions
+    positions = np.linspace(0, image_size - 1, num_sources, dtype=int)
+    for source_pos in positions:
+        # Simulate light propagation from this source
+        # For this example, we'll sum absorption coefficients along several paths
+        # In a real scenario, you would use a numerical solver for the diffusion equation
+        # Here we approximate by integrating along straight lines in different directions
+        # This is a simplification due to computational limitations
+
+        # Vertical propagation (downwards)
+        path = internal_structure[:, source_pos]
+        transmission = np.exp(-np.sum(path))
+        readings.append(transmission)
+
+        # Horizontal propagation (rightwards)
+        path = internal_structure[source_pos, :]
+        transmission = np.exp(-np.sum(path))
+        readings.append(transmission)
+
+        # Diagonal propagation (down-right)
+        path = np.diagonal(internal_structure, offset=source_pos - image_size // 2)
+        transmission = np.exp(-np.sum(path))
+        readings.append(transmission)
+
+        # Diagonal propagation (up-right)
+        path = np.diagonal(np.fliplr(internal_structure), offset=source_pos - image_size // 2)
+        transmission = np.exp(-np.sum(path))
+        readings.append(transmission)
+
+    return np.array(readings)
+
+# Generate detector readings for all samples
+X_detector = np.array([simulate_light_propagation(absorption_coefficients[i]) for i in range(n_samples)])
+
+# Normalize detector readings to [0, 1]
+X_detector = (X_detector - X_detector.min()) / (X_detector.max() - X_detector.min())
+
+# Reshape the true internal structure for training (64x64 pixels)
+X_true = absorption_coefficients[..., np.newaxis]  # Add channel dimension
+
+### STEP 2: Train-Test Split ###
+
+# Split the data into training and testing sets (80% training, 20% testing)
+X_train_det, X_test_det, y_train_img, y_test_img = train_test_split(X_detector, X_true, test_size=0.2, random_state=42)
+
+### STEP 3: Neural Network Architecture (U-Net) ###
+
+def unet_model(input_size=(image_size, image_size, 1)):
+    inputs = Input(input_size)
+
+    # Encoding path
+    c1 = Conv2D(64, (3, 3), activation='relu', padding='same')(inputs)
+    c1 = Conv2D(64, (3, 3), activation='relu', padding='same')(c1)
+    p1 = MaxPooling2D((2, 2))(c1)
+
+    c2 = Conv2D(128, (3, 3), activation='relu', padding='same')(p1)
+    c2 = Conv2D(128, (3, 3), activation='relu', padding='same')(c2)
+    p2 = MaxPooling2D((2, 2))(c2)
+
+    c3 = Conv2D(256, (3, 3), activation='relu', padding='same')(p2)
+    c3 = Conv2D(256, (3, 3), activation='relu', padding='same')(c3)
+    p3 = MaxPooling2D((2, 2))(c3)
+
+    # Bottleneck
+    c4 = Conv2D(512, (3, 3), activation='relu', padding='same')(p3)
+    c4 = Conv2D(512, (3, 3), activation='relu', padding='same')(c4)
+
+    # Decoding path
+    u5 = UpSampling2D((2, 2))(c4)
+    u5 = Concatenate()([u5, c3])
+    c5 = Conv2D(256, (3, 3), activation='relu', padding='same')(u5)
+    c5 = Conv2D(256, (3, 3), activation='relu', padding='same')(c5)
+
+    u6 = UpSampling2D((2, 2))(c5)
+    u6 = Concatenate()([u6, c2])
+    c6 = Conv2D(128, (3, 3), activation='relu', padding='same')(u6)
+    c6 = Conv2D(128, (3, 3), activation='relu', padding='same')(c6)
+
+    u7 = UpSampling2D((2, 2))(c6)
+    u7 = Concatenate()([u7, c1])
+    c7 = Conv2D(64, (3, 3), activation='relu', padding='same')(u7)
+    c7 = Conv2D(64, (3, 3), activation='relu', padding='same')(c7)
+
+    outputs = Conv2D(1, (1, 1), activation='sigmoid')(c7)
+
+    model = Model(inputs=[inputs], outputs=[outputs])
+
+    return model
+
+# Build the model
+model = unet_model(input_size=(image_size, image_size, 1))
+model.summary()
+
+# Compile the model using Adam optimizer and combined loss
+def combined_loss(y_true, y_pred):
+    mse = tf.keras.losses.MeanSquaredError()(y_true, y_pred)
+    ssim = 1 - tf.reduce_mean(tf.image.ssim(y_true, y_pred, max_val=1.0))
+    return mse + ssim
+
+model.compile(optimizer=Adam(learning_rate=0.0001), loss=combined_loss, metrics=['mse'])
+
+### STEP 4: Preparing Data for Training ###
+
+# Since our model expects image inputs, we need to reshape the detector readings to match the input size
+# We'll reshape them into a 4x4 grid
+detector_grid_size = int(np.sqrt(X_detector.shape[1]))
+X_train_det_img = X_train_det.reshape(-1, detector_grid_size, detector_grid_size, 1)
+X_test_det_img = X_test_det.reshape(-1, detector_grid_size, detector_grid_size, 1)
+
+# Resize detector images to match the internal structure size
+X_train_det_img = tf.image.resize(X_train_det_img, [image_size, image_size]).numpy()
+X_test_det_img = tf.image.resize(X_test_det_img, [image_size, image_size]).numpy()
+
+# Normalize detector images
+X_train_det_img = (X_train_det_img - X_train_det_img.min()) / (X_train_det_img.max() - X_train_det_img.min())
+X_test_det_img = (X_test_det_img - X_test_det_img.min()) / (X_test_det_img.max() - X_test_det_img.min())
+
+### STEP 5: Data Augmentation ###
+
+# Create a custom data generator to apply the same augmentations to both inputs and labels
+def create_augmented_generator(X_train, y_train, batch_size, seed):
+    data_gen_args = dict(rotation_range=20,
+                         width_shift_range=0.1,
+                         height_shift_range=0.1,
+                         zoom_range=0.1,
+                         horizontal_flip=True,
+                         vertical_flip=True,
+                         fill_mode='nearest')
+
+    image_datagen = ImageDataGenerator(**data_gen_args)
+    mask_datagen = ImageDataGenerator(**data_gen_args)
+
+    # Provide the same seed and keyword arguments to the flow methods
+    image_generator = image_datagen.flow(
+        X_train, batch_size=batch_size, seed=seed)
+    mask_generator = mask_datagen.flow(
+        y_train, batch_size=batch_size, seed=seed)
+
+    # Combine generators into one which yields image and masks
+    while True:
+        X_batch = next(image_generator)
+        y_batch = next(mask_generator)
+        yield (X_batch, y_batch)
+
+# Create the generator
+batch_size = 16
+seed = 42
+train_generator = create_augmented_generator(X_train_det_img, y_train_img, batch_size, seed)
+
+### STEP 6: Training the Model ###
+
+# Define callbacks
+callbacks = [
+    EarlyStopping(patience=10, verbose=1, restore_best_weights=True),
+    ModelCheckpoint('unet_model.keras', verbose=1, save_best_only=True)
+]
+
+# Calculate steps per epoch
+steps_per_epoch = len(X_train_det_img) // batch_size
+
+# Train the model
+history = model.fit(train_generator,
+                    steps_per_epoch=steps_per_epoch,
+                    epochs=100,
+                    validation_data=(X_test_det_img, y_test_img),
+                    callbacks=callbacks,
+                    verbose=1)
+
+### STEP 7: Evaluation and Prediction ###
+
+# Predict the internal structures from the test set
+y_pred_img = model.predict(X_test_det_img)
+
+# Ensure the predictions are within [0, 1]
+y_pred_img = np.clip(y_pred_img, 0, 1)
+
+# Calculate evaluation metrics
+mse = mean_squared_error(y_test_img.flatten(), y_pred_img.flatten())
+psnr = peak_signal_noise_ratio(y_test_img, y_pred_img, data_range=1)
+ssim = structural_similarity(y_test_img.squeeze(), y_pred_img.squeeze(), multichannel=False)
+
+print(f"Mean Squared Error (MSE) on Test Set: {mse:.6f}")
+print(f"Peak Signal-to-Noise Ratio (PSNR) on Test Set: {psnr:.2f} dB")
+print(f"Structural Similarity Index (SSIM) on Test Set: {ssim:.4f}")
+
+### STEP 8: Visualize the Results ###
+
+# Plot original vs reconstructed internal structures for a random test sample
+sample_index = np.random.randint(0, X_test_det_img.shape[0])
+
+plt.figure(figsize=(15, 5))
+
+# Plot the true internal structure
+plt.subplot(1, 4, 1)
+plt.imshow(y_test_img[sample_index, :, :, 0], cmap='viridis', origin='lower')
+plt.title('True Internal Structure')
+plt.axis('off')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+# Plot the detector readings (reshaped)
+plt.subplot(1, 4, 2)
+plt.imshow(X_test_det_img[sample_index, :, :, 0], cmap='gray', origin='lower')
+plt.title('Detector Readings')
+plt.axis('off')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+# Plot the reconstructed internal structure
+plt.subplot(1, 4, 3)
+plt.imshow(y_pred_img[sample_index, :, :, 0], cmap='viridis', origin='lower')
+plt.title('Reconstructed Internal Structure')
+plt.axis('off')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+# Plot the absolute difference
+plt.subplot(1, 4, 4)
+difference = np.abs(y_test_img[sample_index, :, :, 0] - y_pred_img[sample_index, :, :, 0])
+plt.imshow(difference, cmap='hot', origin='lower')
+plt.title('Absolute Difference')
+plt.axis('off')
+plt.colorbar(fraction=0.046, pad=0.04)
+
+plt.tight_layout()
+plt.show()
+
+# Plot the training and validation loss over epochs
+plt.figure(figsize=(8,6))
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Combined Loss (MSE + 1 - SSIM)')
+plt.title('Training and Validation Loss Over Epochs')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+

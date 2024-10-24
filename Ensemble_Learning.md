@@ -69,6 +69,7 @@ $$
   High variance occurs when a model is overly complex and fits the idiosyncrasies (noise) in the training data rather than capturing the underlying pattern.
 
 - **$\sigma^2$**: This represents the irreducible error, which is the variance of the noise in the data. No matter how good the model is, this component of the error cannot be eliminated, as it represents randomness or noise in the relationship between $x$ and $y$.
+- 
 ### 2. Mathematical Formulation of Bagging
 
 Bagging (Bootstrap Aggregating) aims to reduce the variance of an individual model by training multiple models on different bootstrapped samples of the data and then averaging their predictions.
@@ -78,15 +79,25 @@ For a dataset $D = \{(x_1, y_1), (x_2, y_2), \dots, (x_n, y_n)\}$, each base lea
 For regression, the final ensemble prediction is the average of the predictions from the individual models:
 
 $$
-\hat{f}_{\text{bagging}}(x) = \frac{1}{M} \sum_{i=1}^{M} f_i(x),
+\hat{f}_{\text{bagging}}(x)
 $$
+
+$$
+=\frac{1}{M}\sum_{i=1}^{M}f_i(x)
+$$
+
+
 
 where $f_i(x)$ is the prediction from the $i$-th learner, and $M$ is the number of learners.
 
 For classification, majority voting is used, where each base classifier $f_i(x)$ returns a class label, and the predicted class is the one that receives the most votes:
 
 $$
-\hat{y}_{\text{bagging}} = \arg\max_{y \in C} \sum_{i=1}^{M} I(f_i(x) = y),
+\hat{y}_{\text{bagging}}
+$$
+
+$$
+= \arg\max_{y \in C} \sum_{i=1}^{M} I(f_i(x) = y),
 $$
 
 where $C$ is the set of possible classes, and $I(\cdot)$ is the indicator function, which is 1 if $f_i(x) = y$ and 0 otherwise.
@@ -95,6 +106,7 @@ where $C$ is the set of possible classes, and $I(\cdot)$ is the indicator functi
 
 - **$I(f_i(x) = y)$**: The indicator function outputs 1 if the prediction of model $f_i(x)$ equals class $y$, otherwise it outputs 0. The majority vote selects the class with the highest number of votes.
 - **$\hat{f}_{\text{bagging}}(x)$**: The ensemble model's final prediction, which is the average of all the individual model predictions.
+
 ### 3. Mathematical Formulation of Random Forests
 
 Random Forests build on bagging by introducing another layer of randomness—at each split in each tree, a random subset of features is considered, rather than all features. This decorrelates the trees, further reducing variance.
@@ -102,15 +114,23 @@ Random Forests build on bagging by introducing another layer of randomness—at 
 For regression, the prediction is the average of the predictions of all decision trees:
 
 $$
-\hat{f}_{\text{RF}}(x) = \frac{1}{M} \sum_{i=1}^{M} T_i(x),
+\hat{f}_{\text{RF}}(x)
 $$
+
+$$
+ = \frac{1}{M} \sum_{i=1}^{M} T_i(x)
+ $$
 
 where $T_i(x)$ is the prediction of the $i$-th decision tree.
 
 For classification, majority voting is used:
 
 $$
-\hat{y}_{\text{RF}} = \arg\max_{y \in C} \sum_{i=1}^{M} I(T_i(x) = y).
+\hat{y}_{\text{RF}}
+$$
+
+$$
+= \arg\max_{y \in C} \sum_{i=1}^{M} I(T_i(x) = y)
 $$
 
 #### Explanation of Terms:

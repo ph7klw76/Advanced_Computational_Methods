@@ -274,7 +274,6 @@ def gradient_descent(X, y, m, b, learning_rate, num_iterations):
     
     return m, b
 
-# Example usage
 if __name__ == "__main__":
     # Generate some synthetic data for linear regression
     np.random.seed(0)

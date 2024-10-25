@@ -355,763 +355,323 @@ $$
 3. **Backpropagation** to calculate the gradients.
 4. **Gradient descent** to update the weights and biases iteratively.
 
-```python
-# Import necessary libraries
-import numpy as np
-import pandas as pd
+## Example
 
-# Matminer for materials data and featurization
-from matminer.datasets import load_dataset
-from matminer.featurizers.composition import ElementProperty
+This code implements a machine learning pipeline using a neural network to predict the energy output of a photovoltaic (solar) panel based on environmental conditions such as irradiance, temperature, wind speed, and humidity. It also includes visualizations to track the model's performance during training. Below is a breakdown of each part of the code:
 
-# Scikit-learn for data splitting and preprocessing
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error
-
-# TensorFlow Keras for building neural network models
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-
-# Suppress warnings for cleaner output
-import warnings
-warnings.filterwarnings('ignore')
-
-# Load the dielectric constant dataset from matminer
-df = load_dataset('dielectric_constant')
-print("Dataset loaded with {} entries.".format(len(df)))
-
-# Extract composition from the structure
-df['composition'] = df['structure'].apply(lambda x: x.composition)
-
-# Initialize the ElementProperty featurizer with "magpie" preset
-ep_featurizer = ElementProperty.from_preset(preset_name="magpie")
-
-# Featurize the compositions
-df = ep_featurizer.featurize_dataframe(df, col_id='composition', ignore_errors=True)
-print("Featurization complete. Number of features: {}.".format(len(ep_featurizer.feature_labels())))
-
-# Define features (X) and target variable (y)
-X = df[ep_featurizer.feature_labels()]
-y = df['n']  # Refractive index
-
-# Drop any rows with missing values
-X = X.dropna()
-y = y.loc[X.index]
-
-# Split the dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-print("Data split into training and testing sets.")
-
-# Standardize the feature data
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-print("Feature scaling complete.")
-
-# Build the artificial neural network model
-model = Sequential()
-model.add(Dense(128, input_dim=X_train_scaled.shape[1], activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(1))  # Output layer for regression
-print("Neural network model constructed.")
-
-# Compile the model
-model.compile(loss='mean_squared_error', optimizer='adam')
-
-# Train the model
-history = model.fit(
-    X_train_scaled, y_train,
-    epochs=100,
-    batch_size=32,
-    validation_split=0.1,
-    verbose=1  # Set to 1 to see training progress
-)
-print("Model training complete.")
-
-# Evaluate the model on the test set
-y_pred = model.predict(X_test_scaled)
-mae = mean_absolute_error(y_test, y_pred)
-print("Model evaluation complete.")
-print(f"Test Mean Absolute Error (MAE): {mae:.4f}")
-
-# Plotting the predicted vs actual values
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(8, 6))
-plt.scatter(y_test, y_pred, alpha=0.7)
-plt.xlabel('Actual Refractive Index')
-plt.ylabel('Predicted Refractive Index')
-plt.title('Actual vs Predicted Refractive Index')
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
-plt.show()
-```
-
-This Python code demonstrates a real-world application of Artificial Neural Networks (ANNs) for predicting the refractive index of materials based on their composition. The dataset and feature engineering is done using matminer, a materials data mining library, and the machine learning model is built using TensorFlow/Keras.
-
-Let’s go step by step through the code:
-
-###  Importing Libraries
-
-```python
-import numpy as np
-import pandas as pd
-from matminer.datasets import load_dataset
-from matminer.featurizers.composition import ElementProperty
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-import warnings
-warnings.filterwarnings('ignore')
-```
-
-- **numpy** and **pandas**: These libraries are used for handling data and numerical computations.
-- **matminer**: A data mining toolkit for materials science. It provides access to datasets and tools for extracting features from material compositions.
-- **scikit-learn**: This library provides tools for splitting data, scaling features, and evaluating the model using Mean Absolute Error (MAE).
-- **TensorFlow Keras**: Used for building and training an artificial neural network.
-- **warnings**: Warnings are suppressed to make the output cleaner.
-
-### Loading Data
-
-The load_dataset('dielectric_constant') function loads a materials dataset related to the dielectric constant from the matminer library.
-The dataset includes structural data for various materials, which we will use to predict their refractive index (a measure of how light propagates through the material).
-
-```python
-df = load_dataset('dielectric_constant')
-print("Dataset loaded with {} entries.".format(len(df)))
-```
-### Extracting Material Composition
-```python
-df['composition'] = df['structure'].apply(lambda x: x.composition)
-```
-The column 'structure' in the dataset contains atomic structures of the materials.
-The code extracts the composition of each material using the apply function. This composition is crucial for generating features (descriptors) that will be used to train the neural network.
-
-### Featurization using ElementProperty
-
-```python
-ep_featurizer = ElementProperty.from_preset(preset_name="magpie")
-df = ep_featurizer.featurize_dataframe(df, col_id='composition', ignore_errors=True)
-print("Featurization complete. Number of features: {}.".format(len(ep_featurizer.feature_labels())))
-```
-
-Featurization refers to the process of converting the material’s composition into numerical features that can be used for machine learning.
-The ElementProperty featurizer from matminer generates descriptors for the chemical composition using a preset called magpie (Materials Agnostic Platform for Informatics and Exploration). These features could include atomic radii, electronegativity, and other elemental properties.
-The featurize_dataframe method applies this featurizer to the dataset and appends the features as new columns in the dataframe.
-The line print("Featurization complete...") confirms the process and tells us how many features (descriptors) were generated.
-### Defining Features and Target Variable
-
-```python
-X = df[ep_featurizer.feature_labels()]
-y = df['n']  # Refractive index
-```
-
-X: The features matrix containing the featurized composition (numerical descriptors of the material's atomic structure).
-y: The target variable, which is the refractive index (denoted as 'n' in the dataset).
-
-### Handling Missing Data and Data Splitting
-
-```python
-X = X.dropna()
-y = y.loc[X.index]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-print("Data split into training and testing sets.")
-```
-
-X.dropna(): Removes rows with missing values in the feature matrix.
-The dataset is split into training (80%) and testing (20%) sets using train_test_split. The training set is used to fit the model, and the testing set is used to evaluate the model’s performance.
-
-### Feature Scaling
-
-```python
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-print("Feature scaling complete.")
-```
-Standardization is applied to the features using StandardScaler, which ensures that each feature has a mean of 0 and a standard deviation of 1. This is crucial for neural networks to ensure faster convergence and more stable training.
-The scaler is first fit on the training data and then applied to both the training and test data.
-
-### Building the Artificial Neural Network
-
-```python
-model = Sequential()
-model.add(Dense(128, input_dim=X_train_scaled.shape[1], activation='relu'))
-model.add(Dense(64, activation='relu'))
-model.add(Dense(1))  # Output layer for regression
-print("Neural network model constructed.")
-```
-
-A Sequential model from Keras is used to define the neural network.
-The input layer has 128 neurons with ReLU activation.
-A second hidden layer with 64 neurons and ReLU activation is added.
-The output layer consists of 1 neuron (since this is a regression task, where the network predicts a continuous value: the refractive index).
-ReLU (Rectified Linear Unit) is a commonly used activation function that helps the network learn non-linear relationships between features.
-
-### Compiling the Model
-
-```python
-model.compile(loss='mean_squared_error', optimizer='adam')
-The model is compiled with the Mean Squared Error (MSE) as the loss function, which is appropriate for regression tasks.
-The Adam optimizer is used, which is a variant of stochastic gradient descent that adapts the learning rate during training and generally performs well in practice.
-
-
-### Training the Model
-
-```python
-history = model.fit(
-    X_train_scaled, y_train,
-    epochs=100,
-    batch_size=32,
-    validation_split=0.1,
-    verbose=0  # Set to 1 to see training progress
-)
-print("Model training complete.")
-```
-
-The model is trained using the training data for 100 epochs with a batch size of 32. Each epoch consists of a complete pass over the training data.
-Validation split: 10% of the training data is used for validation during training to monitor the model’s performance on unseen data.
-verbose=0 suppresses the output, but you can set verbose=1 to see the training progress.
-
-### Evaluating the Model
-
-```python
-y_pred = model.predict(X_test_scaled)
-mae = mean_absolute_error(y_test, y_pred)
-print("Model evaluation complete.")
-print(f"Test Mean Absolute Error (MAE): {mae:.4f}")
-```
-
-After training, the model is evaluated on the test set.
-The predictions (y_pred) are generated using the test features.
-The Mean Absolute Error (MAE) between the predicted and actual refractive indices is computed as the evaluation metric. MAE is a commonly used regression metric that measures the average magnitude of the prediction errors.
-
-### Plotting the Results
-
-```python
-plt.figure(figsize=(8, 6))
-plt.scatter(y_test, y_pred, alpha=0.7)
-plt.xlabel('Actual Refractive Index')
-plt.ylabel('Predicted Refractive Index')
-plt.title('Actual vs Predicted Refractive Index')
-plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=2)
-plt.show()
-```
-
-A scatter plot is generated to compare the actual refractive index (on the x-axis) with the predicted refractive index (on the y-axis).
-The diagonal dashed line represents the ideal case where the predicted values match the true values perfectly. The closer the points are to this line, the better the model’s predictions.
-
+1. Import Libraries
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import regularizers
-from sklearn.metrics import mean_squared_error
-
-# For reproducibility
-np.random.seed(42)
-
-# Import functions to draw shapes
-from skimage.draw import disk, ellipse, rectangle
-
-### STEP 1: Generate Physically Realistic Data ###
-
-# Simulate a simple optical tomography system (e.g., 2D grid of 32x32 pixels)
-image_size = 32  # 32x32 pixel internal structure
-
-# Let's assume we have 1000 different internal structures to simulate
-n_samples = 1000
-
-def generate_internal_structures(n_samples, image_size):
-    """
-    Generate physically realistic internal structures with a background medium and random inclusions.
-    Inclusions are randomly placed shapes (disks, ellipses, rectangles) with different absorption coefficients.
-    """
-    structures = []
-    for _ in range(n_samples):
-        # Start with a background absorption coefficient (e.g., soft tissue)
-        background_absorption = 0.01  # Low absorption coefficient
-        image = np.ones((image_size, image_size)) * background_absorption
-
-        # Randomly decide the number of inclusions (e.g., tumors or anomalies)
-        n_inclusions = np.random.randint(1, 6)  # Between 1 and 5 inclusions
-
-        for _ in range(n_inclusions):
-            # Randomly choose a shape
-            shape_type = np.random.choice(['disk', 'ellipse', 'rectangle'])
-            # Randomly choose size and position
-            if shape_type == 'disk':
-                radius = np.random.randint(3, image_size // 4)
-                center_x = np.random.randint(radius, image_size - radius)
-                center_y = np.random.randint(radius, image_size - radius)
-                rr, cc = disk((center_y, center_x), radius, shape=image.shape)
-            elif shape_type == 'ellipse':
-                center_x = np.random.randint(image_size // 4, 3 * image_size // 4)
-                center_y = np.random.randint(image_size // 4, 3 * image_size // 4)
-                major_axis = np.random.randint(5, image_size // 3)
-                minor_axis = np.random.randint(3, major_axis)
-                orientation = np.random.uniform(0, np.pi)
-                rr, cc = ellipse(center_y, center_x, minor_axis, major_axis, shape=image.shape, rotation=orientation)
-            elif shape_type == 'rectangle':
-                start_x = np.random.randint(0, image_size - 5)
-                start_y = np.random.randint(0, image_size - 5)
-                end_x = np.random.randint(start_x + 5, min(start_x + image_size // 4, image_size))
-                end_y = np.random.randint(start_y + 5, min(start_y + image_size // 4, image_size))
-                rr, cc = rectangle(start=(start_y, start_x), end=(end_y, end_x), shape=image.shape)
-
-            # Randomly choose absorption coefficient for the inclusion (e.g., higher than background)
-            inclusion_absorption = np.random.uniform(0.05, 0.1)
-            # Add the inclusion to the image
-            image[rr, cc] = inclusion_absorption
-
-        structures.append(image)
-
-    return np.array(structures)
-
-# Generate physically realistic internal structures
-absorption_coefficients = generate_internal_structures(n_samples, image_size)
-
-# Simulate the detector readings using a simple optical tomography model
-# Here we use a simplified Beer-Lambert law model for light absorption
-
-def simulate_light_propagation(internal_structure):
-    """
-    Simulate light propagation through the medium using Beer-Lambert Law.
-    This simulates light being absorbed as it passes through the material.
-    We simulate a 'detector' that collects light after passing through the medium.
-
-    This is a simplified model assuming light passes through in straight lines and is absorbed exponentially.
-    """
-    # Simulate detector readings based on absorption using Beer-Lambert Law
-    # Light travels from one side of the grid to the opposite side
-    readings = []
-    for i in range(image_size):
-        # Sum over rows to simulate light passing through the material in a straight line (1D integration along y-axis)
-        total_absorption = np.sum(internal_structure[i, :])
-        transmission = np.exp(-total_absorption)
-        readings.append(transmission)
-    return np.array(readings)
-
-# Generate detector readings for all samples
-X_detector = np.array([simulate_light_propagation(absorption_coefficients[i]) for i in range(n_samples)])
-
-# Reshape the true internal structure (flatten 2D images) for training (32x32 = 1024 features)
-X_true_flatten = absorption_coefficients.reshape(n_samples, -1)
-
-### STEP 2: Train-Test Split ###
-
-# Split the data into training and testing sets (80% training, 20% testing)
-X_train, X_test, y_train, y_test = train_test_split(X_detector, X_true_flatten, test_size=0.2, random_state=42)
-
-### STEP 3: Neural Network Architecture ###
-
-# Build a neural network to reconstruct the 32x32 internal structure from the detector readings (32 features)
-model = Sequential()
-
-# Input is the detector readings (32 features)
-model.add(Dense(128, input_dim=X_detector.shape[1], activation='relu'))
-
-# Fully connected layers with regularization to avoid overfitting
-model.add(Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.01)))
-model.add(Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.01)))
-
-# Output layer: 32x32 pixels (flattened to 1024 neurons)
-model.add(Dense(image_size * image_size, activation='linear'))
-
-# Compile the model using MSE loss and Adam optimizer
-model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error')
-
-### STEP 4: Training the Model ###
-
-# Train the model with the training data (detector readings -> internal structure)
-history = model.fit(X_train, y_train, epochs=100, batch_size=32, validation_data=(X_test, y_test), verbose=1)
-
-### STEP 5: Evaluation and Prediction ###
-
-# Predict the internal structures from the test set
-y_pred = model.predict(X_test)
-
-# Reshape the predictions back to 32x32 images
-y_pred_images = y_pred.reshape(-1, image_size, image_size)
-y_test_images = y_test.reshape(-1, image_size, image_size)
-
-# Calculate MSE on the test set
-mse = mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error (MSE) on Test Set: {mse:.6f}")
-
-### STEP 6: Visualize the Results ###
-
-# Plot original vs reconstructed internal structures for a random test sample
-sample_index = np.random.randint(0, X_test.shape[0])
-
-plt.figure(figsize=(12, 5))
-
-# Plot the true internal structure
-plt.subplot(1, 3, 1)
-plt.imshow(y_test_images[sample_index], cmap='viridis', origin='lower')
-plt.title('True Internal Structure')
-plt.colorbar(fraction=0.046, pad=0.04)
-
-# Plot the reconstructed internal structure
-plt.subplot(1, 3, 2)
-plt.imshow(y_pred_images[sample_index], cmap='viridis', origin='lower')
-plt.title('Reconstructed Internal Structure (ANN)')
-plt.colorbar(fraction=0.046, pad=0.04)
-
-# Plot the difference between true and reconstructed structures
-plt.subplot(1, 3, 3)
-difference = np.abs(y_test_images[sample_index] - y_pred_images[sample_index])
-plt.imshow(difference, cmap='hot', origin='lower')
-plt.title('Absolute Difference')
-plt.colorbar(fraction=0.046, pad=0.04)
-
-plt.tight_layout()
-plt.show()
-
-# Plot the training and validation loss over epochs
-plt.figure(figsize=(8,6))
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.xlabel('Epochs')
-plt.ylabel('Loss (MSE)')
-plt.title('Training and Validation Loss Over Epochs')
-plt.legend()
-plt.grid(True)
-plt.show()
-```
-
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Concatenate
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import os
-
-# For reproducibility
-np.random.seed(42)
-tf.random.set_seed(42)
-
-# Import functions to draw shapes
-from skimage.draw import disk, ellipse, rectangle
-
-### STEP 1: Generate Physically Realistic Data ###
-
-# Simulate a 2D grid of 64x64 pixels for higher resolution
-image_size = 64  # Increased from 32 to 64 pixels
-
-# Let's assume we have 2000 different internal structures to simulate
-n_samples = 2000  # Increased sample size for better training
-
-def generate_internal_structures(n_samples, image_size):
-    """
-    Generate physically realistic internal structures with a background medium and random inclusions.
-    Inclusions are randomly placed shapes (disks, ellipses, rectangles) with different absorption coefficients.
-    """
-    structures = []
-    for _ in range(n_samples):
-        # Start with a background absorption coefficient (e.g., soft tissue)
-        background_absorption = 0.01  # Low absorption coefficient
-        image = np.ones((image_size, image_size)) * background_absorption
-
-        # Randomly decide the number of inclusions (e.g., tumors or anomalies)
-        n_inclusions = np.random.randint(1, 6)  # Between 1 and 5 inclusions
-
-        for _ in range(n_inclusions):
-            # Randomly choose a shape
-            shape_type = np.random.choice(['disk', 'ellipse', 'rectangle'])
-            # Randomly choose size and position
-            if shape_type == 'disk':
-                radius = np.random.randint(3, image_size // 8)
-                center_x = np.random.randint(radius, image_size - radius)
-                center_y = np.random.randint(radius, image_size - radius)
-                rr, cc = disk((center_y, center_x), radius, shape=image.shape)
-            elif shape_type == 'ellipse':
-                center_x = np.random.randint(image_size // 8, 7 * image_size // 8)
-                center_y = np.random.randint(image_size // 8, 7 * image_size // 8)
-                major_axis = np.random.randint(5, image_size // 6)
-                minor_axis = np.random.randint(3, major_axis)
-                orientation = np.random.uniform(0, np.pi)
-                rr, cc = ellipse(center_y, center_x, minor_axis, major_axis, shape=image.shape, rotation=orientation)
-            elif shape_type == 'rectangle':
-                start_x = np.random.randint(0, image_size - 5)
-                start_y = np.random.randint(0, image_size - 5)
-                end_x = np.random.randint(start_x + 5, min(start_x + image_size // 4, image_size))
-                end_y = np.random.randint(start_y + 5, min(start_y + image_size // 4, image_size))
-                rr, cc = rectangle(start=(start_y, start_x), end=(end_y, end_x), shape=image.shape)
-
-            # Randomly choose absorption coefficient for the inclusion (e.g., higher than background)
-            inclusion_absorption = np.random.uniform(0.05, 0.15)
-            # Add the inclusion to the image
-            image[rr, cc] = inclusion_absorption
-
-        structures.append(image)
-
-    return np.array(structures)
-
-# Generate physically realistic internal structures
-absorption_coefficients = generate_internal_structures(n_samples, image_size)
-
-# Normalize absorption coefficients to [0, 1]
-absorption_coefficients = (absorption_coefficients - absorption_coefficients.min()) / (absorption_coefficients.max() - absorption_coefficients.min())
-
-# Simulate the detector readings using a more realistic optical tomography model
-# Using Diffusion Approximation for light propagation
-
-def simulate_light_propagation(internal_structure):
-    """
-    Simulate light propagation through the medium using a simplified diffusion approximation model.
-    """
-    # For simplicity, we'll simulate measurements from multiple sources and detectors around the boundary
-    num_sources = 16  # Number of sources placed uniformly around the boundary
-    readings = []
-
-    # Generate source positions
-    positions = np.linspace(0, image_size - 1, num_sources, dtype=int)
-    for source_pos in positions:
-        # Simulate light propagation from this source
-        # For this example, we'll sum absorption coefficients along several paths
-        # In a real scenario, you would use a numerical solver for the diffusion equation
-        # Here we approximate by integrating along straight lines in different directions
-        # This is a simplification due to computational limitations
-
-        # Vertical propagation (downwards)
-        path = internal_structure[:, source_pos]
-        transmission = np.exp(-np.sum(path))
-        readings.append(transmission)
-
-        # Horizontal propagation (rightwards)
-        path = internal_structure[source_pos, :]
-        transmission = np.exp(-np.sum(path))
-        readings.append(transmission)
-
-        # Diagonal propagation (down-right)
-        path = np.diagonal(internal_structure, offset=source_pos - image_size // 2)
-        transmission = np.exp(-np.sum(path))
-        readings.append(transmission)
-
-        # Diagonal propagation (up-right)
-        path = np.diagonal(np.fliplr(internal_structure), offset=source_pos - image_size // 2)
-        transmission = np.exp(-np.sum(path))
-        readings.append(transmission)
-
-    return np.array(readings)
-
-# Generate detector readings for all samples
-X_detector = np.array([simulate_light_propagation(absorption_coefficients[i]) for i in range(n_samples)])
-
-# Normalize detector readings to [0, 1]
-X_detector = (X_detector - X_detector.min()) / (X_detector.max() - X_detector.min())
-
-# Reshape the true internal structure for training (64x64 pixels)
-X_true = absorption_coefficients[..., np.newaxis]  # Add channel dimension
-
-### STEP 2: Train-Test Split ###
-
-# Split the data into training and testing sets (80% training, 20% testing)
-X_train_det, X_test_det, y_train_img, y_test_img = train_test_split(X_detector, X_true, test_size=0.2, random_state=42)
-
-### STEP 3: Neural Network Architecture (U-Net) ###
-
-def unet_model(input_size=(image_size, image_size, 1)):
-    inputs = Input(input_size)
-
-    # Encoding path
-    c1 = Conv2D(64, (3, 3), activation='relu', padding='same')(inputs)
-    c1 = Conv2D(64, (3, 3), activation='relu', padding='same')(c1)
-    p1 = MaxPooling2D((2, 2))(c1)
-
-    c2 = Conv2D(128, (3, 3), activation='relu', padding='same')(p1)
-    c2 = Conv2D(128, (3, 3), activation='relu', padding='same')(c2)
-    p2 = MaxPooling2D((2, 2))(c2)
-
-    c3 = Conv2D(256, (3, 3), activation='relu', padding='same')(p2)
-    c3 = Conv2D(256, (3, 3), activation='relu', padding='same')(c3)
-    p3 = MaxPooling2D((2, 2))(c3)
-
-    # Bottleneck
-    c4 = Conv2D(512, (3, 3), activation='relu', padding='same')(p3)
-    c4 = Conv2D(512, (3, 3), activation='relu', padding='same')(c4)
-
-    # Decoding path
-    u5 = UpSampling2D((2, 2))(c4)
-    u5 = Concatenate()([u5, c3])
-    c5 = Conv2D(256, (3, 3), activation='relu', padding='same')(u5)
-    c5 = Conv2D(256, (3, 3), activation='relu', padding='same')(c5)
-
-    u6 = UpSampling2D((2, 2))(c5)
-    u6 = Concatenate()([u6, c2])
-    c6 = Conv2D(128, (3, 3), activation='relu', padding='same')(u6)
-    c6 = Conv2D(128, (3, 3), activation='relu', padding='same')(c6)
-
-    u7 = UpSampling2D((2, 2))(c6)
-    u7 = Concatenate()([u7, c1])
-    c7 = Conv2D(64, (3, 3), activation='relu', padding='same')(u7)
-    c7 = Conv2D(64, (3, 3), activation='relu', padding='same')(c7)
-
-    outputs = Conv2D(1, (1, 1), activation='sigmoid')(c7)
-
-    model = Model(inputs=[inputs], outputs=[outputs])
-
-    return model
-
-# Build the model
-model = unet_model(input_size=(image_size, image_size, 1))
-model.summary()
-
-# Compile the model using Adam optimizer and combined loss
-def combined_loss(y_true, y_pred):
-    mse = tf.keras.losses.MeanSquaredError()(y_true, y_pred)
-    ssim = 1 - tf.reduce_mean(tf.image.ssim(y_true, y_pred, max_val=1.0))
-    return mse + ssim
-
-model.compile(optimizer=Adam(learning_rate=0.0001), loss=combined_loss, metrics=['mse'])
-
-### STEP 4: Preparing Data for Training ###
-
-# Since our model expects image inputs, we need to reshape the detector readings to match the input size
-# We'll reshape them into a 4x4 grid
-detector_grid_size = int(np.sqrt(X_detector.shape[1]))
-X_train_det_img = X_train_det.reshape(-1, detector_grid_size, detector_grid_size, 1)
-X_test_det_img = X_test_det.reshape(-1, detector_grid_size, detector_grid_size, 1)
-
-# Resize detector images to match the internal structure size
-X_train_det_img = tf.image.resize(X_train_det_img, [image_size, image_size]).numpy()
-X_test_det_img = tf.image.resize(X_test_det_img, [image_size, image_size]).numpy()
-
-# Normalize detector images
-X_train_det_img = (X_train_det_img - X_train_det_img.min()) / (X_train_det_img.max() - X_train_det_img.min())
-X_test_det_img = (X_test_det_img - X_test_det_img.min()) / (X_test_det_img.max() - X_test_det_img.min())
-
-### STEP 5: Data Augmentation ###
-
-# Create a custom data generator to apply the same augmentations to both inputs and labels
-def create_augmented_generator(X_train, y_train, batch_size, seed):
-    data_gen_args = dict(rotation_range=20,
-                         width_shift_range=0.1,
-                         height_shift_range=0.1,
-                         zoom_range=0.1,
-                         horizontal_flip=True,
-                         vertical_flip=True,
-                         fill_mode='nearest')
-
-    image_datagen = ImageDataGenerator(**data_gen_args)
-    mask_datagen = ImageDataGenerator(**data_gen_args)
-
-    # Provide the same seed and keyword arguments to the flow methods
-    image_generator = image_datagen.flow(
-        X_train, batch_size=batch_size, seed=seed)
-    mask_generator = mask_datagen.flow(
-        y_train, batch_size=batch_size, seed=seed)
-
-    # Combine generators into one which yields image and masks
-    while True:
-        X_batch = next(image_generator)
-        y_batch = next(mask_generator)
-        yield (X_batch, y_batch)
-
-# Create the generator
-batch_size = 16
-seed = 42
-train_generator = create_augmented_generator(X_train_det_img, y_train_img, batch_size, seed)
-
-### STEP 6: Training the Model ###
-
-# Define callbacks
-callbacks = [
-    EarlyStopping(patience=10, verbose=1, restore_best_weights=True),
-    ModelCheckpoint('unet_model.keras', verbose=1, save_best_only=True)
-]
-
-# Calculate steps per epoch
-steps_per_epoch = len(X_train_det_img) // batch_size
-
-# Train the model
-history = model.fit(train_generator,
-                    steps_per_epoch=steps_per_epoch,
-                    epochs=100,
-                    validation_data=(X_test_det_img, y_test_img),
-                    callbacks=callbacks,
-                    verbose=1)
-
-### STEP 7: Evaluation and Prediction ###
-
-# Predict the internal structures from the test set
-y_pred_img = model.predict(X_test_det_img)
-
-# Ensure the predictions are within [0, 1]
-y_pred_img = np.clip(y_pred_img, 0, 1)
-
-# Calculate evaluation metrics
-mse = mean_squared_error(y_test_img.flatten(), y_pred_img.flatten())
-psnr = peak_signal_noise_ratio(y_test_img, y_pred_img, data_range=1)
-ssim = structural_similarity(y_test_img.squeeze(), y_pred_img.squeeze(), multichannel=False)
-
-print(f"Mean Squared Error (MSE) on Test Set: {mse:.6f}")
-print(f"Peak Signal-to-Noise Ratio (PSNR) on Test Set: {psnr:.2f} dB")
-print(f"Structural Similarity Index (SSIM) on Test Set: {ssim:.4f}")
-
-### STEP 8: Visualize the Results ###
-
-# Plot original vs reconstructed internal structures for a random test sample
-sample_index = np.random.randint(0, X_test_det_img.shape[0])
-
-plt.figure(figsize=(15, 5))
-
-# Plot the true internal structure
-plt.subplot(1, 4, 1)
-plt.imshow(y_test_img[sample_index, :, :, 0], cmap='viridis', origin='lower')
-plt.title('True Internal Structure')
-plt.axis('off')
-plt.colorbar(fraction=0.046, pad=0.04)
-
-# Plot the detector readings (reshaped)
-plt.subplot(1, 4, 2)
-plt.imshow(X_test_det_img[sample_index, :, :, 0], cmap='gray', origin='lower')
-plt.title('Detector Readings')
-plt.axis('off')
-plt.colorbar(fraction=0.046, pad=0.04)
-
-# Plot the reconstructed internal structure
-plt.subplot(1, 4, 3)
-plt.imshow(y_pred_img[sample_index, :, :, 0], cmap='viridis', origin='lower')
-plt.title('Reconstructed Internal Structure')
-plt.axis('off')
-plt.colorbar(fraction=0.046, pad=0.04)
-
-# Plot the absolute difference
-plt.subplot(1, 4, 4)
-difference = np.abs(y_test_img[sample_index, :, :, 0] - y_pred_img[sample_index, :, :, 0])
-plt.imshow(difference, cmap='hot', origin='lower')
-plt.title('Absolute Difference')
-plt.axis('off')
-plt.colorbar(fraction=0.046, pad=0.04)
-
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import RMSprop
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
+```
+
+numpy is used for generating and handling arrays.
+matplotlib.pyplot is used for plotting graphs to visualize results.
+tensorflow and keras are used to build and train the neural network.
+sklearn is used for data manipulation (splitting data, scaling, and evaluating model performance).
+
+2. Physics-Based Energy Output Calculation
+
+``` python
+def calculate_energy_output(irradiance, temperature, wind_speed, humidity):
+    P_max = 0.3  # Maximum power rating of the panel (kW)
+    eta_stc = 0.18  # Efficiency at Standard Test Conditions (18%)
+    beta = 0.004  # Temperature coefficient per degree Celsius
+    T_noct = 45  # Nominal Operating Cell Temperature (°C)
+    T_ref = 25  # Reference temperature at STC (°C)
+    
+    T_cell = temperature + (irradiance / 800) * (T_noct - 20)
+    eta = eta_stc * (1 - beta * (T_cell - T_ref))
+    E_out = P_max * irradiance * eta  # Output in kW
+    return E_out
+```
+
+This function simulates the energy output of a solar panel using a simplified physics-based model. It calculates the energy output based on:
+
+Solar irradiance (power of sunlight per unit area),
+Ambient temperature (affects the panel's efficiency),
+Cell temperature, estimated from irradiance and ambient temperature,
+Panel efficiency (which decreases with increasing temperature), and
+Panel's power rating.
+
+3. Simulating Environmental Data
+   
+```python
+np.random.seed(42)  # For reproducibility
+irradiance = np.random.uniform(100, 1000, 1000)  # Solar irradiance in W/m²
+temperature = np.random.uniform(0, 40, 1000)  # Ambient temperature in °C
+wind_speed = np.random.uniform(0, 10, 1000)  # Wind speed in m/s
+humidity = np.random.uniform(10, 100, 1000)  # Humidity in %
+```
+Here, random environmental data is generated using numpy's random uniform function. These represent real-world environmental variables that would affect the energy output of a photovoltaic panel.
+
+4. Generate Energy Output Using Physics-Based Equation
+
+```python
+energy_output = np.array([calculate_energy_output(I, T, W, H) 
+                          for I, T, W, H in zip(irradiance, temperature, wind_speed, humidity)])
+```
+
+The energy output is calculated using the physics-based function for each set of environmental data points (irradiance, temperature, wind speed, and humidity).
+
+5. Prepare the Dataset
+
+```python
+data = np.column_stack((irradiance, temperature, wind_speed, humidity))
+X_train, X_test, y_train, y_test = train_test_split(data, energy_output, test_size=0.2, random_state=42)
+```
+
+The features (irradiance, temperature, wind speed, and humidity) are combined into a single dataset (data).
+The dataset is split into training and test sets using train_test_split from sklearn. The test set contains 20% of the data, and the random state ensures reproducibility.
+
+6. Normalize the Data
+
+```python
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+```
+
+The features are normalized (scaled to have zero mean and unit variance) using StandardScaler from sklearn. This helps the neural network converge faster and avoid being biased toward certain features with large values.
+
+7. Build the Neural Network
+
+```python
+model = Sequential()
+model.add(Dense(16, input_dim=4, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(16, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(8, activation='relu'))
+model.add(Dense(1, activation='linear'))
+```
+
+A feedforward neural network is built using Sequential from tensorflow.keras. The model has:
+
+Input layer with 4 neurons (one for each feature),
+Three hidden layers with ReLU activations (Rectified Linear Unit, a common choice for hidden layers),
+Dropout layers to prevent overfitting (dropout randomly turns off a portion of neurons during training),
+Output layer with a single neuron (for the energy output).
+
+8. Compile the Model
+
+```
+python
+
+model.compile(optimizer=RMSprop(learning_rate=0.001), loss='mean_squared_error')
+```
+
+The model is compiled with:
+RMSprop optimizer (a variant of gradient descent known for its fast convergence),
+Mean Squared Error (MSE) as the loss function, since it’s a regression task.
+
+9. Train the Model with Early Stopping
+    
+``` python
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+history = model.fit(X_train, y_train, epochs=200, batch_size=16, validation_split=0.2, callbacks=[early_stopping], verbose=1)
+```
+
+10. Evaluate and Predict
+
+``` python
+predictions = model.predict(X_test)
+test_loss = model.evaluate(X_test, y_test, verbose=0)
+print(f"Test Loss (MSE): {test_loss}")
+r2 = r2_score(y_test, predictions)
+print(f"R² Score: {r2}")
+```
+
+The model's performance is evaluated on the test set.
+R² score (coefficient of determination) is calculated to show how well the model's predictions match the actual data.
+The model is trained for 200 epochs with a batch size of 16. Early stopping is used to stop training if the validation loss doesn't improve for 10 epochs, preventing overfitting.
+
+11. Evaluate and Predict
+
+``` python
+predictions = model.predict(X_test)
+test_loss = model.evaluate(X_test, y_test, verbose=0)
+print(f"Test Loss (MSE): {test_loss}")
+r2 = r2_score(y_test, predictions)
+print(f"R² Score: {r2}")
+```
+
+The model's performance is evaluated on the test set.
+R² score (coefficient of determination) is calculated to show how well the model's predictions match the actual data.
+
+12. Visualize Results
+    
+``` 
+python
+plt.figure(figsize=(10, 6))
+plt.plot(y_test, label='Actual Energy Output', color='blue', linestyle='-', marker='o')
+plt.plot(predictions, label='Predicted Energy Output', color='red', linestyle='--', marker='x')
+plt.title(f'Actual vs Predicted Energy Output (R² = {r2:.2f})')
+plt.xlabel('Test Samples')
+plt.ylabel('Energy Output (kWh)')
+plt.legend()
+plt.show()
+``` 
+The actual vs predicted energy outputs are plotted to visualize the model's performance.
+
+13. Plot Loss Over Epochs
+    
+``` python
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['loss'], label='Training Loss', color='blue')
+plt.plot(history.history['val_loss'], label='Validation Loss', color='red')
+plt.yscale('log')
+plt.title('Training and Validation Loss Over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (Log Scale)')
+plt.legend()
+plt.show()
+```
+
+This plot shows how the training and validation loss change over the epochs. The logarithmic y-scale makes it easier to observe convergence and detect signs of overfitting or underfitting.
+
+The full code is below:
+
+``` python
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import RMSprop
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import r2_score
+
+# Physics-based function to calculate energy output from environmental factors
+def calculate_energy_output(irradiance, temperature, wind_speed, humidity):
+    # Constants
+    P_max = 0.3  # Maximum power rating of the panel (kW)
+    eta_stc = 0.18  # Efficiency at Standard Test Conditions (18%)
+    beta = 0.004  # Temperature coefficient per degree Celsius
+    T_noct = 45  # Nominal Operating Cell Temperature (°C)
+    T_ref = 25  # Reference temperature at STC (°C)
+    
+    # Estimate cell temperature based on ambient temperature and irradiance
+    T_cell = temperature + (irradiance / 800) * (T_noct - 20)
+    
+    # Calculate panel efficiency based on cell temperature
+    eta = eta_stc * (1 - beta * (T_cell - T_ref))
+    
+    # Calculate the energy output
+    E_out = P_max * irradiance * eta  # Output in kW
+    return E_out
+
+# Simulated environmental data (irradiance, temperature, wind speed, humidity)
+np.random.seed(42)  # For reproducibility
+irradiance = np.random.uniform(100, 1000, 1000)  # Solar irradiance in W/m²
+temperature = np.random.uniform(0, 40, 1000)  # Ambient temperature in °C
+wind_speed = np.random.uniform(0, 10, 1000)  # Wind speed in m/s
+humidity = np.random.uniform(10, 100, 1000)  # Humidity in %
+
+# Generate energy output using the physics-based equation
+energy_output = np.array([calculate_energy_output(I, T, W, H) 
+                          for I, T, W, H in zip(irradiance, temperature, wind_speed, humidity)])
+
+# Combine the inputs into a single dataset
+data = np.column_stack((irradiance, temperature, wind_speed, humidity))
+
+# Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(data, energy_output, test_size=0.2, random_state=42)
+
+# Normalize the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Build the improved neural network
+model = Sequential()
+
+# Adding layers with more neurons and dropout to prevent overfitting
+model.add(Dense(16, input_dim=4, activation='relu'))  # First hidden layer with 16 neurons
+model.add(Dropout(0.2))  # Dropout to prevent overfitting
+model.add(Dense(16, activation='relu'))  # Second hidden layer with 16 neurons
+model.add(Dropout(0.2))  # Dropout to prevent overfitting
+model.add(Dense(8, activation='relu'))  # Third hidden layer with 8 neurons
+
+# Output layer for regression
+model.add(Dense(1, activation='linear'))  # Linear activation for regression output
+
+# Compile the model using RMSprop optimizer and mean squared error loss
+model.compile(optimizer=RMSprop(learning_rate=0.001), loss='mean_squared_error')
+
+# Train the model with early stopping to avoid overfitting
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+# Train the model and capture the history object to track losses
+history = model.fit(X_train, y_train, epochs=200, batch_size=16, validation_split=0.2, callbacks=[early_stopping], verbose=1)
+
+# Predict the energy output on the test set
+predictions = model.predict(X_test)
+
+# Evaluate the model (for reporting purposes)
+test_loss = model.evaluate(X_test, y_test, verbose=0)
+print(f"Test Loss (MSE): {test_loss}")
+
+# Calculate R² (coefficient of determination)
+r2 = r2_score(y_test, predictions)
+print(f"R² Score: {r2}")
+
+# Visualize the results
+plt.figure(figsize=(10, 6))
+
+# Plot actual vs predicted energy output
+plt.plot(y_test, label='Actual Energy Output', color='blue', linestyle='-', marker='o')
+plt.plot(predictions, label='Predicted Energy Output', color='red', linestyle='--', marker='x')
+
+# Adding labels and title
+plt.title(f'Actual vs Predicted Energy Output (R² = {r2:.2f})')
+plt.xlabel('Test Samples')
+plt.ylabel('Energy Output (kWh)')
+plt.legend()
+
+# Display the plot
 plt.tight_layout()
 plt.show()
 
-# Plot the training and validation loss over epochs
-plt.figure(figsize=(8,6))
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.xlabel('Epochs')
-plt.ylabel('Combined Loss (MSE + 1 - SSIM)')
+# Plot training and validation loss over epochs with log scale on the y-axis
+plt.figure(figsize=(10, 6))
+
+# Plot the training loss
+plt.plot(history.history['loss'], label='Training Loss', color='blue')
+
+# Plot the validation loss
+plt.plot(history.history['val_loss'], label='Validation Loss', color='red')
+
+# Set y-axis to log scale to clearly observe both curves
+plt.yscale('log')
+
+# Adding labels and title
 plt.title('Training and Validation Loss Over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (Log Scale)')
 plt.legend()
-plt.grid(True)
+
+# Display the plot
+plt.tight_layout()
 plt.show()
 ```
+
+## Results and Discussions
+
+![image](https://github.com/user-attachments/assets/05446429-f36d-476a-8505-dcf5afbc0da1)
+
+- **Strong Model Performance**: The $R^2$ score of 0.97 shows that the model fits the data very well, and the predicted outputs are close to the actual energy outputs.
+- **No Overfitting**: The training and validation losses do not diverge significantly, indicating the model is generalizing well to unseen data. The use of dropout layers and early stopping in the training process likely contributed to preventing overfitting.
+- **Convergence**: The model converged nicely after around 10-20 epochs, as seen from the flattening of both the training and validation loss curves.
+
+This means that the neural network effectively learned from the data and produced accurate predictions for solar panel energy output based on environmental conditions.
+
 

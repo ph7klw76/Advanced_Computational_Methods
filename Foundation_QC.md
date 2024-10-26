@@ -495,3 +495,134 @@ E_1 = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}, \quad E_2 = \begin{pmatrix} 
 $$
 
 represents a measurement that discriminates between the two states probabilistically, with outcome probabilities based on the overlap between $\vert \psi_1 \rangle$ and $\vert \psi_2 \rangle$.
+
+
+# Tensor Product Spaces in Quantum Mechanics
+
+In quantum mechanics, the tensor product of vector spaces allows us to represent composite quantum systems. For two-qubit systems, the tensor product combines the state spaces of individual qubits into a joint state space, capturing all possible configurations of the combined system.
+
+If a single qubit has a state space $\mathbb{C}^2$, then a system of two qubits resides in the space $\mathbb{C}^2 \otimes \mathbb{C}^2 = \mathbb{C}^4$. This combined space can describe entangled states and the effects of quantum gates on multiple qubits.
+
+## 1. Defining the Tensor Product of Vectors and Matrices
+
+### Tensor Product of Basis States
+
+For two qubits, each qubit has basis states $\vert 0 \rangle$ and $\vert 1 \rangle$, represented by vectors in $\mathbb{C}^2$:
+
+$$
+\vert 0 \rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}, \quad \vert 1 \rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}.
+$$
+
+The tensor product of two states $\vert a \rangle$ and $\vert b \rangle$ from separate qubits is denoted $\vert a \rangle \otimes \vert b \rangle$ or simply $\vert ab \rangle$. The tensor product is computed as follows:
+
+$$
+\vert 0 \rangle \otimes \vert 0 \rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \otimes \begin{pmatrix} 1 \\ 0 \end{pmatrix} = \begin{pmatrix} 1 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \\ 0 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \end{pmatrix},
+$$
+
+$$
+\vert 0 \rangle \otimes \vert 1 \rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \otimes \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} 1 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \\ 0 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\ 1 \\ 0 \\ 0 \end{pmatrix},
+$$
+
+$$
+\vert 1 \rangle \otimes \vert 0 \rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix} \otimes \begin{pmatrix} 1 \\ 0 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \\ 1 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 1 \\ 0 \end{pmatrix},
+$$
+
+$$
+\vert 1 \rangle \otimes \vert 1 \rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix} \otimes \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \\ 1 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 0 \\ 1 \end{pmatrix}.
+$$
+
+These results represent the four possible basis states for the two-qubit system in the combined $\mathbb{C}^4$ space:
+
+$$
+\{ \vert 00 \rangle, \vert 01 \rangle, \vert 10 \rangle, \vert 11 \rangle \} = \left\{ \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \end{pmatrix}, \begin{pmatrix} 0 \\ 1 \\ 0 \\ 0 \end{pmatrix}, \begin{pmatrix} 0 \\ 0 \\ 1 \\ 0 \end{pmatrix}, \begin{pmatrix} 0 \\ 0 \\ 0 \\ 1 \end{pmatrix} \right\}.
+$$
+
+### Tensor Product of Matrices
+
+For operators acting on multiple qubits, we also use the tensor product. If $A$ and $B$ are operators on single qubits, their combined action on a two-qubit system is represented by the tensor product $A \otimes B$.
+
+For example, if:
+
+$$
+A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix}, \quad B = \begin{pmatrix} b_{11} & b_{12} \\ b_{21} & b_{22} \end{pmatrix},
+$$
+
+then:
+
+$$
+A \otimes B = \begin{pmatrix} a_{11} B & a_{12} B \\ a_{21} B & a_{22} B \end{pmatrix} = \begin{pmatrix} a_{11} b_{11} & a_{11} b_{12} & a_{12} b_{11} & a_{12} b_{12} \\ a_{11} b_{21} & a_{11} b_{22} & a_{12} b_{21} & a_{12} b_{22} \\ a_{21} b_{11} & a_{21} b_{12} & a_{22} b_{11} & a_{22} b_{12} \\ a_{21} b_{21} & a_{21} b_{22} & a_{22} b_{21} & a_{22} b_{22} \end{pmatrix}.
+$$
+
+This tensor product matrix acts on the combined $\mathbb{C}^4$ space of the two qubits.
+
+### Example: Tensor Product of Pauli Matrices
+
+Let’s compute the tensor product of two Pauli matrices $\sigma_x$ and $\sigma_y$, where:
+
+$$
+\sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}, \quad \sigma_y = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix}.
+$$
+
+Then:
+
+$$
+\sigma_x \otimes \sigma_y = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix} \otimes \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} & 1 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} \\ 1 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} & 0 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} \end{pmatrix}.
+$$
+
+Carrying out the multiplications gives:
+
+$$
+\sigma_x \otimes \sigma_y = \begin{pmatrix} 0 & 0 & 0 & -i \\ 0 & 0 & i & 0 \\ 0 & -i & 0 & 0 \\ i & 0 & 0 & 0 \end{pmatrix}.
+$$
+
+This combined matrix represents the action of $\sigma_x$ on the first qubit and $\sigma_y$ on the second qubit in the two-qubit system.
+
+## 2. Examples of Tensor Product States and Operations
+
+### Example 1: Constructing a Product State
+
+Suppose qubit $A$ is in the state $\vert + \rangle = \frac{1}{\sqrt{2}}(\vert 0 \rangle + \vert 1 \rangle)$, and qubit $B$ is in the state $\vert 0 \rangle$. The two-qubit state $\vert \Psi \rangle$ is then:
+
+$$
+\vert \Psi \rangle = \vert + \rangle \otimes \vert 0 \rangle = \frac{1}{\sqrt{2}}(\vert 0 \rangle + \vert 1 \rangle) \otimes \vert 0 \rangle = \frac{1}{\sqrt{2}}(\vert 0 \rangle \otimes \vert 0 \rangle + \vert 1 \rangle \otimes \vert 0 \rangle).
+$$
+
+Expanding this, we get:
+
+$$
+\vert \Psi \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 10 \rangle) = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 1 \\ 0 \end{pmatrix}.
+$$
+
+This result represents a separable two-qubit state in $\mathbb{C}^4$.
+
+### Example 2: Entangled State Construction - The Bell State $\vert \Phi^+ \rangle$
+
+The Bell state $\vert \Phi^+ \rangle$ is one of the maximally entangled states for a two-qubit system and is defined as:
+
+$$
+\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 11 \rangle).
+$$
+
+In vector form, $\vert \Phi^+ \rangle$ is represented as:
+
+$$
+\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 0 \\ 1 \end{pmatrix}.
+$$
+
+Unlike separable states, $\vert \Phi^+ \rangle$ cannot be factored into the tensor product of two single-qubit states. This is an example of an entangled state.
+
+### Example 3: Applying a Gate to a Two-Qubit State
+
+Consider the CNOT gate, a two-qubit gate often used to create entanglement. The CNOT gate flips the second qubit (target qubit) if the first qubit (control qubit) is $\vert 1 \rangle$. The CNOT gate is represented by the matrix:
+
+$$
+\text{CNOT} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 1 & 0 \end{pmatrix}.
+$$
+
+Suppose we start with the two-qubit state $\vert + \rangle \otimes \vert 0 \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 10 \rangle)$. Applying the CNOT gate to this state, we get:
+
+$$
+\text{CNOT} \cdot \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 1 \\ 0 \end{pmatrix} = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 0 \\ 1 \end{pmatrix} = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 11 \rangle),
+$$
+
+which is the entangled Bell state $\vert \Phi^+ \rangle$. This shows that the CNOT gate, when applied to a product state, can create entanglement between qubits.

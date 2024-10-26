@@ -491,7 +491,9 @@ If the measurement outcome is $i$, the state after the measurement (in the gener
 Consider two non-orthogonal states $\vert \psi_1 \rangle = \vert 0 \rangle$ and $\vert \psi_2 \rangle = \cos(\theta) \vert 0 \rangle + \sin(\theta) \vert 1 \rangle$, and suppose we wish to distinguish between them. A POVM with elements:
 
 $$
-E_1 = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}, \quad E_2 = \begin{pmatrix} 0 & 0 \\ 0 & 1 \end{pmatrix},
+E_1 = \begin{pmatrix} 1 & 0 \\
+0 & 0 \end{pmatrix}, \quad E_2 = \begin{pmatrix} 0 & 0 \\
+0 & 1 \end{pmatrix},
 $$
 
 represents a measurement that discriminates between the two states probabilistically, with outcome probabilities based on the overlap between $\vert \psi_1 \rangle$ and $\vert \psi_2 \rangle$.
@@ -510,32 +512,78 @@ If a single qubit has a state space $\mathbb{C}^2$, then a system of two qubits 
 For two qubits, each qubit has basis states $\vert 0 \rangle$ and $\vert 1 \rangle$, represented by vectors in $\mathbb{C}^2$:
 
 $$
-\vert 0 \rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}, \quad \vert 1 \rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}.
+\vert 0 \rangle = \begin{pmatrix} 1 \\
+0 \end{pmatrix}, \quad \vert 1 \rangle = \begin{pmatrix} 0 \\
+1 \end{pmatrix}.
 $$
 
 The tensor product of two states $\vert a \rangle$ and $\vert b \rangle$ from separate qubits is denoted $\vert a \rangle \otimes \vert b \rangle$ or simply $\vert ab \rangle$. The tensor product is computed as follows:
 
 $$
-\vert 0 \rangle \otimes \vert 0 \rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \otimes \begin{pmatrix} 1 \\ 0 \end{pmatrix} = \begin{pmatrix} 1 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \\ 0 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \end{pmatrix},
+\vert 0 \rangle \otimes \vert 0 \rangle = \begin{pmatrix} 1 \\
+0 \end{pmatrix} \otimes \begin{pmatrix} 1 \\
+0 \end{pmatrix} = \begin{pmatrix} 1 \cdot \begin{pmatrix} 1 \\
+0 \end{pmatrix} \\
+0 \cdot \begin{pmatrix} 1 \\
+0 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 1 \\
+0 \\
+0 \\
+0 \end{pmatrix},
 $$
 
 $$
-\vert 0 \rangle \otimes \vert 1 \rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix} \otimes \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} 1 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \\ 0 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\ 1 \\ 0 \\ 0 \end{pmatrix},
+\vert 0 \rangle \otimes \vert 1 \rangle = \begin{pmatrix} 1 \\
+0 \end{pmatrix} \otimes \begin{pmatrix} 0 \\
+1 \end{pmatrix} = \begin{pmatrix} 1 \cdot \begin{pmatrix} 0 \\
+1 \end{pmatrix} \\
+0 \cdot \begin{pmatrix} 0 \\
+1 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\
+1 \\
+0 \\
+0 \end{pmatrix},
 $$
 
 $$
-\vert 1 \rangle \otimes \vert 0 \rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix} \otimes \begin{pmatrix} 1 \\ 0 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \\ 1 \cdot \begin{pmatrix} 1 \\ 0 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 1 \\ 0 \end{pmatrix},
+\vert 1 \rangle \otimes \vert 0 \rangle = \begin{pmatrix} 0 \\
+1 \end{pmatrix} \otimes \begin{pmatrix} 1 \\
+0 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 1 \\
+0 \end{pmatrix} \\
+1 \cdot \begin{pmatrix} 1 \\
+0 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\
+0 \\
+1 \\
+0 \end{pmatrix},
 $$
 
 $$
-\vert 1 \rangle \otimes \vert 1 \rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix} \otimes \begin{pmatrix} 0 \\ 1 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \\ 1 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 0 \\ 1 \end{pmatrix}.
+\vert 1 \rangle \otimes \vert 1 \rangle = \begin{pmatrix} 0 \\
+1 \end{pmatrix} \otimes \begin{pmatrix} 0 \\
+1 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 0 \\
+1 \end{pmatrix} \\
+1 \cdot \begin{pmatrix} 0 \\ 1 \end{pmatrix} \end{pmatrix} = \begin{pmatrix} 0 \\
+0 \\
+0 \\
+1 \end{pmatrix}.
 $$
 
 These results represent the four possible basis states for the two-qubit system in the combined $\mathbb{C}^4$ space:
 
 $$
-\{ \vert 00 \rangle, \vert 01 \rangle, \vert 10 \rangle, \vert 11 \rangle \} = \left\{ \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \end{pmatrix}, \begin{pmatrix} 0 \\ 1 \\ 0 \\ 0 \end{pmatrix}, \begin{pmatrix} 0 \\ 0 \\ 1 \\ 0 \end{pmatrix}, \begin{pmatrix} 0 \\ 0 \\ 0 \\ 1 \end{pmatrix} \right\}.
+\{ \vert 00 \rangle, \vert 01 \rangle, \vert 10 \rangle, \vert 11 \rangle \} = \{\{ \begin{pmatrix} 1 \\
+0 \\
+0 \\
+0 \end{pmatrix}, \begin{pmatrix} 0 \\
+1 \\
+0 \\
+0 \end{pmatrix}, \begin{pmatrix} 0 \\
+0 \\
+1 \\
+0 \end{pmatrix}, \begin{pmatrix} 0 \\
+0 \\
+0 \\
+1 \end{pmatrix}\}\}
 $$
+
 
 ### Tensor Product of Matrices
 
@@ -544,13 +592,19 @@ For operators acting on multiple qubits, we also use the tensor product. If $A$ 
 For example, if:
 
 $$
-A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix}, \quad B = \begin{pmatrix} b_{11} & b_{12} \\ b_{21} & b_{22} \end{pmatrix},
+A = \begin{pmatrix} a_{11} & a_{12} \\
+a_{21} & a_{22} \end{pmatrix}, \quad B = \begin{pmatrix} b_{11} & b_{12} \\
+b_{21} & b_{22} \end{pmatrix},
 $$
 
 then:
 
 $$
-A \otimes B = \begin{pmatrix} a_{11} B & a_{12} B \\ a_{21} B & a_{22} B \end{pmatrix} = \begin{pmatrix} a_{11} b_{11} & a_{11} b_{12} & a_{12} b_{11} & a_{12} b_{12} \\ a_{11} b_{21} & a_{11} b_{22} & a_{12} b_{21} & a_{12} b_{22} \\ a_{21} b_{11} & a_{21} b_{12} & a_{22} b_{11} & a_{22} b_{12} \\ a_{21} b_{21} & a_{21} b_{22} & a_{22} b_{21} & a_{22} b_{22} \end{pmatrix}.
+A \otimes B = \begin{pmatrix} a_{11} B & a_{12} B \\
+a_{21} B & a_{22} B \end{pmatrix} = \begin{pmatrix} a_{11} b_{11} & a_{11} b_{12} & a_{12} b_{11} & a_{12} b_{12} \\
+a_{11} b_{21} & a_{11} b_{22} & a_{12} b_{21} & a_{12} b_{22} \\
+a_{21} b_{11} & a_{21} b_{12} & a_{22} b_{11} & a_{22} b_{12} \\
+a_{21} b_{21} & a_{21} b_{22} & a_{22} b_{21} & a_{22} b_{22} \end{pmatrix}.
 $$
 
 This tensor product matrix acts on the combined $\mathbb{C}^4$ space of the two qubits.
@@ -566,13 +620,23 @@ $$
 Then:
 
 $$
-\sigma_x \otimes \sigma_y = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix} \otimes \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} & 1 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} \\ 1 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} & 0 \cdot \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} \end{pmatrix}.
+\sigma_x \otimes \sigma_y = \begin{pmatrix} 0 & 1 \\
+1 & 0 \end{pmatrix} \otimes \begin{pmatrix} 0 & -i \\
+i & 0 \end{pmatrix} = \begin{pmatrix} 0 \cdot \begin{pmatrix} 0 & -i \\
+i & 0 \end{pmatrix} & 1 \cdot \begin{pmatrix} 0 & -i \\
+i & 0 \end{pmatrix} \\
+1 \cdot \begin{pmatrix} 0 & -i \\
+i & 0 \end{pmatrix} & 0 \cdot \begin{pmatrix} 0 & -i \\
+i & 0 \end{pmatrix} \end{pmatrix}.
 $$
 
 Carrying out the multiplications gives:
 
 $$
-\sigma_x \otimes \sigma_y = \begin{pmatrix} 0 & 0 & 0 & -i \\ 0 & 0 & i & 0 \\ 0 & -i & 0 & 0 \\ i & 0 & 0 & 0 \end{pmatrix}.
+\sigma_x \otimes \sigma_y = \begin{pmatrix} 0 & 0 & 0 & -i \\
+0 & 0 & i & 0 \\
+0 & -i & 0 & 0 \\
+i & 0 & 0 & 0 \end{pmatrix}.
 $$
 
 This combined matrix represents the action of $\sigma_x$ on the first qubit and $\sigma_y$ on the second qubit in the two-qubit system.
@@ -590,7 +654,10 @@ $$
 Expanding this, we get:
 
 $$
-\vert \Psi \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 10 \rangle) = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 1 \\ 0 \end{pmatrix}.
+\vert \Psi \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 10 \rangle) = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\
+0 \\
+1 \\
+0 \end{pmatrix}.
 $$
 
 This result represents a separable two-qubit state in $\mathbb{C}^4$.
@@ -606,7 +673,10 @@ $$
 In vector form, $\vert \Phi^+ \rangle$ is represented as:
 
 $$
-\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 0 \\ 1 \end{pmatrix}.
+\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\
+0 \\
+0 \\
+1 \end{pmatrix}.
 $$
 
 Unlike separable states, $\vert \Phi^+ \rangle$ cannot be factored into the tensor product of two single-qubit states. This is an example of an entangled state.
@@ -616,13 +686,184 @@ Unlike separable states, $\vert \Phi^+ \rangle$ cannot be factored into the tens
 Consider the CNOT gate, a two-qubit gate often used to create entanglement. The CNOT gate flips the second qubit (target qubit) if the first qubit (control qubit) is $\vert 1 \rangle$. The CNOT gate is represented by the matrix:
 
 $$
-\text{CNOT} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 1 & 0 \end{pmatrix}.
+\text{CNOT} = \begin{pmatrix} 1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\ 
+0 & 0 & 0 & 1 \\ 
+0 & 0 & 1 & 0 \end{pmatrix}.
 $$
 
 Suppose we start with the two-qubit state $\vert + \rangle \otimes \vert 0 \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 10 \rangle)$. Applying the CNOT gate to this state, we get:
 
 $$
-\text{CNOT} \cdot \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 1 \\ 0 \end{pmatrix} = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\ 0 \\ 0 \\ 1 \end{pmatrix} = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 11 \rangle),
+\text{CNOT} \cdot \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\
+0 \\
+1 \\ 
+0 \end{pmatrix} = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 \\
+0 \\
+0 \\
+1 \end{pmatrix} = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 11 \rangle),
 $$
 
 which is the entangled Bell state $\vert \Phi^+ \rangle$. This shows that the CNOT gate, when applied to a product state, can create entanglement between qubits.
+
+# 1. Representing Two-Qubit States
+
+## Tensor Product Spaces
+
+A single qubit exists in a two-dimensional complex vector space, typically denoted $\mathbb{C}^2$, with basis states $\vert 0 \rangle$ and $\vert 1 \rangle$. For a two-qubit system, the total state space is the tensor product of two single-qubit spaces:
+
+$$
+H_{AB} = H_A \otimes H_B = \mathbb{C}^2 \otimes \mathbb{C}^2 = \mathbb{C}^4.
+$$
+
+The basis states of $H_{AB}$ are given by the tensor products of the basis states of each qubit:
+
+$$
+\{ \vert 00 \rangle, \vert 01 \rangle, \vert 10 \rangle, \vert 11 \rangle \},
+$$
+
+where, for instance, $\vert 00 \rangle = \vert 0 \rangle \otimes \vert 0 \rangle$, meaning that both qubits are in the $\vert 0 \rangle$ state.
+
+## Constructing Two-Qubit States
+
+Given qubits $A$ and $B$ in states $\vert \psi \rangle_A = \alpha \vert 0 \rangle + \beta \vert 1 \rangle$ and $\vert \phi \rangle_B = \gamma \vert 0 \rangle + \delta \vert 1 \rangle$, the product state $\vert \psi \rangle_A \otimes \vert \phi \rangle_B$ is:
+
+$$
+\vert \Psi \rangle = (\alpha \vert 0 \rangle + \beta \vert 1 \rangle) \otimes (\gamma \vert 0 \rangle + \delta \vert 1 \rangle) \\
+\\
+= \alpha \gamma \vert 00 \rangle + \alpha \delta \vert 01 \rangle + \beta \gamma \vert 10 \rangle + \beta \delta \vert 11 \rangle.
+$$
+
+This tensor product produces a four-dimensional vector that represents all possible combinations of states for qubits $A$ and $B$.
+
+### Example: Product State Calculation
+
+Suppose qubit $A$ is in the state $\vert \psi \rangle_A = \frac{1}{\sqrt{2}}(\vert 0 \rangle + \vert 1 \rangle)$ and qubit $B$ is in the state $\vert \phi \rangle_B = \vert 0 \rangle$. Then the joint state is:
+
+$$
+\vert \Psi \rangle = \left( \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle) \right) \otimes \vert 0 \rangle \\
+\\
+= \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 10 \rangle).
+$$
+
+This is a separable state, meaning that it can be written as a tensor product of individual qubit states.
+
+# 2. Separable and Entangled States
+
+## Definition of Separable States
+
+A two-qubit state $\vert \Psi \rangle \in H_{AB}$ is separable if it can be written as:
+
+$$
+\vert \Psi \rangle = \vert \psi \rangle_A \otimes \vert \phi \rangle_B,
+$$
+
+where $\vert \psi \rangle_A \in H_A$ and $\vert \phi \rangle_B \in H_B$ are the states of qubits $A$ and $B$, respectively. If a state cannot be factored into the tensor product of two single-qubit states, it is entangled.
+
+For example, the state $\frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 11 \rangle)$ cannot be written as a tensor product of individual qubit states, hence it is entangled.
+
+## Definition of Entangled States
+
+Entanglement is a uniquely quantum mechanical phenomenon where the state of each qubit in a two-qubit system cannot be independently described. Mathematically, a state $\vert \Psi \rangle \in H_{AB}$ is entangled if it cannot be decomposed into a product state.
+
+### Example: Bell States
+
+The Bell states are maximally entangled two-qubit states, and they form an orthonormal basis for the two-qubit Hilbert space $H_{AB}$. They are defined as follows:
+
+- **$\vert \Phi^+ \rangle$:**
+
+$$
+  \vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle).
+$$
+
+- **$\vert \Phi^- \rangle$:**
+
+$$
+  \vert \Phi^- \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle - \vert 11 \rangle).
+$$
+
+- **$\vert \Psi^+ \rangle$:**
+
+$$
+  \vert \Psi^+ \rangle = \frac{1}{\sqrt{2}} (\vert 01 \rangle + \vert 10 \rangle).
+$$
+
+- **$\vert \Psi^- \rangle$:**
+
+$$
+  \vert \Psi^- \rangle = \frac{1}{\sqrt{2}} (\vert 01 \rangle - \vert 10 \rangle).
+$$
+
+Each Bell state is entangled, as it cannot be factored into individual qubit states. These states are essential in quantum information theory and serve as foundational states in quantum communication and quantum cryptography.
+
+# 3. Entanglement and Density Matrices
+
+The density matrix formalism provides a complete description of both pure and mixed states in quantum mechanics. For two qubits, the density matrix $\rho$ of a state $\vert \Psi \rangle$ is given by:
+
+$$
+\rho = \vert \Psi \rangle \langle \Psi \vert.
+$$
+
+## Reduced Density Matrices and Entanglement
+
+For entangled states, examining the reduced density matrix of each subsystem helps determine the degree of entanglement. Given a joint density matrix $\rho_{AB}$ of two qubits, the reduced density matrix of qubit $A$ (ignoring qubit $B$) is obtained by taking the partial trace over the $B$ subsystem:
+
+$$
+\rho_A = \operatorname{Tr}_B (\rho_{AB})
+$$
+
+### Example: Reduced Density Matrix of a Bell State
+
+Consider the Bell state $\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}}(\vert 00 \rangle + \vert 11 \rangle)$. The density matrix $\rho_{AB} = \vert \Phi^+ \rangle \langle \Phi^+ \vert$ is:
+
+$$
+\rho_{AB} = \frac{1}{2} \begin{pmatrix} 1 & 0 & 0 & 1 \\
+0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 \\
+1 & 0 & 0 & 1 \end{pmatrix}.
+$$
+
+To obtain the reduced density matrix $\rho_A$, we trace out qubit $B$:
+
+$$
+\rho_A = \text{Tr}_B (\rho_{AB}) \\
+\\
+= \frac{1}{2} \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} = \frac{1}{2} I.
+$$
+
+The reduced density matrix $\rho_A = \frac{1}{2} I$ represents a completely mixed state, meaning that measurements on qubit $A$ alone yield no information about the original Bell state. This mixed state result is a hallmark of entanglement, as the individual qubits appear maximally uncertain when considered independently.
+
+# 4. Entanglement Measures: Concurrence and Entropy
+
+To quantify entanglement in a two-qubit system, we use mathematical measures like concurrence and entropy of entanglement.
+
+## Concurrence
+
+For a pure two-qubit state $\vert \Psi \rangle$, the concurrence $C$ is given by:
+
+$$
+C = \vert \langle \Psi \vert \tilde{\Psi} \rangle \vert,
+$$
+
+where $\vert \tilde{\Psi} \rangle = (\sigma_y \otimes \sigma_y) \vert \Psi^* \rangle$, with $\vert \Psi^* \rangle$ being the complex conjugate of $\vert \Psi \rangle$ in the standard basis. For maximally entangled states (e.g., Bell states), $C = 1$, while for separable states, $C = 0$.
+
+## Entropy of Entanglement
+
+The entropy of entanglement $S$ is another measure, defined as the von Neumann entropy of the reduced density matrix $\rho_A$ (or $\rho_B$):
+
+$$
+S(\rho_A) = - \text{Tr}(\rho_A \log_2 \rho_A).
+$$
+
+For a maximally entangled state, such as a Bell state, $S(\rho_A) = 1$, representing maximum entanglement. For a separable state, $S(\rho_A) = 0$, as there is no entanglement.
+
+# 5. Bell Test and Non-Local Correlations
+
+One of the most profound implications of entanglement is the existence of non-local correlations that defy classical intuition, as demonstrated by Bell’s theorem. In an entangled two-qubit system, measurements on qubits $A$ and $B$ exhibit correlations that cannot be explained by classical mechanics or local hidden variables.
+
+Bell's theorem shows that entangled states violate Bell inequalities, suggesting that quantum mechanics allows for correlations stronger than any classical system. Bell states are especially important because they maximize these correlations.
+
+### Example: Violation of Bell Inequalities
+
+For a Bell state like $\vert \Phi^+ \rangle$, measuring specific observables on each qubit in different directions produces correlations that exceed the bounds set by classical probability. This Bell inequality violation is direct evidence of entanglement, emphasizing the unique properties of two-qubit states in quantum mechanics.
+

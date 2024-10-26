@@ -47,4 +47,24 @@
 ## Solutions of PennyLane Challenges 
 
 
+## Advanced Algorithms
+1.  Graphs
+2.  Weighted Graphs
+3.  Hash Tables
+4.  Heaps
+5.  Binary Trees and AVL Trees 
+6.  Recursion
+7.  Spatial Data Structures 
+
+
+## Concurrency and Parallelism
+
+
+## Design Pattern in Python
+
+
+## GPU Programming in Python
+
+
+
 

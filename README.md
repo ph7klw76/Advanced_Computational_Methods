@@ -36,6 +36,14 @@
 4. The Best of Both Worlds: Hybrid Architectures
 5. Quantum Generative Adversarial Networks
 
-## Problems and Solutions of PennyLane Tutorials
+## PennyLane Demostration 
+
+[Visit PennyLane Quantum Computing Demonstrations](https://pennylane.ai/qml/demonstrations/)
+
+## Solutions of PennyLane Codebook
+
+
+## Solutions of PennyLane Challenges 
+
 
 

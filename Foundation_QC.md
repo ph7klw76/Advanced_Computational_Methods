@@ -839,21 +839,171 @@ To quantify entanglement in a two-qubit system, we use mathematical measures lik
 
 ## Concurrence
 
-For a pure two-qubit state $\vert \Psi \rangle$, the concurrence $C$ is given by:
+# Concurrence
+
+## Definition of Concurrence
+
+Concurrence is a measure of entanglement introduced by William Wootters, specifically useful for quantifying the entanglement of formation in a two-qubit system. For a two-qubit pure state $\vert \Psi \rangle$, concurrence $C$ can be calculated as follows:
+
+### Step 1: Define the Spin-Flipped State
+
+Define the spin-flipped state $\vert \tilde{\Psi} \rangle$ of $\vert \Psi \rangle$:
+
+$$
+\vert \tilde{\Psi} \rangle = (\sigma_y \otimes \sigma_y) \vert \Psi^* \rangle,
+$$
+
+where $\vert \Psi^* \rangle$ is the complex conjugate of $\vert \Psi \rangle$ in the computational basis, and $\sigma_y$ is the Pauli-Y matrix:
+
+$$
+\sigma_y = \begin{pmatrix} 0 & -i \\
+i & 0 \end{pmatrix}.
+$$
+
+### Step 2: Compute the Overlap
+
+Compute the overlap between $\vert \Psi \rangle$ and $\vert \tilde{\Psi} \rangle$:
 
 $$
 C = \vert \langle \Psi \vert \tilde{\Psi} \rangle \vert,
 $$
 
-where $\vert \tilde{\Psi} \rangle = (\sigma_y \otimes \sigma_y) \vert \Psi^* \rangle$, with $\vert \Psi^* \rangle$ being the complex conjugate of $\vert \Psi \rangle$ in the standard basis. For maximally entangled states (e.g., Bell states), $C = 1$, while for separable states, $C = 0$.
+where $C \in [0,1]$, with $C = 0$ for separable (non-entangled) states and $C = 1$ for maximally entangled states.
 
-## Entropy of Entanglement
+For mixed states represented by a density matrix $\rho$, concurrence is calculated using an extended formula, which we’ll cover after illustrating the pure state example.
 
-The entropy of entanglement $S$ is another measure, defined as the von Neumann entropy of the reduced density matrix $\rho_A$ (or $\rho_B$):
+### Example: Concurrence of a Bell State
+
+Consider the Bell state $\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle)$, which is a maximally entangled two-qubit state.
+
+The complex conjugate $\vert \Phi^+ \rangle^*$ of $\vert \Phi^+ \rangle$ in the computational basis is:
+
+$$
+\vert \Phi^+ \rangle^* = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle).
+$$
+
+The spin-flipped state $\vert \tilde{\Phi}^+ \rangle$ is:
+
+$$
+\vert \tilde{\Phi}^+ \rangle = (\sigma_y \otimes \sigma_y) \vert \Phi^+ \rangle^* = \frac{1}{\sqrt{2}} (\vert 11 \rangle + \vert 00 \rangle).
+$$
+
+Calculating the overlap between $\vert \Phi^+ \rangle$ and $\vert \tilde{\Phi}^+ \rangle$:
+
+$$
+C = \vert \langle \Phi^+ \vert \tilde{\Phi}^+ \rangle \vert = \left\vert \frac{1}{\sqrt{2}} \langle 00 \vert + \frac{1}{\sqrt{2}} \langle 11 \vert \right\vert \frac{1}{\sqrt{2}} (\vert 11 \rangle + \vert 00 \rangle) = 1.
+$$
+
+Since $C = 1$, $\vert \Phi^+ \rangle$ is maximally entangled.
+
+## Concurrence for Mixed States
+
+For a two-qubit mixed state $\rho$, the concurrence is computed by a more involved process:
+
+### Step 1: Define the Spin-Flipped Density Matrix
+
+Define the spin-flipped density matrix $\tilde{\rho}$ as:
+
+$$
+\tilde{\rho} = (\sigma_y \otimes \sigma_y) \rho^* (\sigma_y \otimes \sigma_y),
+$$
+
+where $\rho^*$ is the complex conjugate of $\rho$.
+
+### Step 2: Calculate the Eigenvalues
+
+Calculate the eigenvalues $\lambda_1, \lambda_2, \lambda_3, \lambda_4$ of the matrix $R = \sqrt{\rho \tilde{\rho}}$ in descending order.
+
+### Step 3: Compute Concurrence
+
+Compute concurrence $C$ as:
+
+$$
+C = \max (0, \lambda_1 - \lambda_2 - \lambda_3 - \lambda_4).
+$$
+
+This method allows us to measure entanglement even when dealing with mixed states, accounting for the loss of purity due to decoherence or environmental interaction.
+
+# 2. Entropy of Entanglement
+
+## Definition of Entropy of Entanglement
+
+The entropy of entanglement is a measure that quantifies the amount of entanglement in a pure two-qubit state. It uses the concept of von Neumann entropy to evaluate the uncertainty of the state of one qubit when the other qubit is known. For a pure state $\vert \Psi \rangle$ in a two-qubit system, we compute the entropy of entanglement by first finding the reduced density matrix of one qubit.
+
+### Step 1: Calculate the Reduced Density Matrix
+
+Calculate the reduced density matrix $\rho_A$ of qubit $A$ by taking the partial trace over qubit $B$:
+
+$$
+\rho_A = \text{Tr}_B (\vert \Psi \rangle \langle \Psi \vert).
+$$
+
+### Step 2: Compute the von Neumann Entropy
+
+Compute the von Neumann entropy $S(\rho_A)$ of the reduced density matrix $\rho_A$:
 
 $$
 S(\rho_A) = - \text{Tr}(\rho_A \log_2 \rho_A).
 $$
+
+The von Neumann entropy $S(\rho_A)$ represents the entropy of entanglement for the state $\vert \Psi \rangle$. For maximally entangled states, $S(\rho_A) = 1$, and for separable states, $S(\rho_A) = 0$.
+
+### Example: Entropy of Entanglement of a Bell State
+
+Let’s calculate the entropy of entanglement for the Bell state $\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle)$.
+
+The density matrix of $\vert \Phi^+ \rangle$ is:
+
+$$
+\rho_{AB} = \vert \Phi^+ \rangle \langle \Phi^+ \vert = \frac{1}{2} \begin{pmatrix} 1 & 0 & 0 & 1 \\
+0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 \\
+1 & 0 & 0 & 1 \end{pmatrix}.
+$$
+
+We take the partial trace over qubit $B$ to obtain the reduced density matrix $\rho_A$:
+
+$$
+\rho_A = \text{Tr}_B (\rho_{AB}) = \frac{1}{2} \begin{pmatrix} 1 & 0 \\
+0 & 1 \end{pmatrix} = \frac{1}{2} I.
+$$
+
+The eigenvalues of $\rho_A$ are $\frac{1}{2}$ and $\frac{1}{2}$, and the von Neumann entropy is:
+
+$$
+S(\rho_A) = -\left( \frac{1}{2} \log_2 \frac{1}{2} + \frac{1}{2} \log_2 \frac{1}{2} \right) = 1.
+$$
+
+Since $S(\rho_A) = 1$, $\vert \Phi^+ \rangle$ is maximally entangled, as expected for a Bell state.
+
+## Entropy of Entanglement for a Separable State
+
+Consider a separable state $\vert \Psi \rangle = \vert 0 \rangle \otimes \vert + \rangle$, where $\vert + \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle)$.
+
+The density matrix of $\vert \Psi \rangle$ is:
+
+$$
+\rho_{AB} = \vert \Psi \rangle \langle \Psi \vert = \frac{1}{2} \begin{pmatrix} 1 & 1 \\
+1 & 1 \end{pmatrix} \otimes \begin{pmatrix} 1 & 0 \\
+0 & 0 \end{pmatrix} = \frac{1}{2} \begin{pmatrix} 1 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 \\
+1 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 \end{pmatrix}.
+$$
+
+We calculate the reduced density matrix $\rho_A$ by tracing out qubit $B$:
+
+$$
+\rho_A = \text{Tr}_B (\rho_{AB}) = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}.
+$$
+
+The von Neumann entropy $S(\rho_A)$ is:
+
+$$
+S(\rho_A) = -\left( 1 \log_2 1 + 0 \log_2 0 \right) = 0.
+$$
+
+Since $S(\rho_A) = 0$, the state $\vert \Psi \rangle = \vert 0 \rangle \otimes \vert + \rangle$ is separable, as expected.
 
 For a maximally entangled state, such as a Bell state, $S(\rho_A) = 1$, representing maximum entanglement. For a separable state, $S(\rho_A) = 0$, as there is no entanglement.
 

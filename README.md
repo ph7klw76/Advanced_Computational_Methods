@@ -37,6 +37,16 @@
 4. The Best of Both Worlds: Hybrid Architectures
 5. Quantum Generative Adversarial Networks
 
+## To learn orther Quantum Computing Methods, follow the steps below
+1.  Variational Quantum Eigensolver VQE with Noise
+2.  Quantum Chemistry
+3.  Quantum Phase Estimation
+4.  Solving Linear Systems
+5.  Quantum Random Number Generator
+6.  Quantum Walks
+7.  Unification Framework for Quantum Algorithms
+8.  Dequantization 
+
 ## PennyLane Demostration 
 
 [Visit PennyLane Quantum Computing Demonstrations](https://pennylane.ai/qml/demonstrations/)

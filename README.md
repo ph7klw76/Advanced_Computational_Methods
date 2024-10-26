@@ -22,8 +22,19 @@
 
 ## To learn Quantum Optimization, follow the steps below:
 1.  [Foundation of Quantum Computing](Foundation_QC.md)
+2.  Working with Quadratic Unconstrained Binary Optimization
+3.  Adiabatic Quantum Computing and Quantum Annealing
+4.  QAOA: Quantum Approximate Optimization Algorithm
+5.  GAS: Grover Adaptive Search
+6.  VQE: Variational Quantum Eigensolver
 
 ## To learn Quantum Machine Learning, follow the steps below:
+
+1. What is Quantum Machine Learning?
+2. Quantum Support Vector Machines
+3. Quantum Neural Networks
+4. The Best of Both Worlds: Hybrid Architectures
+5. Quantum Generative Adversarial Networks
 
 ## Problems and Solutions of PennyLane Tutorials
 

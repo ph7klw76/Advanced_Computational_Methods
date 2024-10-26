@@ -1194,3 +1194,139 @@ $$
 
 because both control qubits are in the state $\vert 1 \rangle$, so the NOT operation is applied to the target qubit, flipping it from $\vert 0 \rangle$ to $\vert 1 \rangle$.
 
+# Universality in Quantum Computing
+
+In quantum computing, the concept of universality is essential, as it allows us to construct any quantum operation on multi-qubit systems using a small set of fundamental gates. For multi-qubit systems, gate universality means that any quantum computation can be decomposed into sequences of single-qubit gates and two-qubit controlled gates. Here, we’ll provide the mathematical description of multi-qubit systems and how universality is achieved through specific gate sets.
+
+## 1. Mathematical Description of Multi-Qubit States
+
+A single qubit exists in a two-dimensional complex vector space $C^2$, with basis states $\vert 0 \rangle$ and $\vert 1 \rangle$. For a system of $n$ qubits, the state space is the tensor product of $n$ single-qubit spaces, which is a $2^n$-dimensional complex vector space:
+
+$$
+H^{(n)} = \underbrace{C^2 \otimes C^2 \otimes \dots \otimes C^2}_{n \text{ times}} = C^{2^n}.
+$$
+
+### Example: Two-Qubit and Three-Qubit Systems
+
+For a two-qubit system, the basis states are $\vert 00 \rangle$, $\vert 01 \rangle$, $\vert 10 \rangle$, and $\vert 11 \rangle$, which form a basis for the four-dimensional vector space $C^4$. An arbitrary two-qubit state $\vert \psi \rangle$ can be written as:
+
+$$
+\vert \psi \rangle = \alpha_{00} \vert 00 \rangle + \alpha_{01} \vert 01 \rangle + \alpha_{10} \vert 10 \rangle + \alpha_{11} \vert 11 \rangle,
+$$
+
+where $\alpha_{ij} \in C$ and satisfy the normalization condition:
+
+$$
+\vert \alpha_{00} \vert^2 + \vert \alpha_{01} \vert^2 + \vert \alpha_{10} \vert^2 + \vert \alpha_{11} \vert^2 = 1.
+$$
+
+For a three-qubit system, the basis states are $\vert 000 \rangle$, $\vert 001 \rangle$, …, $\vert 111 \rangle$, forming an eight-dimensional vector space $C^8$. An arbitrary three-qubit state is:
+
+$$
+\vert \psi \rangle = \sum_{i,j,k \in \{0,1\}} \alpha_{ijk} \vert ijk \rangle,
+$$
+
+where the coefficients $\alpha_{ijk} \in C$ satisfy the normalization condition:
+
+$$
+\sum_{i,j,k} \vert \alpha_{ijk} \vert^2 = 1.
+$$
+
+## 2. Quantum Gates and Unitaries in Multi-Qubit Systems
+
+### Single-Qubit Gates
+
+Single-qubit gates are represented by $2 \times 2$ unitary matrices. Any single-qubit gate $U$ acting on a qubit in state $\vert \psi \rangle = \alpha \vert 0 \rangle + \beta \vert 1 \rangle$ is represented as:
+
+$$
+U \vert \psi \rangle = \begin{pmatrix} u_{11} & u_{12} \\
+u_{21} & u_{22} \end{pmatrix} \begin{pmatrix} \alpha \\
+\beta \end{pmatrix} = \begin{pmatrix} u_{11} \alpha + u_{12} \beta \\
+u_{21} \alpha + u_{22} \beta \end{pmatrix}.
+$$
+
+Examples of single-qubit gates include the Pauli gates $X$, $Y$, and $Z$, as well as the Hadamard gate $H$.
+
+### Two-Qubit Gates (Controlled Gates)
+
+A two-qubit gate acts on a two-qubit system, represented by a $4 \times 4$ matrix. A crucial two-qubit gate is the Controlled-NOT (CNOT) gate, which performs a NOT operation on the target qubit if the control qubit is in the state $\vert 1 \rangle$. In the computational basis $\{\vert 00 \rangle, \vert 01 \rangle, \vert 10 \rangle, \vert 11 \rangle\}$, the CNOT gate is represented as:
+
+$$
+\text{CNOT} = \begin{pmatrix} 1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & 1 & 0 \end{pmatrix}.
+$$
+
+The action of the CNOT gate on a two-qubit state $\vert \psi \rangle = \alpha_{00} \vert 00 \rangle + \alpha_{01} \vert 01 \rangle + \alpha_{10} \vert 10 \rangle + \alpha_{11} \vert 11 \rangle$ can be derived by matrix multiplication with the state vector.
+
+## 3. Gate Universality in Quantum Computing
+
+Universality in quantum computing refers to the ability to approximate any arbitrary unitary operation on $n$-qubit states using a finite set of basic gates. A set of gates is universal if any unitary transformation $U \in C^{2^n \times 2^n}$ can be approximated to arbitrary precision using a sequence of gates from this set.
+
+### Universal Gate Set: Single-Qubit and Two-Qubit Gates
+
+It is a foundational result in quantum computing that any unitary operation on $n$ qubits can be constructed from:
+
+- Single-qubit gates (e.g., Hadamard $H$, phase $S$, and T gates),
+- Two-qubit entangling gates, such as the CNOT gate.
+
+This universality theorem implies that any complex quantum circuit can be decomposed into a sequence of single-qubit rotations and two-qubit CNOT gates.
+
+### Mathematical Statement of Universality
+
+For any unitary operator $U$ on $n$-qubits (i.e., a $2^n \times 2^n$ unitary matrix), there exists a finite sequence of gates $G_1, G_2, \dots, G_k$ from the set of single-qubit and two-qubit CNOT gates such that:
+
+$$
+U \approx G_k G_{k-1} \dots G_2 G_1,
+$$
+
+where the approximation can be made arbitrarily close by choosing a sufficient number of gates.
+
+### Example of Universal Gate Decomposition
+
+To see universality in practice, consider a general single-qubit rotation gate $R(\theta, \phi, \lambda)$, which can be decomposed as:
+
+$$
+R(\theta, \phi, \lambda) = e^{i \alpha} R_z(\phi) R_y(\theta) R_z(\lambda),
+$$
+
+where:
+
+$$
+R_y(\theta) = e^{-i \theta \sigma_y / 2} \quad \text{and} \quad R_z(\phi) = e^{-i \phi \sigma_z / 2}
+$$
+
+are rotations around the $y$- and $z$-axes, respectively. For an arbitrary two-qubit gate, the decomposition may involve a sequence of CNOT gates interleaved with single-qubit rotations on each qubit.
+
+## 4. Examples of Universality in Quantum Circuits
+
+### Example 1: Constructing a Quantum Circuit for the CNOT Gate
+
+To show universality, consider the implementation of the CNOT gate in terms of the universal set of single-qubit rotations and two-qubit gates. Since CNOT itself is a part of the universal gate set, any circuit requiring conditional operations between qubits can be constructed using a combination of CNOT gates and single-qubit gates.
+
+### Example 2: Building a Multi-Qubit Entangled State
+
+Suppose we want to create a two-qubit entangled state, specifically the Bell state $\vert \Phi^+ \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle)$. This can be constructed using the following steps:
+
+1. **Apply the Hadamard gate $H$ to the first qubit:**
+
+$$
+   H \vert 0 \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle).
+  $$
+
+   After this step, the state becomes:
+
+$$
+   \vert \psi \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle) \otimes \vert 0 \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 10 \rangle).
+  $$
+
+2. **Apply a CNOT gate with the first qubit as the control and the second qubit as the target:**
+
+$$
+   \text{CNOT} \left( \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 10 \rangle) \right) = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle).
+  $$
+
+Thus, using only a single-qubit gate (Hadamard) and a two-qubit gate (CNOT), we’ve created an entangled Bell state, demonstrating the principle of universality.
+
+

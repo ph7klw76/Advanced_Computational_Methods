@@ -1313,20 +1313,153 @@ Suppose we want to create a two-qubit entangled state, specifically the Bell sta
 
 $$
    H \vert 0 \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle).
-  $$
+$$
 
    After this step, the state becomes:
 
 $$
    \vert \psi \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle) \otimes \vert 0 \rangle = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 10 \rangle).
-  $$
+$$
 
 2. **Apply a CNOT gate with the first qubit as the control and the second qubit as the target:**
 
 $$
    \text{CNOT} \left( \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 10 \rangle) \right) = \frac{1}{\sqrt{2}} (\vert 00 \rangle + \vert 11 \rangle).
-  $$
+$$
 
 Thus, using only a single-qubit gate (Hadamard) and a two-qubit gate (CNOT), we’ve created an entangled Bell state, demonstrating the principle of universality.
+
+# Universal Gate in Quantum Computing
+This universality is analogous to classical logic, where operations like AND and NOT are universal for Boolean logic. In the quantum case, the universality of single-qubit gates (e.g.,
+
+$$
+R_Y, \quad R_Z, \quad \text{Hadamard}, \quad T
+$$
+
+and the CNOT gate allows us to construct any arbitrary unitary operation.
+
+# Mathematical Description of the Toffoli Gate (CCNOT) and Its Action
+
+The Toffoli gate (also known as the controlled-controlled-NOT or CCNOT gate) is a three-qubit gate with two control qubits and one target qubit. It performs a NOT operation on the target qubit if, and only if, both control qubits are in the $\vert 1 \rangle$ state.
+
+Let’s denote the three input qubits by $\vert a \rangle$, $\vert b \rangle$, and $\vert c \rangle$, where:
+
+- $\vert a \rangle$ and $\vert b \rangle$ are the control qubits.
+- $\vert c \rangle$ is the target qubit.
+
+The action of the Toffoli gate can be mathematically expressed as:
+
+$$
+\text{Toffoli}(\vert a \rangle \otimes \vert b \rangle \otimes \vert c \rangle) = \vert a \rangle \otimes \vert b \rangle \otimes \vert c \oplus (a \land b) \rangle,
+$$
+
+where:
+
+- $\oplus$ represents the XOR operation (addition modulo 2).
+- $a \land b$ is the logical AND of $a$ and $b$.
+
+## Truth Table Representation
+
+The Toffoli gate acts as follows on the computational basis states:
+
+| Input $\vert a,b,c \rangle$ | Output $\text{Toffoli}(\vert a,b,c \rangle)$ |
+|-----------------------------|-----------------------------------------------|
+| $\vert 000 \rangle$         | $\vert 000 \rangle$                          |
+| $\vert 001 \rangle$         | $\vert 001 \rangle$                          |
+| $\vert 010 \rangle$         | $\vert 010 \rangle$                          |
+| $\vert 011 \rangle$         | $\vert 011 \rangle$                          |
+| $\vert 100 \rangle$         | $\vert 100 \rangle$                          |
+| $\vert 101 \rangle$         | $\vert 101 \rangle$                          |
+| $\vert 110 \rangle$         | $\vert 111 \rangle$                          |
+| $\vert 111 \rangle$         | $\vert 110 \rangle$                          |
+
+From the truth table, we see that the target qubit (third qubit) is flipped if, and only if, both control qubits are in the state $\vert 1 \rangle$.
+
+## Matrix Representation of the Toffoli Gate
+
+In the standard basis $\{\vert 000 \rangle, \vert 001 \rangle, \vert 010 \rangle, \vert 011 \rangle, \vert 100 \rangle, \vert 101 \rangle, \vert 110 \rangle, \vert 111 \rangle\}$, the matrix representation of the Toffoli gate is an $8 \times 8$ matrix given by:
+
+$$
+\text{Toffoli} = \begin{pmatrix}
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0
+\end{pmatrix}.
+$$
+
+This matrix acts as the identity on all basis states except for $\vert 110 \rangle$ and $\vert 111 \rangle$, where it swaps these states to perform the controlled NOT operation on the target qubit when both control qubits are $\vert 1 \rangle$.
+
+## 4. Decomposition of the Toffoli Gate Using Universal Gates
+
+Since the Toffoli gate is not typically a native gate in most quantum hardware, we can decompose it using a sequence of single-qubit gates (Hadamard $H$, $T$, $T^\dagger$) and two-qubit CNOT gates. This decomposition is essential because it allows implementation of the Toffoli gate using only universal gate sets.
+
+### Universal Gate Decomposition of Toffoli
+
+The standard decomposition of the Toffoli gate uses:
+
+- **Hadamard gates** to create superpositions,
+- **T and $T^\dagger$ gates** to manage phase shifts,
+- **CNOT gates** to entangle the qubits and propagate the control operations.
+
+### Step-by-Step Decomposition
+
+#### Phase Correction with T and $T^\dagger$ Gates
+
+The $T$ gate applies a phase shift of $\pi / 4$, while $T^\dagger$ (the adjoint of $T$) applies a phase shift of $-\pi / 4$. Together, these gates allow precise control over phase interference, which is crucial for implementing the conditional NOT operation.
+
+- **T Gate**:
+- 
+$$
+T = \begin{pmatrix} 1 & 0 \\
+0 & e^{i \pi / 4} \end{pmatrix}
+$$
+  
+- **$T^\dagger$ Gate**:
+- 
+$$
+T^\dagger = \begin{pmatrix} 1 & 0 \\
+0 & e^{-i \pi / 4} \end{pmatrix}
+$$
+
+#### Applying Hadamard Gates (H) to Target Qubit
+
+The Hadamard gate $H$ is used to place the target qubit into a superposition and later to disentangle it. The Hadamard gate acts as follows:
+
+$$
+H = \frac{1}{\sqrt{2}} \begin{pmatrix} 1 & 1 \\
+1 & -1 \end{pmatrix}.
+$$
+
+The Hadamard gate enables constructive and destructive interference, facilitating conditional operations between control and target qubits in the decomposition.
+
+### Constructing the Toffoli Gate with a Sequence of CNOT, T, $T^\dagger$, and H Gates
+
+The Toffoli gate can be decomposed into the following sequence:
+
+$$
+H \text{ on target} \rightarrow \text{CNOT} \rightarrow T \rightarrow \text{CNOT} \rightarrow T^\dagger \rightarrow H \rightarrow \text{CNOT} \rightarrow T \rightarrow \text{CNOT} \rightarrow T^\dagger \rightarrow T
+$$
+
+In the circuit, these gates work together as follows:
+
+- **CNOT Gates**: Used to entangle the control qubits with the target qubit.
+- **T and $T^\dagger$ Gates**: Used to apply precise phase corrections to ensure that the target qubit flips only when both control qubits are $\vert 1 \rangle$.
+- **Hadamard Gates**: Used at the beginning and end to place the target qubit in the correct superposition, allowing for the correct interference pattern.
+
+This decomposition is precise and achieves the exact effect of the Toffoli gate by creating the same mapping between input and output states.
+
+# Applications in Quantum Machine Learning and Neural Networks
+
+In the context of quantum machine learning and quantum neural networks, the universality of single-qubit gates and the CNOT gate is crucial. For example:
+
+- **Feature Maps**: Quantum machine learning algorithms often encode classical data into quantum states using feature maps. This encoding process requires universal gate sets to implement arbitrary rotations and entangling operations.
+
+- **Variational Circuits**: In variational quantum algorithms, a parameterized circuit is optimized to solve specific problems. The universality of quantum gates ensures that these variational circuits can represent a wide range of functions, making them suitable for tasks like classification, regression, and data encoding.
+
 
 

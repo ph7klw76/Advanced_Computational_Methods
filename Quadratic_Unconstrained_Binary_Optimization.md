@@ -395,6 +395,282 @@ $$
 
 This minimized cost reflects a configuration where points are grouped to minimize intra-cluster dissimilarity, yielding an optimal clustering solution.
 
+
+
+# Formulation of the Traveling Salesperson Problem (TSP) as a QUBO
+
+In the TSP, we are given:
+
+- A set of \( n \) cities, each of which must be visited exactly once.
+- A distance matrix \( D \), where \( D_{ij} \) represents the distance between city \( i \) and city \( j \).
+
+Our goal is to find a tour that visits each city once and minimizes the total travel distance.
+
+## Step 1: Define Binary Variables
+
+Define binary variables \( x_{ij} \):
+
+$$
+x_{ij} = \begin{cases} 
+1 & \text{if the tour visits city } i \text{ at position } j, \\ 
+0 & \text{otherwise.} 
+\end{cases}
+$$
+
+This binary encoding requires \( n \times n \) variables, where \( x_{ij} \) tells us whether city \( i \) is in the \( j \)-th position in the tour.
+
+## Step 2: Objective Function for Minimizing Distance
+
+The objective is to minimize the total distance traveled in the tour. This objective can be written in terms of the distance matrix \( D \) and the binary variables \( x_{ij} \):
+
+$$
+\text{Minimize } \sum_{i=1}^n \sum_{j=1}^n D_{ij} x_{i,j} x_{i, (j+1) \, \text{mod} \, n}
+$$
+
+### Implementation
+
+In code, this can be implemented as follows:
+
+```python
+for i in range(num_cities):
+    for j in range(num_cities):
+        if i != j:
+            for k in range(num_cities):
+                Q[i * num_cities + k, j * num_cities + (k + 1) % num_cities] += distance_matrix[i, j]
+```
+
+Each entry in the QUBO matrix \( Q \) is updated with the corresponding distance \( D_{ij} \) for transitions between adjacent cities \( i \) and \( j \) in the tour.
+
+## Step 3: Constraints to Ensure a Valid Tour
+
+We need to add constraints to make sure that:
+
+1. **Each city is visited exactly once.**
+2. **Each position in the tour is occupied by exactly one city.**
+
+These constraints are encoded by adding large penalty terms to the QUBO matrix \( Q \), ensuring that any invalid tour configuration (such as missing or repeating cities) incurs a high cost.
+
+### Constraint 1: Each City is Visited Exactly Once
+
+For each city \( i \), we want:
+
+$$
+\sum_{j=1}^n x_{ij} = 1
+$$
+
+This ensures that each city appears once in the tour. To enforce this, we add a penalty term to \( Q \):
+
+$$
+P \sum_{i=1}^n \left( \sum_{j=1}^n x_{ij} - 1 \right)^2
+$$
+
+### Code Implementation
+
+This constraint can be implemented as follows:
+
+```python
+for i in range(num_cities):
+    for j in range(num_cities):
+        if i != j:
+            for k in range(num_cities):
+                Q[i * num_cities + k, j * num_cities + k] += 2
+                Q[i * num_cities + k, i * num_cities + k] -= 1
+                Q[j * num_cities + k, j * num_cities + k] -= 1
+```
+
+By adding these penalties, the QUBO matrix \( Q \) is constructed to minimize the distance while enforcing a valid tour configuration.
+
+## Constructing the QUBO Matrix
+
+The `create_qubo` function returns the fully constructed QUBO matrix \( Q \), which encapsulates both the objective function and the constraints.
+
+### Step 4: Implement the Quantum Circuit
+
+We use **QAOA (Quantum Approximate Optimization Algorithm)** to solve the TSP as a QUBO problem. Let’s dive into the mathematical reasoning behind each gate and why it’s used.
+
+#### QAOA Overview
+
+QAOA is a hybrid quantum-classical algorithm that alternates between applying two types of operations:
+
+1. **Phase Separation (Problem Hamiltonian)**: Encodes the problem’s objective and constraints into the quantum state by modifying the phases of certain qubits.
+2. **Mixer (Driver Hamiltonian)**: Encourages exploration of different solutions by spreading the probability distribution across possible states.
+
+The QAOA algorithm requires two parameters for each layer:
+
+- \( \gamma \): Controls the influence of the problem Hamiltonian (penalty and objective encoded in the QUBO matrix).
+- \( \beta \): Controls the influence of the mixer Hamiltonian (spread over possible states).
+
+These layers are repeated multiple times, with each layer tuned by \( \gamma \) and \( \beta \) parameters to refine the solution.
+
+#### Quantum Circuit for TSP with QAOA
+
+The goal of our quantum circuit is to prepare a quantum state that represents an optimal solution to the TSP by evolving the quantum state according to these QAOA layers.
+
+The quantum circuit is constructed as follows:
+
+```python
+@qml.qnode(dev)
+def circuit(params):
+    for i in range(num_cities**2):
+        qml.Hadamard(wires=i)
+    for gamma, beta in zip(params[:len(params)//2], params[len(params)//2:]):
+        qaoa_layer(gamma, beta)
+    return qml.probs(wires=range(num_cities**2))
+```
+## Step 1: Hadamard Gates for Superposition
+
+```python
+for i in range(num_cities**2):
+    qml.Hadamard(wires=i)
+```
+
+The Hadamard gate is used to create an equal superposition state for each qubit. Mathematically, applying a Hadamard gate to a qubit in the \( |0\rangle \) state produces:
+
+$$
+H|0\rangle = \frac{1}{\sqrt{2}} \left( |0\rangle + |1\rangle \right)
+$$
+
+Applying Hadamard gates to all \( n \times n \) qubits (representing all possible city-position pairs) results in a superposition of all possible routes through the cities, where each bit in the binary solution represents whether a city is visited at a particular position.
+
+For \( N \) qubits, the overall superposition state is:
+
+$$
+|\psi\rangle = \frac{1}{\sqrt{2^N}} \sum_{x=0}^{2^N - 1} |x\rangle
+$$
+
+This superposition enables QAOA to explore all possible configurations simultaneously, leveraging quantum parallelism to test all routes through interference.
+
+### Step 2: Define the QAOA Layer (Mixer and Phase Separation)
+
+The QAOA layer consists of two main operations:
+
+1. **Rotation around the X-axis (Mixer Hamiltonian)**
+2. **Controlled Rotation around the Z-axis (Phase Separation/Problem Hamiltonian)**
+
+#### Code Implementation
+
+```python
+def qaoa_layer(gamma, beta):
+    # Mixer: RX rotations on all qubits
+    for i in range(num_cities**2):
+        qml.RX(2 * beta, wires=i)
+
+    # Phase Separation: RZ rotations based on QUBO matrix
+    for i in range(num_cities**2):
+        for j in range(i + 1, num_cities**2):
+            if Q[i, j] != 0:
+                qml.CNOT(wires=[i, j])
+                qml.RZ(2 * gamma * Q[i, j], wires=j)
+                qml.CNOT(wires=[i, j])
+```
+
+The **RX gate** (rotation around the X-axis) acts as the mixer Hamiltonian, responsible for distributing amplitude across states. Mathematically, an RX gate with angle \( \theta \) on a qubit \( i \) is represented by the unitary:
+
+$$
+RX(\theta) = e^{-i \frac{\theta}{2} X} = \cos\left(\frac{\theta}{2}\right) I - i \sin\left(\frac{\theta}{2}\right) X
+$$
+
+For \( \theta = 2\beta \), the RX gate applies:
+
+$$
+RX(2\beta) |0\rangle = \cos(\beta) |0\rangle - i \sin(\beta) |1\rangle
+$$
+
+This rotation acts on each qubit, redistributing probability across possible states, encouraging exploration and preventing the algorithm from getting stuck in local minima.
+
+The **mixer Hamiltonian** for all qubits is effectively:
+
+$$
+H_M(\beta) = \sum_{i=1}^{n^2} RX(2\beta)_i
+$$
+
+Applying this Hamiltonian spreads the probability mass over different states by creating a "mixing" effect.
+
+### Phase Separation Hamiltonian (Controlled RZ Gates)
+
+The Controlled-RZ gate sequence encodes the QUBO problem’s penalties and objectives (distance and constraints) into the quantum state by adjusting qubit phases.
+
+The **RZ gate**, \( RZ(\theta) \), performs a rotation around the Z-axis:
+
+$$
+RZ(\theta) = e^{-i \frac{\theta}{2} Z} = \cos\left(\frac{\theta}{2}\right) I - i \sin\left(\frac{\theta}{2}\right) Z
+$$
+
+In the QAOA layer, the RZ rotation is applied conditionally, controlled by CNOT gates, with an angle proportional to \( 2\gamma Q_{ij} \), where \( Q_{ij} \) represents the pairwise penalty and cost between qubits \( i \) and \( j \) in the QUBO matrix.
+
+Mathematically, the **phase separation Hamiltonian** is:
+
+$$
+H_P(\gamma) = \sum_{i,j} Q_{ij} Z_i Z_j
+$$
+
+where \( Z_i \) and \( Z_j \) are Pauli-Z operators on qubits \( i \) and \( j \), and \( Q_{ij} \) represents the QUBO cost associated with that pair.
+
+### Implementation of Controlled-RZ Gates in the Code
+
+```python
+for i in range(num_cities**2):
+    for j in range(i+1, num_cities**2):
+        if Q[i, j] != 0:
+            qml.CNOT(wires=[i, j])
+            qml.RZ(2 * gamma * Q[i, j], wires=j)
+            qml.CNOT(wires=[i, j])
+```
+### CNOT Gate
+
+The **CNOT gate** is used to set up a control condition, where an **RZ rotation** on qubit \( j \) is applied only if qubit \( i \) is in the state \( |1\rangle \).
+
+### RZ Gate
+
+The **RZ rotation** $RZ(2\gamma Q_{ij})$ applies a phase shift based on the QUBO matrix value $Q_{ij}$ and the parameter $\gamma$, encoding both the objective function and constraints. This **phase separation operation** "marks" each possible configuration based on its cost (distance or penalty). Configurations that don’t satisfy the TSP constraints or have longer paths receive phase penalties, leading to lower probabilities in the final measurement.
+
+### Final Measurement and Optimization
+
+After repeating the QAOA layers, the state of the qubits represents a superposition where the probability of each basis state corresponds to the likelihood of that route being optimal. By measuring the qubits and using classical optimization to adjust \( \gamma \) and \( \beta \), QAOA iteratively improves the solution.
+
+The final circuit returns a probability distribution over all configurations, from which we select the most probable configuration as the optimal solution to the TSP.
+
+### Summary of the QAOA Circuit Components
+
+1. **Hadamard Gates**: Initialize a superposition of all possible city-position configurations.
+2. **Mixer (RX) Gates**: Spread the probability distribution over all configurations, allowing exploration of solution space.
+3. **Phase Separation (Controlled-RZ) Gates**: Encode the QUBO matrix, imposing penalties for invalid routes and minimizing distance.
+
+Through iterative optimization, **QAOA** gradually focuses the quantum state on configurations with lower penalties and distances, converging on an optimal solution to the TSP.
+
+### Cost Function and Optimization
+
+The **cost function** calculates the cost for the current set of parameters using the QAOA circuit output. The **GradientDescentOptimizer** minimizes this cost to find the optimal parameters.
+
+
+```python
+def cost(params):
+    return circuit(params)[0]
+
+params = np.random.rand(2 * num_cities)
+opt = qml.GradientDescentOptimizer(stepsize=0.1)
+
+for i in range(100):
+    params = opt.step(cost, params)
+```
+
+### Step 5: Interpret the Results
+
+After optimization, we interpret the results by finding the **optimal tour** based on the final probability distribution of the QAOA circuit output.
+
+```python
+result = circuit(params)
+solution = np.argmax(result)
+tour = [solution // num_cities**i % num_cities for i in range(num_cities)]
+print("Optimal tour:", tour)
+```
+
+- `np.argmax(result)` retrieves the binary solution with the **highest probability**, representing the most likely **optimal tour configuration**.
+- The `tour` list decodes the solution into a readable **tour sequence** by iterating through the binary solution.
+
+
+
+Full code
 ```python
 import pennylane as qml
 from pennylane import numpy as np
@@ -482,152 +758,5 @@ solution = np.argmax(result)
 tour = [solution // num_cities**i % num_cities for i in range(num_cities)]
 print("Optimal tour:", tour)
 ```
-
-
-```python
-import pennylane as qml
-from pennylane import numpy as np
-
-# Number of cities
-N = 4
-
-# Distance matrix D
-D = np.array([
-    [0, 2, 9, 10],
-    [2, 0, 6, 4],
-    [9, 6, 0, 8],
-    [10, 4, 8, 0]
-])
-
-# Penalty coefficients
-A = 10
-B = 10
-
-def qubit_index(i, j):
-    return i * N + j
-
-num_vars = N * N
-Q = np.zeros((num_vars, num_vars))
-
-# Objective Function
-for i in range(N):
-    for j in range(N):
-        for k in range(N):
-            if j != k:
-                idx1 = qubit_index(i, j)
-                idx2 = qubit_index((i + 1) % N, k)
-                Q[idx1, idx2] += D[j, k]
-
-# Constraints
-# Each city is visited exactly once
-for j in range(N):
-    idx = [qubit_index(i, j) for i in range(N)]
-    for a in idx:
-        Q[a, a] += -A * (2 * (N - 1))
-        for b in idx:
-            Q[a, b] += 2 * A
-
-# One city per position
-for i in range(N):
-    idx = [qubit_index(i, j) for j in range(N)]
-    for a in idx:
-        Q[a, a] += -B * (2 * (N - 1))
-        for b in idx:
-            Q[a, b] += 2 * B
-
-# Convert QUBO to Ising Hamiltonian
-h = np.zeros(num_vars)
-J = {}
-constant = 0
-
-for i in range(num_vars):
-    h[i] += Q[i, i] * (-0.5)
-    constant += Q[i, i] * 0.5
-
-for i in range(num_vars):
-    for j in range(i+1, num_vars):
-        if Q[i, j] != 0:
-            h[i] += Q[i, j] * (-0.25)
-            h[j] += Q[i, j] * (-0.25)
-            J[(i, j)] = Q[i, j] * 0.25
-            constant += Q[i, j] * 0.25
-
-# Construct the Hamiltonian
-coeffs = []
-obs = []
-
-for i in range(num_vars):
-    if h[i] != 0:
-        coeffs.append(h[i])
-        obs.append(qml.PauliZ(i))
-
-for (i, j), value in J.items():
-    coeffs.append(value)
-    obs.append(qml.PauliZ(i) @ qml.PauliZ(j))
-
-H = qml.Hamiltonian(coeffs, obs)
-
-# Quantum Circuit with QAOA
-num_qubits = num_vars
-dev = qml.device('default.qubit', wires=num_qubits)
-
-p = 2  # Number of QAOA layers
-
-@qml.qnode(dev)
-def circuit(params):
-    # Initialize qubits
-    for i in range(num_qubits):
-        qml.Hadamard(wires=i)
-    
-    gamma = params[0]
-    beta = params[1]
-    
-    # Apply QAOA layers
-    for l in range(p):
-        qml.qaoa.cost_layer(gamma[l], H)
-        qml.qaoa.mixer_layer(beta[l], wires=range(num_qubits))
-    
-    return qml.expval(H)
-
-def cost_function(params):
-    return circuit(params)
-
-# Optimization
-np.random.seed(42)
-params = [np.random.uniform(0, np.pi, p), np.random.uniform(0, np.pi, p)]
-opt = qml.AdamOptimizer(stepsize=0.1)
-steps = 100
-
-for _ in range(steps):
-    params = opt.step(cost_function, params)
-
-# Retrieve solution
-@qml.qnode(dev)
-def final_circuit(params):
-    # Initialize qubits
-    for i in range(num_qubits):
-        qml.Hadamard(wires=i)
-    
-    gamma = params[0]
-    beta = params[1]
-    
-    # Apply QAOA layers
-    for l in range(p):
-        qml.qaoa.cost_layer(gamma[l], H)
-        qml.qaoa.mixer_layer(beta[l], wires=range(num_qubits))
-    
-    # Sample all qubits
-    return qml.sample(wires=range(num_qubits))
-
-samples = final_circuit(params)
-binary_solution = samples.flatten()
-solution_matrix = binary_solution.reshape(N, N)
-
-# Extract tour
-tour = []
-for i in range(N):
-    city = np.argmax(solution_matrix[i])
-    tour.append(city)
-
-print("Optimal tour:", tour)
-```
+The answer is: Optimal tour: [3, 3, 0, 0]
+Beware it takes a few minutes to calculate.

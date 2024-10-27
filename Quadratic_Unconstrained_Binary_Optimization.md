@@ -395,3 +395,239 @@ $$
 
 This minimized cost reflects a configuration where points are grouped to minimize intra-cluster dissimilarity, yielding an optimal clustering solution.
 
+```python
+import pennylane as qml
+from pennylane import numpy as np
+
+
+# Define the distance matrix for the cities
+distance_matrix = np.array([
+    [0, 2, 9, 10],
+    [1, 0, 6, 4],
+    [15, 7, 0, 8],
+    [6, 3, 12, 0]
+])
+
+num_cities = len(distance_matrix)
+
+# Define the QUBO matrix for the TSP
+def create_qubo(distance_matrix):
+    num_cities = len(distance_matrix)
+    Q = np.zeros((num_cities**2, num_cities**2))
+
+    # Constraint: Each city must be visited exactly once
+    for i in range(num_cities):
+        for j in range(num_cities):
+            if i != j:
+                for k in range(num_cities):
+                    Q[i*num_cities + k, j*num_cities + k] += 2
+                    Q[i*num_cities + k, i*num_cities + k] -= 1
+                    Q[j*num_cities + k, j*num_cities + k] -= 1
+
+    # Constraint: Each position in the tour must be occupied by exactly one city
+    for k in range(num_cities):
+        for i in range(num_cities):
+            for j in range(num_cities):
+                if i != j:
+                    Q[k*num_cities + i, k*num_cities + j] += 2
+                    Q[k*num_cities + i, k*num_cities + i] -= 1
+                    Q[k*num_cities + j, k*num_cities + j] -= 1
+
+    # Objective: Minimize the total distance
+    for i in range(num_cities):
+        for j in range(num_cities):
+            if i != j:
+                for k in range(num_cities):
+                    Q[i*num_cities + k, j*num_cities + (k+1) % num_cities] += distance_matrix[i, j]
+
+    return Q
+
+Q = create_qubo(distance_matrix)
+
+# Define the quantum device
+dev = qml.device('default.qubit', wires=num_cities**2)
+
+# Define the QAOA circuit
+def qaoa_layer(gamma, beta):
+    for i in range(num_cities**2):
+        qml.RX(2 * beta, wires=i)
+    for i in range(num_cities**2):
+        for j in range(i+1, num_cities**2):  # Ensure i != j
+            if Q[i, j] != 0:
+                qml.CNOT(wires=[i, j])
+                qml.RZ(2 * gamma * Q[i, j], wires=j)
+                qml.CNOT(wires=[i, j])
+
+@qml.qnode(dev)
+def circuit(params):
+    for i in range(num_cities**2):
+        qml.Hadamard(wires=i)
+    for gamma, beta in zip(params[:len(params)//2], params[len(params)//2:]):
+        qaoa_layer(gamma, beta)
+    return qml.probs(wires=range(num_cities**2))
+
+# Optimize the QAOA parameters
+def cost(params):
+    return circuit(params)[0]
+
+params = np.random.rand(2 * num_cities)
+opt = qml.GradientDescentOptimizer(stepsize=0.1)
+
+for i in range(100):
+    params = opt.step(cost, params)
+
+# Interpret the results
+result = circuit(params)
+solution = np.argmax(result)
+tour = [solution // num_cities**i % num_cities for i in range(num_cities)]
+print("Optimal tour:", tour)
+```
+
+
+```python
+import pennylane as qml
+from pennylane import numpy as np
+
+# Number of cities
+N = 4
+
+# Distance matrix D
+D = np.array([
+    [0, 2, 9, 10],
+    [2, 0, 6, 4],
+    [9, 6, 0, 8],
+    [10, 4, 8, 0]
+])
+
+# Penalty coefficients
+A = 10
+B = 10
+
+def qubit_index(i, j):
+    return i * N + j
+
+num_vars = N * N
+Q = np.zeros((num_vars, num_vars))
+
+# Objective Function
+for i in range(N):
+    for j in range(N):
+        for k in range(N):
+            if j != k:
+                idx1 = qubit_index(i, j)
+                idx2 = qubit_index((i + 1) % N, k)
+                Q[idx1, idx2] += D[j, k]
+
+# Constraints
+# Each city is visited exactly once
+for j in range(N):
+    idx = [qubit_index(i, j) for i in range(N)]
+    for a in idx:
+        Q[a, a] += -A * (2 * (N - 1))
+        for b in idx:
+            Q[a, b] += 2 * A
+
+# One city per position
+for i in range(N):
+    idx = [qubit_index(i, j) for j in range(N)]
+    for a in idx:
+        Q[a, a] += -B * (2 * (N - 1))
+        for b in idx:
+            Q[a, b] += 2 * B
+
+# Convert QUBO to Ising Hamiltonian
+h = np.zeros(num_vars)
+J = {}
+constant = 0
+
+for i in range(num_vars):
+    h[i] += Q[i, i] * (-0.5)
+    constant += Q[i, i] * 0.5
+
+for i in range(num_vars):
+    for j in range(i+1, num_vars):
+        if Q[i, j] != 0:
+            h[i] += Q[i, j] * (-0.25)
+            h[j] += Q[i, j] * (-0.25)
+            J[(i, j)] = Q[i, j] * 0.25
+            constant += Q[i, j] * 0.25
+
+# Construct the Hamiltonian
+coeffs = []
+obs = []
+
+for i in range(num_vars):
+    if h[i] != 0:
+        coeffs.append(h[i])
+        obs.append(qml.PauliZ(i))
+
+for (i, j), value in J.items():
+    coeffs.append(value)
+    obs.append(qml.PauliZ(i) @ qml.PauliZ(j))
+
+H = qml.Hamiltonian(coeffs, obs)
+
+# Quantum Circuit with QAOA
+num_qubits = num_vars
+dev = qml.device('default.qubit', wires=num_qubits)
+
+p = 2  # Number of QAOA layers
+
+@qml.qnode(dev)
+def circuit(params):
+    # Initialize qubits
+    for i in range(num_qubits):
+        qml.Hadamard(wires=i)
+    
+    gamma = params[0]
+    beta = params[1]
+    
+    # Apply QAOA layers
+    for l in range(p):
+        qml.qaoa.cost_layer(gamma[l], H)
+        qml.qaoa.mixer_layer(beta[l], wires=range(num_qubits))
+    
+    return qml.expval(H)
+
+def cost_function(params):
+    return circuit(params)
+
+# Optimization
+np.random.seed(42)
+params = [np.random.uniform(0, np.pi, p), np.random.uniform(0, np.pi, p)]
+opt = qml.AdamOptimizer(stepsize=0.1)
+steps = 100
+
+for _ in range(steps):
+    params = opt.step(cost_function, params)
+
+# Retrieve solution
+@qml.qnode(dev)
+def final_circuit(params):
+    # Initialize qubits
+    for i in range(num_qubits):
+        qml.Hadamard(wires=i)
+    
+    gamma = params[0]
+    beta = params[1]
+    
+    # Apply QAOA layers
+    for l in range(p):
+        qml.qaoa.cost_layer(gamma[l], H)
+        qml.qaoa.mixer_layer(beta[l], wires=range(num_qubits))
+    
+    # Sample all qubits
+    return qml.sample(wires=range(num_qubits))
+
+samples = final_circuit(params)
+binary_solution = samples.flatten()
+solution_matrix = binary_solution.reshape(N, N)
+
+# Extract tour
+tour = []
+for i in range(N):
+    city = np.argmax(solution_matrix[i])
+    tour.append(city)
+
+print("Optimal tour:", tour)
+```

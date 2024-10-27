@@ -23,7 +23,7 @@
 
 ## To learn Quantum Optimization, follow the steps below:
 1.  [Foundation of Quantum Computing](Foundation_QC.md)
-2.  [Working with Quadratic Unconstrained Binary Optimization](Quadratic_Unconstrained_Binary_Optimization.md.md)
+2.  [Working with Quadratic Unconstrained Binary Optimization](Quadratic_Unconstrained_Binary_Optimization.md)
 3.  Adiabatic Quantum Computing and Quantum Annealing
 4.  QAOA: Quantum Approximate Optimization Algorithm
 5.  GAS: Grover Adaptive Search

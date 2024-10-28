@@ -488,3 +488,74 @@ $$
 Since $H(t)$ changes with $t$, this method requires solving differential equations for $E_n(t)$ and $|\phi_n(t)\rangle$, which can be complex.
 
 
+'''python
+# Import necessary libraries
+import pennylane as qml
+from pennylane import numpy as np
+import matplotlib.pyplot as plt
+
+# Use the default.qubit simulator with two qubits
+num_qubits = 2
+dev = qml.device('default.qubit', wires=num_qubits)
+
+# Define constants
+J = 1.0       # Coupling constant in H_P
+Delta = 1.0   # Transverse field strength in H_0
+T = 10.0      # Total annealing time
+N = 100       # Number of Trotter steps
+dt = T / N    # Time step size
+times = np.linspace(0, T, N)
+
+# Linear annealing schedule
+def s(t):
+    return t / T
+
+def A(t):
+    return (1 - s(t))
+
+def B(t):
+    return s(t)
+
+# Constructing the quantum annealing circuit
+@qml.qnode(dev)
+def quantum_annealing_circuit(params):
+    # Initialize in the equal superposition state (ground state of H_0 at t=0)
+    for wire in range(num_qubits):
+        qml.Hadamard(wires=wire)
+    
+    # Apply Trotterized evolution
+    for i in range(N):
+        # Compute time-dependent coefficients
+        a = A(times[i]) * dt
+        b = B(times[i]) * dt
+        
+        # Evolution under H_0
+        for wire in range(num_qubits):
+            qml.RX(-2 * Delta * a, wires=wire)
+        
+        # Evolution under H_P
+        qml.CNOT(wires=[0, 1])
+        qml.RZ(-2 * J * b, wires=1)
+        qml.CNOT(wires=[0, 1])
+    
+    # Return probabilities of computational basis states
+    return qml.probs(wires=[0, 1])
+
+# Run the quantum annealing circuit
+probabilities = quantum_annealing_circuit(None)
+
+# Print the probabilities
+basis_states = ['00', '01', '10', '11']
+print("Final probabilities after quantum annealing:")
+for idx, prob in enumerate(probabilities):
+    print(f"Probability of state |{basis_states[idx]}>: {prob:.4f}")
+
+# Plotting the probabilities
+plt.bar(basis_states, probabilities)
+plt.xlabel('Basis States')
+plt.ylabel('Probability')
+plt.title('Final Probabilities After Quantum Annealing')
+plt.show()
+'''
+
+

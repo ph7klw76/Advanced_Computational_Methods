@@ -106,13 +106,15 @@ First, recall the Pauli matrices:
 - **Pauli-X ($\sigma_x$):**
   
 $$
-\sigma_x = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}
+\sigma_x = \begin{pmatrix} 0 & 1 \\
+1 & 0 \end{pmatrix}
 $$
   
 - **Pauli-Z ($\sigma_z$):**
   
 $$
-\sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}
+\sigma_z = \begin{pmatrix} 1 & 0 \\
+0 & -1 \end{pmatrix}
 $$
 
 ### Initial Hamiltonian ($H_0$)
@@ -195,50 +197,52 @@ $$
 ## Compute $\sigma_{1x}$ and $\sigma_{2x}$
 
 1. **For $\sigma_{1x}$**:
-   $$
-   \sigma_{1x} = \sigma_x \otimes I
-   $$
+   
+$$
+\sigma_{1x} = \sigma_x \otimes I
+$$
 
    Calculating $\sigma_x \otimes I$:
 
-   $$
-   \sigma_x = \begin{pmatrix} 0 & 1 \\
-    1 & 0 \end{pmatrix}, \quad I = \begin{pmatrix} 1 & 0 \\
-   0 & 1 \end{pmatrix}
-   $$
+$$
+\sigma_x = \begin{pmatrix} 0 & 1 \\
+1 & 0 \end{pmatrix}, \quad I = \begin{pmatrix} 1 & 0 \\
+0 & 1 \end{pmatrix}
+$$
 
    Therefore:
 
-   $$
-   \sigma_x \otimes I = \begin{pmatrix} 0 & 1 \\
-    1 & 0 \end{pmatrix} \otimes \begin{pmatrix} 1 & 0 \\
-    0 & 1 \end{pmatrix} = \begin{pmatrix} 0 & 0 & 1 & 0 \\
-    0 & 0 & 0 & 1 \\
-    1 & 0 & 0 & 0 \\
-    0 & 1 & 0 & 0 \end{pmatrix}
-   $$
+$$
+\sigma_x \otimes I = \begin{pmatrix} 0 & 1 \\
+1 & 0 \end{pmatrix} \otimes \begin{pmatrix} 1 & 0 \\
+0 & 1 \end{pmatrix} = \begin{pmatrix} 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \\
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \end{pmatrix}
+$$
 
 3. **For $\sigma_{2x}$**:
-   $$
-   \sigma_{2x} = I \otimes \sigma_x
-   $$
+   
+$$
+\sigma_{2x} = I \otimes \sigma_x
+$$
 
    Calculating $I \otimes \sigma_x$:
 
-   $$
-   I = \begin{pmatrix} 1 & 0 \\
-    0 & 1 \end{pmatrix}, \quad \sigma_x = \begin{pmatrix} 0 & 1 \\
-    1 & 0 \end{pmatrix}
-   $$
+$$
+I = \begin{pmatrix} 1 & 0 \\
+0 & 1 \end{pmatrix}, \quad \sigma_x = \begin{pmatrix} 0 & 1 \\
+1 & 0 \end{pmatrix}
+$$
 
    Therefore:
 
-   $$
-   I \otimes \sigma_x = \begin{pmatrix} 1 & 0 & 0 & 1 \\
-    0 & 1 & 0 & 0 \\
-    0 & 0 & 1 & 0 \\
-    0 & 0 & 0 & 1 \end{pmatrix}
-   $$
+$$
+I \otimes \sigma_x = \begin{pmatrix} 1 & 0 & 0 & 1 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 \end{pmatrix}
+$$
 
 ### Total $H_0$
 The initial Hamiltonian $H_0$ is given by:
@@ -261,24 +265,25 @@ $$
 ## Compute $\sigma_{1z} \sigma_{2z}$
 
 1. **For $\sigma_{1z} \sigma_{2z}$**:
-   $$
-   \sigma_{1z} \sigma_{2z} = (\sigma_z \otimes I)(I \otimes \sigma_z) = \sigma_z \otimes \sigma_z
-   $$
+   
+$$
+\sigma_{1z} \sigma_{2z} = (\sigma_z \otimes I)(I \otimes \sigma_z) = \sigma_z \otimes \sigma_z
+$$
 
    Calculate $\sigma_z \otimes \sigma_z$:
 
-   $$
-   \sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}
-   $$
+$$
+\sigma_z = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}
+$$
 
    Therefore:
 
-   $$
-   \sigma_z \otimes \sigma_z = \begin{pmatrix} 1 & 0 & 0 & -1 \\
-    0 & -1 & 0 & 0 \\
-    0 & 0 & -1 & 0 \\
-    -1 & 0 & 0 & 1 \end{pmatrix}
-   $$
+$$
+\sigma_z \otimes \sigma_z = \begin{pmatrix} 1 & 0 & 0 & -1 \\
+0 & -1 & 0 & 0 \\
+0 & 0 & -1 & 0 \\
+-1 & 0 & 0 & 1 \end{pmatrix}
+$$
 
 ### Total $H_P$
 
@@ -488,7 +493,7 @@ $$
 Since $H(t)$ changes with $t$, this method requires solving differential equations for $E_n(t)$ and $|\phi_n(t)\rangle$, which can be complex.
 
 
-'''python
+```python
 # Import necessary libraries
 import pennylane as qml
 from pennylane import numpy as np
@@ -556,6 +561,6 @@ plt.xlabel('Basis States')
 plt.ylabel('Probability')
 plt.title('Final Probabilities After Quantum Annealing')
 plt.show()
-'''
+```
 
 

@@ -27,7 +27,7 @@
 3.  [Adiabatic Quantum Computing and Quantum Annealing](Adiabatic_Quantum_Computing_Quantum_Annealing.md)
 4.  [QAOA: Quantum Approximate Optimization Algorithm](Quantum_Approximate_Optimization_Algorithm.md)
 5.  [GAS: Grover Adaptive Search](Grover_Adaptive_Search.md)
-6.  VQE: Variational Quantum Eigensolver
+6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md)
 
 ## To learn Quantum Machine Learning, follow the steps below:
 

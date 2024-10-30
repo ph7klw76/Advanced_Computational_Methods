@@ -129,4 +129,215 @@ Grover Adaptive Search has potential applications in several domains, particular
 - **Scheduling Problems**: Determining the optimal scheduling of jobs, projects, or operations to optimize time and resources.
 - **Supply Chain Management**: Optimizing logistics and supply chain networks to reduce costs and improve efficiency.
 
+# Grover Adaptive Search (GAS) in Applied Physics
+
+Grover Adaptive Search (GAS) is leveraged in applied physics to tackle complex optimization problems, especially those requiring optimal configurations, minimizing energy states, or identifying specific solutions in large datasets. Many problems in applied physics can be framed as finding an optimal solution within a large set of possibilities, where a traditional search would be prohibitively slow. GAS provides a more efficient quantum approach by iteratively refining the search criteria based on feedback from previous results, allowing for faster convergence on optimal or near-optimal solutions.
+
+### Applications of GAS in Applied Physics
+
+1. **Molecular and Materials Simulation**
+
+   - **Problem**: Finding the ground-state configuration of molecules, where the system's total energy is minimized, is critical for understanding molecular stability and designing materials with desired properties.
+   - **GAS Application**: By iteratively refining search bounds, GAS focuses on configurations with progressively lower energies. For example, when simulating a new material, GAS can help identify the atomic arrangement that yields the lowest energy, enabling predictions about stability, conductivity, or other properties.
+
+2. **Optimization of Physical Systems in Engineering**
+
+   - **Problem**: Engineering challenges often require finding optimal configurations to maximize efficiency or minimize waste, such as designing aerodynamic shapes, optimizing power distribution networks, or configuring cooling systems.
+   - **GAS Application**: GAS identifies optimal solutions by adjusting search parameters to narrow possibilities for the most efficient design, such as the optimal shape for an aircraft wing or the minimal-energy layout of a cooling network. This approach speeds up design iterations and enhances system efficiency.
+
+3. **Magnetic Material Configuration and Spin Glasses**
+
+   - **Problem**: In condensed matter physics, finding the lowest-energy configuration of spins in disordered magnetic systems, such as spin glasses, is crucial for understanding magnetic properties.
+   - **GAS Application**: GAS adaptively narrows down configurations to locate those with lower energy, facilitating the search for ground states. This adaptability helps avoid local minima, providing insights into the behavior of magnetic materials under varying conditions, which is valuable in quantum magnetism, superconductivity, and quantum computing materials.
+
+4. **Nuclear Physics and Particle Collision Optimization**
+
+   - **Problem**: Optimizing particle interaction pathways or collision parameters is essential for studying fundamental particle behavior or simulating nuclear reactor conditions.
+   - **GAS Application**: By iteratively refining search conditions, GAS identifies the most probable or efficient collision outcomes based on energy conservation and reaction thresholds. In particle accelerators, GAS helps in selecting configurations that maximize the probability of observing specific high-energy collisions, aiding in the discovery of new particles or interactions.
+
+5. **Quantum State Preparation and Quantum Control**
+
+   - **Problem**: Precise control over quantum states is vital for achieving specific states, such as entangled or ground states, which are foundational in quantum computing and quantum physics.
+   - **GAS Application**: GAS iteratively refines control parameters, such as magnetic fields or laser pulses, to increase the likelihood of achieving the desired state. This is essential in quantum computing for precise state preparation, ensuring robust qubit performance and facilitating the execution of quantum algorithms.
+
+
+```python
+import pennylane as qml
+from pennylane import numpy as np
+
+# Define the number of qubits representing the problem
+n_qubits = 4  # Number of qubits representing the configurations
+n_iterations = 1  # Number of Grover iterations per adaptive step
+
+# Define the energies of the configurations
+# For simplicity, we use the Hamming weight (number of ones) as the energy
+def energy(bitstring):
+    return sum(bitstring)
+
+# Generate all possible configurations and their energies
+from itertools import product
+configurations = list(product([0, 1], repeat=n_qubits))
+energies = [energy(config) for config in configurations]
+
+# Find the maximum energy (initial threshold)
+max_energy = max(energies)
+
+# Number of bits needed to represent energies
+n_energy_bits = int(np.ceil(np.log2(max_energy + 1)))
+
+# Total number of qubits (configuration qubits + energy qubits + one ancilla qubit)
+total_qubits = n_qubits + n_energy_bits + 1
+
+# Update the device
+dev = qml.device('default.qubit', wires=total_qubits, shots=1)
+
+# Update the oracle function to avoid deprecation warnings
+def oracle(threshold):
+    def oracle_circuit():
+        # Compute the energy and store it in the energy register
+        for i in range(n_energy_bits):
+            qml.PauliX(wires=n_qubits + i)  # Initialize energy qubits to |1>
+
+        # Simulate energy computation (this is a placeholder for the actual energy computation circuit)
+        for i in range(n_qubits):
+            qml.CNOT(wires=[i, n_qubits + i % n_energy_bits])
+
+        # Subtract threshold (this is a simplified representation)
+        binary_threshold = np.binary_repr(threshold, width=n_energy_bits)
+        for i, bit in enumerate(binary_threshold[::-1]):
+            if bit == '1':
+                qml.PauliX(wires=n_qubits + i)
+
+        # Apply multi-controlled Toffoli gate to flip the ancilla qubit if energy < threshold
+        qml.MultiControlledX(
+            wires=(*range(n_qubits, n_qubits + n_energy_bits), total_qubits - 1),
+            control_values=[0] * n_energy_bits
+        )
+
+        # Add threshold back (uncompute)
+        for i, bit in enumerate(binary_threshold[::-1]):
+            if bit == '1':
+                qml.PauliX(wires=n_qubits + i)
+
+        # Uncompute the energy computation
+        for i in reversed(range(n_qubits)):
+            qml.CNOT(wires=[i, n_qubits + i % n_energy_bits])
+
+        for i in range(n_energy_bits):
+            qml.PauliX(wires=n_qubits + i)  # Reset energy qubits to |0>
+    return oracle_circuit
+
+# Update the diffusion operator to avoid deprecation warnings
+def diffusion_operator():
+    # Apply Hadamard gates to configuration qubits
+    for i in range(n_qubits):
+        qml.Hadamard(wires=i)
+    # Apply Pauli-X gates to configuration qubits
+    for i in range(n_qubits):
+        qml.PauliX(wires=i)
+    # Apply multi-controlled Z gate
+    qml.MultiControlledX(
+        wires=(*range(n_qubits), total_qubits - 1),
+        control_values=[1] * n_qubits
+    )
+    # Apply Pauli-X gates to configuration qubits
+    for i in range(n_qubits):
+        qml.PauliX(wires=i)
+    # Apply Hadamard gates to configuration qubits
+    for i in range(n_qubits):
+        qml.Hadamard(wires=i)
+
+# Update the part where the sample is converted to a list
+def grover_adaptive_search():
+    threshold = max_energy + 1
+    best_solution = None
+    best_energy = threshold
+    while threshold > 0:
+        threshold -= 1
+        print(f"\nCurrent threshold: {threshold}")
+        # Check if there are solutions below the threshold
+        num_solutions = sum(1 for e in energies if e < threshold)
+        if num_solutions == 0:
+            continue
+        num_iterations = int(np.floor((np.pi / 4) * np.sqrt(2 ** n_qubits / num_solutions)))
+        num_iterations = max(1, num_iterations)
+        print(f"Number of Grover iterations: {num_iterations}")
+
+        @qml.qnode(dev)
+        def circuit():
+            # Initialize all qubits
+            for i in range(n_qubits):
+                qml.Hadamard(wires=i)
+            # Initialize ancilla qubit to |-> state
+            qml.Hadamard(wires=total_qubits - 1)
+            qml.PauliX(wires=total_qubits - 1)
+
+            # Apply Grover iterations
+            for _ in range(num_iterations):
+                # Oracle
+                oracle_circuit = oracle(threshold)
+                oracle_circuit()
+                # Diffusion operator
+                diffusion_operator()
+
+            # Measure the configuration qubits
+            return qml.sample(wires=range(n_qubits))
+
+        # Run the circuit
+        sample = circuit()
+        bitstring = sample.tolist()  # Convert NumPy array to list
+        sample_energy = energy(bitstring)
+        print(f"Sampled configuration: {bitstring}, Energy: {sample_energy}")
+        if sample_energy < best_energy:
+            best_energy = sample_energy
+            best_solution = bitstring
+            print(f"Found new best solution with energy {best_energy}: {best_solution}")
+        else:
+            print("No better solution found.")
+            break
+    print(f"\nOptimal solution found: {best_solution} with energy {best_energy}")
+
+# Run the Grover Adaptive Search
+grover_adaptive_search()
+```
+
+Detail explanation as below
+
+### Oracle Function
+The oracle function is a crucial part of Grover's algorithm. It is responsible for marking the states that meet a certain condition—in this case, states with energy below a given threshold.
+
+1. **Initialization of Energy Qubits**: The energy qubits are initialized to the state |1>. This is done to prepare them for the subsequent operations.
+2. **Energy Computation Simulation**: This step simulates the computation of the energy of the current state. In a real implementation, this would involve a series of quantum gates that calculate the energy based on the problem's specifics.
+3. **Threshold Subtraction**: The binary representation of the threshold is used to apply Pauli-X gates to the corresponding qubits. This effectively subtracts the threshold from the computed energy.
+4. **Multi-Controlled Toffoli Gate**: A multi-controlled Toffoli gate (also known as a multi-controlled X gate) is applied. This gate flips an ancilla qubit if the energy is below the threshold, marking the state.
+5. **Uncomputation**: The threshold is added back, and the energy computation is uncomputed to reset the energy qubits to their initial state. This ensures that the qubits are ready for the next iteration.
+
+### Diffusion Operator
+The diffusion operator is used to amplify the probability of the marked states, making them more likely to be measured.
+
+1. **Hadamard Gates**: Hadamard gates are applied to all configuration qubits to create a superposition of all possible states.
+2. **Pauli-X Gates**: Pauli-X gates are applied to invert the states of the qubits.
+3. **Multi-Controlled Z Gate**: A multi-controlled Z gate is applied to invert the phase of the |111...1> state. This is a crucial step in the diffusion process.
+4. **Pauli-X Gates**: Pauli-X gates are applied again to revert the inversion done earlier.
+5. **Hadamard Gates**: Hadamard gates are applied again to complete the diffusion operator. This step ensures that the marked states are amplified.
+
+### Grover Adaptive Search
+The Grover Adaptive Search algorithm iteratively reduces the threshold and applies Grover's algorithm to find the optimal solution.
+
+1. **Initialize Threshold**: The threshold is initialized to a value higher than the maximum possible energy. This ensures that all states are initially considered.
+2. **Iterate Over Thresholds**: The threshold is decremented in each iteration, progressively narrowing down the search space.
+3. **Check for Solutions**: The number of solutions below the current threshold is counted. If no solutions are found, the threshold is decremented further.
+4. **Calculate Grover Iterations**: The number of Grover iterations is calculated based on the number of solutions. This is determined using the formula involving the square root of the ratio of the total number of states to the number of solutions.
+5. **Define Quantum Circuit**: A quantum circuit is defined to implement the Grover iterations.
+6. **Initialize Qubits**: All qubits are initialized to the superposition state using Hadamard gates.
+7. **Apply Grover Iterations**: The oracle and diffusion operator are applied for the calculated number of iterations. This amplifies the probability of the marked states.
+8. **Measure Qubits**: The configuration qubits are measured to obtain a sample. This sample represents a potential solution.
+9. **Evaluate Sample**: The energy of the sampled configuration is evaluated. If the energy is lower than the best energy found so far, the best solution and energy are updated.
+10. **Print Results**: The optimal solution and its energy are printed at the end of the search.
+
+### Summary
+- **Oracle Function**: Marks states with energy below a threshold using multi-controlled Toffoli gates.
+- **Diffusion Operator**: Amplifies the probability of marked states using a series of quantum gates.
+- **Grover Adaptive Search**: Iteratively reduces the threshold and applies Grover's algorithm to find the optimal solution. It initializes qubits, applies Grover iterations, and measures the configuration qubits to find the best solution.
+
 

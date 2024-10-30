@@ -261,7 +261,7 @@ $$
 ### Parameter Optimization
 
 - **Visualization**: Plot $\langle C \rangle$ over a range of $\gamma$ and $\beta$.
-- **Optimal Parameters**: Find $(\gamma^*, \beta^*)$ that maximize $\langle C \rangle$.
+- **Optimal Parameters**: Find $\gamma\$*, $\beta$ * that maximize $\langle C \rangle$.
 
 ---
 

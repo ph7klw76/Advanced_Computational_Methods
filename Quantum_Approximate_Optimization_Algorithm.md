@@ -789,9 +789,9 @@ Spin glasses are disordered magnetic systems where the magnetic moments (spins) 
 
 - **Hamiltonian**: The energy of a spin glass can be modeled using the Ising Hamiltonian:
 
-  $$
-  H = - \sum_{\langle i, j \rangle} J_{ij} S_i S_j - \sum_i h_i S_i
-  $$
+$$
+H = - \sum_{\langle i, j \rangle} J_{ij} S_i S_j - \sum_i h_i S_i
+$$
 
   where:
   - $S_i \in \{-1, 1\}$ represents the spin at site $i$.

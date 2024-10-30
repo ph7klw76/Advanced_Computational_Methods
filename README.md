@@ -37,7 +37,7 @@
 4. The Best of Both Worlds: Hybrid Architectures
 5. Quantum Generative Adversarial Networks
 
-## To learn orther Quantum Computing Methods, follow the steps below
+## To learn other Quantum Computing Methods, follow the steps below
 1.  Variational Quantum Eigensolver VQE with Noise
 2.  Quantum Chemistry
 3.  Quantum Phase Estimation

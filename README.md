@@ -40,14 +40,12 @@
 5. Quantum Generative Adversarial Networks
 
 ## To learn other Quantum Computing Methods, follow the steps below
-1.  Variational Quantum Eigensolver VQE with Noise
-2.  Quantum Chemistry
-3.  Quantum Phase Estimation
-4.  Solving Linear Systems
-5.  Quantum Random Number Generator
-6.  Quantum Walks
-7.  Unification Framework for Quantum Algorithms
-8.  Dequantization 
+1.  Quantum Chemistry
+2.  Solving Linear Systems
+3.  Quantum Random Number Generator
+4.  Quantum Walks
+5.  Unification Framework for Quantum Algorithms
+6.  Dequantization 
 
 ## PennyLane Demostration 
 

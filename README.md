@@ -28,6 +28,8 @@
 4.  [QAOA: Quantum Approximate Optimization Algorithm](Quantum_Approximate_Optimization_Algorithm.md)
 5.  [GAS: Grover Adaptive Search](Grover_Adaptive_Search.md)
 6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md)
+7.  Quantum Phase Estimation
+8.  Quantum singular value transformation and block-encoding
 
 ## To learn Quantum Machine Learning, follow the steps below:
 

@@ -25,7 +25,7 @@
 1.  [Foundation of Quantum Computing](Foundation_QC.md)
 2.  [Working with Quadratic Unconstrained Binary Optimization](Quadratic_Unconstrained_Binary_Optimization.md)
 3.  [Adiabatic Quantum Computing and Quantum Annealing](Adiabatic_Quantum_Computing_Quantum_Annealing.md)
-4.  QAOA: Quantum Approximate Optimization Algorithm
+4.  [QAOA: Quantum Approximate Optimization Algorithm](Quantum_Approximate_Optimization_Algorithm.md)
 5.  GAS: Grover Adaptive Search
 6.  VQE: Variational Quantum Eigensolver
 

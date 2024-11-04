@@ -1,4 +1,4 @@
-# SQA7018
+# Advanced Computational Methods
 
 ## To learn the magic of non-linear regression in scipy, follow the steps below:
 1.  [Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)

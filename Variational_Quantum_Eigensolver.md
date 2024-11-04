@@ -266,12 +266,7 @@ The molecular Hamiltonian $\hat{H}$ describes the energy of the electrons in the
 
 The Hamiltonian for H₂ can be written as:
 
-$$
-
-\hat{H} = \sum_{pq} h_{pq} \, \hat{a}_p^\dagger \hat{a}_q + \frac{1}{2} \sum_{pqrs} h_{pqrs} \, \hat{a}_p^\dagger \hat{a}_q^\dagger \hat{a}_r \hat{a}_s
-
-$$
-
+![image](https://github.com/user-attachments/assets/cf1e381e-801c-4730-98db-949dac02ec0f)
 
 where $h_{pq}$ and $h_{pqrs}$ are one- and two-electron integrals, and $\hat{a}^\dagger$ and $\hat{a}$ are creation and annihilation operators, respectively.
 
@@ -298,6 +293,442 @@ def circuit(params, wires):
     qml.RZ(params[7], wires=2)
     qml.RZ(params[8], wires=3)
 ```
+# Preparing the Initial State with `BasisState`
+
+To prepare the initial state for the quantum circuit, we use the `BasisState` function.
+
+```python
+qml.BasisState(np.array([1, 1, 0, 0]), wires=wires)
+```
+
+This gate initializes the qubits to a specific computational basis state. In our case, we prepare the state $\vert 1100 \rangle$, where the first two qubits are in the $\vert 1 \rangle$ state (occupied orbitals), and the last two are in the $\vert 0 \rangle$ state (unoccupied orbitals).
+
+# Double Excitation with `DoubleExcitation`
+
+To apply a double excitation, we use the `DoubleExcitation` gate.
+
+```python
+qml.DoubleExcitation(params[0], wires=[0, 1, 2, 3])
+```
+
+The `DoubleExcitation` gate represents a double excitation from two occupied orbitals to two unoccupied orbitals. Mathematically, it implements the unitary operator:
+
+$$
+U_{\text{DE}}(\theta) = \exp \left( -i \theta \left( \hat{c}_2^\dagger \hat{c}_3^\dagger \hat{c}_0 \hat{c}_1 + \text{H.c.} \right) \right)
+$$
+
+where $\hat{c}^\dagger$ and $\hat{c}$ are fermionic creation and annihilation operators, and H.c. denotes the Hermitian conjugate.
+
+This gate allows us to explore configurations where two electrons are excited simultaneously, which is essential for capturing electron correlation in quantum chemistry.
+
+# Parameterized Single-Qubit Rotations with `RY` and `RZ`
+
+To add parameterized single-qubit rotations, we apply the `RY` and `RZ` gates as follows:
+
+```python
+qml.RY(params[1], wires=0)
+qml.RY(params[2], wires=1)
+qml.RY(params[3], wires=2)
+qml.RY(params[4], wires=3)
+# ...
+qml.RZ(params[5], wires=0)
+qml.RZ(params[6], wires=1)
+qml.RZ(params[7], wires=2)
+qml.RZ(params[8], wires=3)
+```
+
+The `RY` and `RZ` gates perform rotations around the Y and Z axes of the Bloch sphere, respectively. They are defined as:
+
+$$
+RY(\theta) = \exp \left( -i \frac{\theta}{2} Y \right), \quad RZ(\theta) = \exp \left( -i \frac{\theta}{2} Z \right)
+$$
+
+where $Y$ and $Z$ are the Pauli matrices.
+
+These gates introduce variational parameters that adjust the amplitudes and phases of the qubits, allowing the circuit to explore different quantum states within the Hilbert space.
+
+# Entanglement with `CNOT` Gates
+
+To introduce entanglement between qubits, we use the `CNOT` gate as follows:
+
+```python
+qml.CNOT(wires=[0, 1])
+qml.CNOT(wires=[2, 3])
+```
+
+The `CNOT` (Controlled-NOT) gates create entanglement between qubits, which is crucial for representing correlated electronic states. The `CNOT` gate flips the target qubit if the control qubit is in the $\vert 1 \rangle$ state.
+
+Mathematically, the `CNOT` gate is represented as:
+
+$$
+\text{CNOT}_{c \rightarrow t} = \vert 0 \rangle \langle 0 \vert_c \otimes I_t + \vert 1 \rangle \langle 1 \vert_c \otimes X_t
+$$
+
+where $c$ is the control qubit, $t$ is the target qubit, $I$ is the identity operator, and $X$ is the Pauli-X matrix.
+
+By applying `CNOT` gates, we entangle pairs of qubits, enabling the circuit to capture electron correlations more effectively.
+
+# Understanding Each Step of the Quantum Circuit for VQE on the Hydrogen Molecule
+
+Let's delve deeper into each step of the quantum circuit to understand why they are necessary and how they contribute to finding the ground state energy of the hydrogen molecule using the Variational Quantum Eigensolver (VQE).
+
+## 1. Preparing the Initial State with `BasisState`
+
+### What is the `BasisState`?
+
+The `BasisState` gate initializes the qubits to a specific computational basis state, represented by a binary string of zeros and ones. In quantum computing, qubits are typically initialized to the $\vert 0 \rangle$ state. However, for quantum chemistry simulations, we often need to represent specific electronic configurations corresponding to molecular orbitals being occupied or unoccupied by electrons.
+
+### Why is it Necessary?
+
+In the context of the H₂ molecule, we need to represent the reference electronic configuration, which serves as the starting point for our variational ansatz. This reference state corresponds to the **Hartree-Fock ground state**, where electrons occupy the lowest energy orbitals according to the Pauli exclusion principle.
+
+For H₂, considering a minimal basis set, we have:
+
+- **Occupied Orbitals:** The lowest energy orbitals where the electrons reside.
+- **Unoccupied (Virtual) Orbitals:** Higher energy orbitals that are empty in the Hartree-Fock ground state but can be occupied in excited configurations.
+
+By preparing the initial state $\vert 1100 \rangle$, we represent the two electrons of H₂ occupying the first two orbitals (qubits 0 and 1), with the remaining orbitals (qubits 2 and 3) unoccupied.
+
+### How is it Used in the Code?
+
+```python
+qml.BasisState(np.array([1, 1, 0, 0]), wires=wires)
+```
+
+`np.array([1, 1, 0, 0])`: This array specifies the state of each qubit.
+
+- **Qubit 0:** $\vert 1 \rangle$ (occupied)
+- **Qubit 1:** $\vert 1 \rangle$ (occupied)
+- **Qubit 2:** $\vert 0 \rangle$ (unoccupied)
+- **Qubit 3:** $\vert 0 \rangle$ (unoccupied)
+
+`wires=wires`: Applies the `BasisState` to all qubits in the device.
+
+### Rationale
+
+Starting from the Hartree-Fock state ensures that our variational algorithm begins from a physically meaningful configuration. It represents the best single-particle approximation to the ground state and provides a solid foundation for introducing electron correlation through subsequent gates.
+
+## 2. Double Excitation with `DoubleExcitation`
+
+### What is the `DoubleExcitation` Gate?
+
+The `DoubleExcitation` gate simulates the excitation of two electrons from occupied orbitals to unoccupied orbitals simultaneously. It is a parameterized gate that depends on an angle $\theta$, which controls the amplitude of the excitation.
+
+Mathematically, it implements the unitary operator:
+
+$$
+U_{\text{DE}}(\theta) = \exp \left( -i \theta \left( \hat{T} + \hat{T}^\dagger \right) \right)
+$$
+
+where $\hat{T}$ is the double excitation operator:
+
+$$
+\hat{T} = \hat{a}_a^\dagger \hat{a}_b^\dagger \hat{a}_j \hat{a}_i
+$$
+
+with $\hat{a}^\dagger$ and $\hat{a}$ being the fermionic creation and annihilation operators.
+
+### Why is it Necessary?
+
+Electron correlation is a critical aspect of accurately modeling molecular systems. The Hartree-Fock method neglects electron correlation by considering only a single electronic configuration. To capture the effects of electron correlation, we need to consider excited configurations where electrons are promoted to higher energy orbitals.
+
+The double excitation operator allows us to include configurations where two electrons are excited simultaneously. This is essential for capturing correlated electron movements that cannot be represented by single excitations alone.
+
+### How is it Used in the Code?
+
+```python
+qml.DoubleExcitation(params[0], wires=[0, 1, 2, 3])
+```
+
+`params[0]`: The variational parameter $\theta$ controlling the amplitude of the double excitation.
+
+`wires=[0, 1, 2, 3]`: Specifies the qubits involved in the excitation.
+- **Qubits 0 and 1:** Occupied orbitals (initially in state $\vert 1 \rangle$)
+- **Qubits 2 and 3:** Unoccupied orbitals (initially in state $\vert 0 \rangle$)
+
+### Rationale
+
+Including the `DoubleExcitation` gate in our ansatz allows the circuit to explore configurations where both electrons are simultaneously excited to unoccupied orbitals. This provides a more expressive ansatz capable of approximating the true ground state, which may include contributions from these doubly excited states.
+
+By adjusting the parameter $\theta$, the optimizer can control the extent to which these configurations contribute to the trial wavefunction, thus minimizing the energy.
+
+## 3. Parameterized Single-Qubit Rotations with `RY` and `RZ`
+
+### What are the `RY` and `RZ` Gates?
+
+- **`RY(θ)` Gate:** Performs a rotation around the Y-axis of the Bloch sphere by an angle $\theta$.
+  
+  $$
+  R_Y(\theta) = \begin{bmatrix} \cos \left( \frac{\theta}{2} \right) & -\sin \left( \frac{\theta}{2} \right) \\ \sin \left( \frac{\theta}{2} \right) & \cos \left( \frac{\theta}{2} \right) \end{bmatrix}
+  $$
+
+- **`RZ(θ)` Gate:** Performs a rotation around the Z-axis of the Bloch sphere by an angle $\theta$.
+  
+  $$
+  R_Z(\theta) = \begin{bmatrix} e^{-i \theta / 2} & 0 \\ 0 & e^{i \theta / 2} \end{bmatrix}
+  $$
+
+### Why are They Necessary?
+
+Parameterized single-qubit rotations allow us to adjust the amplitudes and phases of the qubit states in a continuous manner. They introduce additional variational parameters that the optimizer can tune to minimize the energy.
+
+- **Amplitude Control:** `RY` gates can change the probability amplitudes of the qubit being in $\vert 0 \rangle$ or $\vert 1 \rangle$, effectively creating superpositions.
+- **Phase Control:** `RZ` gates adjust the relative phase between the basis states $\vert 0 \rangle$ and $\vert 1 \rangle$, which is crucial for interference effects in quantum algorithms.
+
+### How are They Used in the Code?
+
+```python
+# RY rotations
+qml.RY(params[1], wires=0)
+qml.RY(params[2], wires=1)
+qml.RY(params[3], wires=2)
+qml.RY(params[4], wires=3)
+
+# RZ rotations
+qml.RZ(params[5], wires=0)
+qml.RZ(params[6], wires=1)
+qml.RZ(params[7], wires=2)
+qml.RZ(params[8], wires=3)
+```
+
+- **`params[1]` to `params[8]`:** The variational parameters for the rotations.
+- **Applied to Each Qubit Individually:** This allows independent control over each qubit's state.
+
+### Rationale
+
+By applying parameterized rotations to each qubit, we enrich the ansatz, enabling it to represent a wider variety of quantum states. This flexibility is essential for the optimizer to find the parameter set that yields the lowest energy.
+
+- **Adjusting Superpositions:** The `RY` gates create superpositions between the $\vert 0 \rangle$ and $\vert 1 \rangle$ states, which can represent partial occupancies of orbitals in the quantum chemistry context.
+- **Controlling Phases:** The `RZ` gates adjust the phases, allowing the ansatz to construct states with the correct interference patterns necessary for representing the ground state.
+
+The combination of amplitude and phase adjustments is crucial for accurately modeling the quantum state of the electrons in the molecule.
+
+## 4. Entanglement with `CNOT` Gates
+
+### What are `CNOT` Gates?
+
+The `CNOT` (Controlled-NOT) gate is a two-qubit gate that flips the state of the target qubit if the control qubit is in the $\vert 1 \rangle$ state.
+
+Mathematically, the `CNOT` gate is represented by the following matrix:
+
+$$
+\text{CNOT} = \begin{bmatrix} 1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & 1 & 0 \end{bmatrix}
+$$
+
+### Why are They Necessary?
+
+Entanglement is a fundamental feature of quantum mechanics that allows qubits to exhibit correlations that cannot be explained classically. In quantum chemistry, electron correlation is a crucial aspect, and entanglement between qubits is necessary to model these correlations accurately.
+
+- **Modeling Electron Correlation:** Electrons are indistinguishable particles that interact with each other. To capture these interactions, our quantum states need to exhibit entanglement.
+- **Enhancing Ansätze Expressibility:** Entangling gates increase the expressiveness of the ansatz, enabling it to represent more complex quantum states that cannot be factorized into single-qubit states.
+
+### How are They Used in the Code?
+
+```python
+qml.CNOT(wires=[0, 1])
+qml.CNOT(wires=[2, 3])
+```
+- `wires=[0, 1]`: The first `CNOT` gate uses qubit 0 as the control and qubit 1 as the target.
+- `wires=[2, 3]`: The second `CNOT` gate uses qubit 2 as the control and qubit 3 as the target.
+
+### Rationale
+
+By applying `CNOT` gates between specific pairs of qubits, we introduce entanglement that captures the correlation between electrons in different orbitals.
+
+- **Qubits 0 and 1:** Representing occupied orbitals, entangling them can model correlation effects between electrons occupying these orbitals.
+- **Qubits 2 and 3:** Representing unoccupied orbitals, entangling them with each other (and indirectly with occupied orbitals through subsequent gates) allows the ansatz to capture the possibility of simultaneous excitations and their correlations.
+
+**Note:** The choice of which qubits to entangle depends on the specific electron correlation effects we aim to model. In this case, entangling qubits within the occupied and unoccupied subspaces adds necessary correlations without overly complicating the circuit.
+
+## Putting It All Together
+
+### The Overall Circuit
+
+1. **Initialize the Hartree-Fock State:** Start from a meaningful reference state that represents the ground state in the absence of electron correlation.
+2. **Introduce Double Excitations:** Allow the ansatz to include configurations where electrons are excited to higher orbitals, which is essential for capturing electron correlation.
+3. **Parameterized Rotations:** Provide the optimizer with adjustable parameters to fine-tune the quantum state, enhancing the ansatz's flexibility to approximate the true ground state.
+4. **Create Entanglement:** Introduce correlations between qubits to model electron-electron interactions accurately.
+
+### The Necessity of Each Step
+
+- **Initialization:** Without starting from a reasonable reference state, the optimizer might explore irrelevant parts of the Hilbert space, making convergence slower or leading to incorrect results.
+- **Double Excitations:** Single excitations might not be sufficient to capture all the necessary electron correlations, especially in molecules where simultaneous electron movements are significant.
+- **Parameterized Rotations:** Fixed gates without parameters limit the ansatz to a discrete set of states. Parameterization allows continuous exploration of the state space.
+- **Entanglement:** Without entanglement, the ansatz would be restricted to separable states, which cannot represent the correlated nature of the true ground state.
+
+## Optimization and Variational Principle
+
+The VQE algorithm leverages the variational principle, which states that the expectation value of the Hamiltonian with any trial wavefunction $\vert \psi(\theta) \rangle$ is an upper bound to the ground state energy $E_0$:
+
+$$
+E(\theta) = \langle \psi(\theta) \vert \hat{H} \vert \psi(\theta) \rangle \geq E_0
+$$
+
+By constructing an ansatz with sufficient expressibility (through the steps outlined above), we enable the optimizer to adjust the parameters $\theta$ to find the lowest possible energy, thus approximating the ground state.
+
+## Defining the Cost Function
+
+The cost function calculates the expectation value of the Hamiltonian with respect to the quantum state prepared by the circuit.
+
+```python
+# Define the cost function (expectation value of the Hamiltonian)
+@qml.qnode(dev)
+def cost_fn(params):
+    circuit(params, wires=range(qubits))
+    return qml.expval(H)
+```
+
+This function uses the `qml.qnode` decorator to convert it into a quantum node that can be executed on a quantum device (simulator in this case). The expectation value $\langle \psi(\theta) \vert \hat{H} \vert \psi(\theta) \rangle$ is then minimized by adjusting the parameters $\theta$.
+
+## Optimization Process
+
+We use the Nesterov Momentum Optimizer to minimize the cost function.
+
+```python
+from pennylane.optimize import NesterovMomentumOptimizer
+import matplotlib.pyplot as plt
+
+# Initialize parameters
+params = np.random.random(9)  # 9 parameters corresponding to the gates in the circuit
+
+# Choose an optimizer
+opt = NesterovMomentumOptimizer(stepsize=0.4)
+
+# Run the optimization
+max_iterations = 100
+conv_tol = 1e-06
+energy_values = []
+
+for n in range(max_iterations):
+    params, prev_energy = opt.step_and_cost(cost_fn, params)
+    energy = cost_fn(params)
+    energy_values.append(energy)
+
+    if np.abs(energy - prev_energy) < conv_tol:
+        break
+
+    print(f"Iteration: {n}, Energy: {energy:.8f} Ha")
+```
+
+## Understanding the Optimizer
+
+The Nesterov Momentum Optimizer is a gradient-based optimization algorithm that accelerates convergence by incorporating momentum from previous steps. It updates the parameters according to:
+
+$$
+\theta_{n+1} = \theta_n - \eta \nabla_{\theta} E(\theta_n) + \gamma (\theta_n - \theta_{n-1})
+$$
+
+where:
+- $\eta$ is the learning rate (stepsize),
+- $\gamma$ is the momentum coefficient,
+- $\nabla_{\theta} E(\theta_n)$ is the gradient of the energy with respect to the parameters.
+
+This combination of gradient descent and momentum helps the optimizer avoid local minima and converge more quickly toward the global minimum.
+
+## Results and Discussion
+
+After running the optimization, we obtain the optimized parameters and the estimated ground state energy.
+
+The optimized parameters represent the values of $\theta$ that minimize the expectation value of the Hamiltonian, effectively approximating the ground state of the hydrogen molecule.
+
+The final energy value represents our best estimate for the ground state energy, based on the variational principle. This energy serves as an upper bound to the true ground state energy of the system and can be compared to the exact value for validation.
+
+The energy convergence plot shows how the energy decreases over iterations, approaching the ground state energy. The optimized parameters define the quantum state that best approximates the ground state of H₂ within the chosen ansatz.
+
+### Accuracy of the VQE
+
+The accuracy of the VQE depends on the expressibility of the ansatz. Our circuit includes a `DoubleExcitation` gate and parameterized single-qubit rotations, which allow us to capture essential electron correlations. These components enhance the ansatz’s ability to approximate the true ground state by:
+
+- **Capturing Electron Correlations**: The `DoubleExcitation` gate enables the circuit to model configurations where electrons are simultaneously excited, which is important for accurate electron correlation.
+- **Adjusting Amplitudes and Phases**: The parameterized single-qubit `RY` and `RZ` rotations add flexibility, allowing the circuit to explore different quantum states and better approximate the ground state.
+
+This combination provides an expressive ansatz that balances computational feasibility with accuracy in estimating the ground state energy of the hydrogen molecule.
+
+Full code
+```python
+import pennylane as qml
+from pennylane import numpy as np
+from pennylane.optimize import NesterovMomentumOptimizer
+import matplotlib.pyplot as plt
+
+# Define the molecular structure and Hamiltonian for H₂
+symbols = ["H", "H"]
+coordinates = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.74])  # Bond length of 0.74 Å
+
+# Create the molecule
+H2 = qml.qchem.Molecule(symbols, coordinates)
+
+# Generate the Hamiltonian
+H, qubits = qml.qchem.molecular_hamiltonian(symbols, coordinates)
+
+# Initialize a quantum device
+dev = qml.device("default.qubit", wires=qubits)
+
+# Define a more complex quantum circuit with additional parameterized gates
+def circuit(params, wires):
+    qml.BasisState(np.array([1, 1, 0, 0]), wires=wires)
+    qml.DoubleExcitation(params[0], wires=[0, 1, 2, 3])
+    qml.RY(params[1], wires=0)
+    qml.RY(params[2], wires=1)
+    qml.RY(params[3], wires=2)
+    qml.RY(params[4], wires=3)
+    qml.CNOT(wires=[0, 1])
+    qml.CNOT(wires=[2, 3])
+    qml.RZ(params[5], wires=0)
+    qml.RZ(params[6], wires=1)
+    qml.RZ(params[7], wires=2)
+    qml.RZ(params[8], wires=3)
+
+# Define the cost function (expectation value of the Hamiltonian)
+@qml.qnode(dev)
+def cost_fn(params):
+    circuit(params, wires=range(qubits))
+    return qml.expval(H)
+
+# Initialize parameters
+params = np.random.random(9)  # Updated to match the number of parameters in the circuit
+
+# Choose an optimizer
+opt = NesterovMomentumOptimizer(stepsize=0.4)
+
+# Run the optimization
+max_iterations = 100
+conv_tol = 1e-06
+energy_values = []
+
+for n in range(max_iterations):
+    params, prev_energy = opt.step_and_cost(cost_fn, params)
+    energy = cost_fn(params)
+    energy_values.append(energy)
+
+    if np.abs(energy - prev_energy) < conv_tol:
+        break
+
+    print(f"Iteration: {n}, Energy: {energy:.8f} Ha")
+
+# Output the results
+print(f"\nOptimal parameters: {params}")
+print(f"Ground state energy: {energy:.8f} Ha")
+
+# Plot the energy convergence
+plt.plot(energy_values, label="Energy")
+plt.xlabel("Iteration")
+plt.ylabel("Energy (Ha)")
+plt.title("VQE Energy Convergence")
+plt.legend()
+plt.show()
+```
+
+
+
+
+
+
+
+
 
 
 

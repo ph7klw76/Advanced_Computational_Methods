@@ -467,3 +467,5 @@ b = torch.nn.Parameter(torch.ones(1, requires_grad=True))
 optimizer = torch.optim.Adam(list(pinn.parameters()) + [a, b], lr=1e-3)
 ```
 The full code and output of the code can be found at
+[View the Notebook](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/Physics-informed%20neural%20networks.ipynb)
+

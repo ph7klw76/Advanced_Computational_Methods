@@ -469,6 +469,9 @@ optimizer = torch.optim.Adam(list(pinn.parameters()) + [a, b], lr=1e-3)
 
 ![image](https://github.com/user-attachments/assets/48bc77a5-d36f-4ff4-9b45-a081eaef2153)
 
+![image](https://github.com/user-attachments/assets/db43c393-e0f2-4078-9b1a-27111c067b84)
+
+
 
 Full Code
 

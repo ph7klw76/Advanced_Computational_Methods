@@ -467,6 +467,8 @@ b = torch.nn.Parameter(torch.ones(1, requires_grad=True))
 optimizer = torch.optim.Adam(list(pinn.parameters()) + [a, b], lr=1e-3)
 ```
 
+![image](https://github.com/user-attachments/assets/48bc77a5-d36f-4ff4-9b45-a081eaef2153)
+
 
 Full Code
 

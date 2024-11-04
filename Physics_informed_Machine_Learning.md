@@ -470,7 +470,5 @@ The full code and output of the code can be found at
 [View the Notebook](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/Physics-informed%20neural%20networks.ipynb)
 
 
-[View Interactive Notebook on nbviewer](https://nbviewer.jupyter.org/urls/raw.githubusercontent.com/ph7klw76/Advanced_Computational_Methods/refs/heads/main/Physics-informed%20neural%20networks.ipynb)
-
 
 

@@ -647,6 +647,9 @@ The accuracy of the VQE depends on the expressibility of the ansatz. Our circuit
 
 This combination provides an expressive ansatz that balances computational feasibility with accuracy in estimating the ground state energy of the hydrogen molecule.
 
+
+![image](https://github.com/user-attachments/assets/ec888766-7ffd-4d74-b77c-2f417a55a546)
+
 Full code
 ```python
 import pennylane as qml

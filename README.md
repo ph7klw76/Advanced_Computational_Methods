@@ -19,7 +19,7 @@
 2. [k-Nearest_Neighbors](k-Nearest_Neighbors.md) (Supervised learning)
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning)
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both)
-5. Physics informed Machine Learning
+5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md)
 
 ## To learn Quantum Optimization, follow the steps below:
 1.  [Foundation of Quantum Computing](Foundation_QC.md)

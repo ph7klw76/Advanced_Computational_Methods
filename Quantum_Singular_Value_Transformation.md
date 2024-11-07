@@ -281,3 +281,138 @@ Quantum Singular Value Transformation (QSVT) is a unifying framework that extend
 Through a detailed mathematical derivation, we've seen how QSVT constructs a unitary transformation that applies a desired polynomial to the singular values of a block-encoded matrix. The example of quantum matrix inversion illustrates the practical significance of QSVT in solving linear systems efficiently on a quantum computer.
 
 Understanding QSVT requires a solid grasp of linear algebra, quantum mechanics, and polynomial approximations. As quantum computing continues to evolve, frameworks like QSVT will play a crucial role in unlocking new computational possibilities.
+
+Full Python code:
+
+```python
+import pennylane as qml
+from pennylane import numpy as np
+
+# Define the Hamiltonian for a simple material (e.g., H2 molecule)
+H = np.array([[0.5, 0.1], [0.1, -0.5]])
+
+# Number of qubits for the system and ancilla qubits for block-encoding
+n_system_qubits = 1
+n_ancilla_qubits = 1
+
+# Initialize the quantum device
+dev = qml.device("default.qubit", wires=n_system_qubits + n_ancilla_qubits)
+
+# Define the unitary operator for block-encoding
+def block_encode(H):
+    # Create a block-encoded unitary matrix
+    I = np.eye(2)
+    zero_pad = np.zeros_like(H)
+    U = np.block([[H, zero_pad], [zero_pad, I]])
+    return U
+
+# Define the Quantum Singular Value Transformation circuit
+def qsvt_circuit():
+    # Apply Hadamard gate to the ancilla qubit
+    qml.Hadamard(wires=0)
+    
+    # Apply the block-encoded unitary
+    U = block_encode(H)
+    qml.QubitUnitary(U, wires=[0, 1])
+    
+    # Apply another Hadamard gate to the ancilla qubit
+    qml.Hadamard(wires=0)
+
+# Define the QNode
+@qml.qnode(dev)
+def qsvt():
+    qsvt_circuit()
+    return qml.expval(qml.PauliZ(0))
+
+# Run the QSVT algorithm
+result = qsvt()
+
+print(f"Result of QSVT: {result}")
+
+# Plot the result
+import matplotlib.pyplot as plt
+
+plt.bar([0, 1], [result, 1 - result])
+plt.xlabel("State")
+plt.ylabel("Probability")
+plt.title("Result of QSVT")
+plt.show()
+```
+
+### Quantum Device Initialization
+
+```python
+n_system_qubits = 1
+n_ancilla_qubits = 1
+dev = qml.device("default.qubit", wires=n_system_qubits + n_ancilla_qubits)
+```
+A quantum device is initialized with two qubits: one for the system and one ancillary qubit used for block-encoding.
+The default.qubit device simulates a quantum circuit using a statevector approach.
+
+### Defining the Block-Encoding Unitary
+
+```python
+def block_encode(H):
+    # Create a block-encoded unitary matrix
+    I = np.eye(2)
+    zero_pad = np.zeros_like(H)
+    U = np.block([[H, zero_pad], [zero_pad, I]])
+    return U
+```
+
+This function constructs a block-encoded unitary matrix $U$ from the Hamiltonian $H$. The block-encoding embeds the matrix $H$ into the top-left corner of a larger unitary matrix $U$, while padding the remaining elements with zeros and an identity matrix:
+
+$$
+U = 
+\begin{bmatrix}
+H & 0 \\
+0 & I
+\end{bmatrix},
+$$
+
+where $I$ is the identity matrix of the same dimension as $H$ and $0$ represents zero matrices of appropriate size. This is done to ensure $U$ is a unitary matrix.
+
+### Defining the Quantum Singular Value Transformation (QSVT) Circuit
+
+```python
+def qsvt_circuit():
+    # Apply Hadamard gate to the ancilla qubit
+    qml.Hadamard(wires=0)
+    
+    # Apply the block-encoded unitary
+    U = block_encode(H)
+    qml.QubitUnitary(U, wires=[0, 1])
+    
+    # Apply another Hadamard gate to the ancilla qubit
+    qml.Hadamard(wires=0)
+```
+- **Hadamard Gate**: A Hadamard gate is applied to the ancilla qubit (wire 0) to create a superposition state.
+
+- **Block-Encoding Unitary**: The block-encoded unitary matrix $U$ is applied to both the system and ancilla qubits using the `qml.QubitUnitary` function. This operation represents a transformation based on the Hamiltonian $H$.
+
+- **Second Hadamard Gate**: Another Hadamard gate is applied to the ancilla qubit, essentially performing an interference operation that helps extract information about the transformed singular values of $H$.
+
+### Defining and Running the QNode
+
+```python
+@qml.qnode(dev)
+def qsvt():
+    qsvt_circuit()
+    return qml.expval(qml.PauliZ(0))
+```
+
+A Quantum Node (QNode) is defined that executes the `qsvt_circuit` on the initialized device. The expectation value of the Pauli-Z operator on the ancilla qubit (wire 0) is measured and returned. This expectation value provides information about the transformation performed by the QSVT circuit.
+
+### Explanation of the Purpose and Behavior of the Code
+
+- **Block-Encoding**: The code constructs a block-encoding of the Hamiltonian $H$ into a unitary matrix $U$. This embedding allows for performing operations on $H$ using quantum gates.
+
+- **QSVT Circuit**: The circuit applies a series of quantum gates that encode the Hamiltonian's information into the quantum state, perform transformations, and then extract useful information by measuring the expectation value.
+
+- **Result Interpretation**: The final measurement and expectation value capture information about the transformed singular values of $H$. This can be useful for tasks such as determining properties of the matrix, quantum simulations, or more complex operations involving singular value transformations.
+
+This code demonstrates the application of QSVT and block-encoding techniques to a simple matrix (Hamiltonian), illustrating how these tools can be used to perform transformations and extract information about matrix properties on quantum hardware.
+
+
+
+

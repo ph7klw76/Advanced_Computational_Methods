@@ -68,7 +68,8 @@ This guide provides structured pathways for mastering advanced topics in scienti
 4.  Heaps
 5.  Binary Trees and AVL Trees 
 6.  Recursion
-7.  Spatial Data Structures 
+7.  Spatial Data Structures
+8.  Genetic algorithms
 
 ## Agent-Based Modeling (ABM)
 

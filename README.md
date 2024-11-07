@@ -24,6 +24,14 @@ This guide provides structured pathways for mastering advanced topics in scienti
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning) Combines multiple models to improve predictive performance; commonly used in supervised learning.
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
+6. Q-Learning
+7. Multi-Agent Reinforcement Learning
+8. Variational Autoencoders
+9. Generative Adversarial Networks
+10. Transfer Learning
+11. Deep Reinforcement Learning
+12. Active Learning
+13. Multi-Task Learning
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:
 1.  [Foundation of Quantum Computing](Foundation_QC.md) Basic principles and qubit operations form the groundwork.
@@ -34,14 +42,22 @@ This guide provides structured pathways for mastering advanced topics in scienti
 6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md) A method for finding eigenvalues in optimization and chemistry.
 7.  [Quantum Phase Estimation](Quantum_Phase_Estimation.md) Essential for understanding phase shifts, critical in quantum algorithms.
 8.  [Quantum singular value transformation and block-encoding](Quantum_Singular_Value_Transformation.md) Allows efficient transformations in data processing.
+9.  Quantum Monte Carlo Methods
+10.  Hamiltonian Simulation Algorithms
 
 ## To learn Quantum Machine Learning using PennyLane library, follow the steps below:
 
 1. [What is Quantum Machine Learning](Quantum_Machine_Learning.md) ?  Covers how quantum mechanics intersects with traditional machine learning.
 2. Quantum Support Vector Machines A quantum adaptation of SVMs for classification problems.
-3. Quantum Neural Networks Use quantum circuits to mimic neural networks, potentially boosting efficiency.
-4. The Best of Both Worlds: Hybrid Architectures  Combine classical and quantum resources for efficient problem-solving.
-5. Quantum Generative Adversarial Networks A quantum variation of GANs, used for generative tasks.
+3. Quantum Principal Component Analysis
+4. Quantum Neural Networks Use quantum circuits to mimic neural networks, potentially boosting efficiency.
+5. Quantum Generative Adversarial Network
+6. Quantum Reinforcement Learning
+7. The Best of Both Worlds: Hybrid Architectures  Combine classical and quantum resources for efficient problem-solving.
+8. Quantum Generative Adversarial Networks A quantum variation of GANs, used for generative tasks.
+9. Quantum Boltzmann Machines
+10. Hamiltonian Learning
+11. Quantum Circuit Learning
 
 ## To learn other Quantum Computing Methods, follow the steps below
 1.  Quantum Chemistry Uses quantum mechanics to simulate chemical reactions and molecular structures.
@@ -61,6 +77,15 @@ This guide provides structured pathways for mastering advanced topics in scienti
 ## Solutions of PennyLane Challenges 
 
 
+## Agent-Based Modeling (ABM)
+1. Introduction to Agent-Based Modeling
+2. Agent-Based Modeling Frameworks (Mesa, NetLogo, Repast, AnyLogic)
+3. Machine learning techniques with ABM
+4. Hybrid models
+5. Multi-agent systems
+6. Evolutionary and adaptive agents
+
+
 ## Advanced Algorithms
 1.  Graphs 
 2.  Weighted Graphs  
@@ -70,15 +95,15 @@ This guide provides structured pathways for mastering advanced topics in scienti
 6.  Recursion
 7.  Spatial Data Structures
 8.  Genetic algorithms
+9.  Principal Component Analysis
+10. Finite Element Method
+11. Quantum Monte Carlo
+12. Graph Convolutional Networks (GCN)
+13. Particle Swarm Optimization
+14. Inverse Design Algorithms
+15. t-Distributed Stochastic Neighbor Embedding
+    
 
-## Agent-Based Modeling (ABM)
-
-1. Introduction to Agent-Based Modeling
-2. Agent-Based Modeling Frameworks (Mesa, NetLogo, Repast, AnyLogic)
-3. Machine learning techniques with ABM
-4. Hybrid models
-5. Multi-agent systems
-6. Evolutionary and adaptive agents
 
 ## Concurrency and Parallelism
 1. Introduction to Concurrency and Parallelism

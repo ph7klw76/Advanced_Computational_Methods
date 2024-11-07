@@ -70,6 +70,14 @@ This guide provides structured pathways for mastering advanced topics in scienti
 6.  Recursion
 7.  Spatial Data Structures 
 
+## Agent-Based Modeling (ABM)
+
+1. Introduction to Agent-Based Modeling
+2. Agent-Based Modeling Frameworks (Mesa, NetLogo, Repast, AnyLogic)
+3. Machine learning techniques with ABM
+4. Hybrid models
+5. Multi-agent systems
+6. Evolutionary and adaptive agents
 
 ## Concurrency and Parallelism
 1. Introduction to Concurrency and Parallelism

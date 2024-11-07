@@ -195,7 +195,7 @@ $$
     L_{\text{Data}}(\theta) = \frac{1}{N_d} \sum_{i=1}^{N_d} \left| u_\theta(x_i) - u_{\text{obs}}(x_i) \right|^2,
 $$
 
-    where $\{(x_i, u_{\text{obs}}(x_i))\}_{i=1}^{N_d}$ are observed data points.
+where $\{(x_i, u_{\text{obs}}(x_i))\}_{i=1}^{N_d}$ are observed data points.
 
 4. **Total Loss Function**:
 
@@ -203,7 +203,7 @@ $$
     L(\theta, \lambda) = L_{\text{PDE}}(\theta, \lambda) + \lambda_1 L_{\text{BC}}(\theta) + \lambda_2 L_{\text{Data}}(\theta),
 $$
 
-    with $\lambda_1$ and $\lambda_2$ as weighting factors.
+with $\lambda_1$ and $\lambda_2$ as weighting factors.
 
 ### Optimization Objective
 

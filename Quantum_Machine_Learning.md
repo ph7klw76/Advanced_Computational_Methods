@@ -15,8 +15,11 @@ $$
 
 where $\alpha, \beta \in \mathbb{C}$ and $\vert \alpha \vert^2 + \vert \beta \vert^2 = 1$. Here:
 
-- $\vert 0 \rangle = \begin{bmatrix} 1 \\ 0 \end{bmatrix}$ and $\vert 1 \rangle = \begin{bmatrix} 0 \\ 1 \end{bmatrix}$ are computational basis states.
-- $\alpha$ and $\beta$ represent probability amplitudes, and their squared magnitudes correspond to the probabilities of measuring $\vert 0 \rangle$ or $\vert 1 \rangle$.
+$\vert 0 \rangle = \begin{bmatrix} 1 \\
+0 \end{bmatrix}$ and $\vert 1 \rangle = \begin{bmatrix} 0 \\
+1 \end{bmatrix}$ are computational basis states.
+$\alpha$ and $\beta$ represent probability amplitudes, and their squared magnitudes correspond to the probabilities of measuring $\vert 0 \rangle$ or $\vert 1 \rangle$.
+
 
 ### 1.2 Quantum Gates and Unitary Transformations
 Quantum gates operate on qubits by applying unitary transformations, which preserve the norm of the quantum state. A unitary matrix $U$ satisfies:
@@ -30,19 +33,26 @@ where $U^{\dagger}$ is the conjugate transpose of $U$ and $I$ is the identity ma
 **Examples of Quantum Gates**:
 
 - **Pauli-X (NOT Gate)**:
-  $$
-  X = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}.
-  $$
+
+$$
+  X = \begin{bmatrix} 0 & 1 \\
+  1 & 0 \end{bmatrix}.
+$$
+
   It flips the state: $X \vert 0 \rangle = \vert 1 \rangle$ and $X \vert 1 \rangle = \vert 0 \rangle$.
 
 - **Hadamard Gate**:
-  $$
-  H = \frac{1}{\sqrt{2}} \begin{bmatrix} 1 & 1 \\ 1 & -1 \end{bmatrix}.
-  $$
-  The Hadamard gate creates superpositions:
-  $$
+- 
+$$
+  H = \frac{1}{\sqrt{2}} \begin{bmatrix} 1 & 1 \\
+   1 & -1 \end{bmatrix}.
+$$
+
+The Hadamard gate creates superpositions:
+
+$$
   H \vert 0 \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle + \vert 1 \rangle), \quad H \vert 1 \rangle = \frac{1}{\sqrt{2}} (\vert 0 \rangle - \vert 1 \rangle).
-  $$
+$$
 
 ### 1.3 Quantum Measurements
 Measurement collapses a quantum state into one of its basis states with a probability determined by the state's amplitudes. For a state $\vert \psi \rangle = \alpha \vert 0 \rangle + \beta \vert 1 \rangle$, the probability of measuring $\vert 0 \rangle$ is $\vert \alpha \vert^2$ and measuring $\vert 1 \rangle$ is $\vert \beta \vert^2$.

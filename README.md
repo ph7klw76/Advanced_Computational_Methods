@@ -25,7 +25,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
 
-## To learn Quantum Optimization, follow the steps below:
+## To learn Quantum Optimization using PennyLane library, follow the steps below:
 1.  [Foundation of Quantum Computing](Foundation_QC.md) Basic principles and qubit operations form the groundwork.
 2.  [Working with Quadratic Unconstrained Binary Optimization](Quadratic_Unconstrained_Binary_Optimization.md)  A formulation for optimization problems solvable by quantum computers.
 3.  [Adiabatic Quantum Computing and Quantum Annealing](Adiabatic_Quantum_Computing_Quantum_Annealing.md) Techniques for optimization problems, using gradual transitions or energy minimization.
@@ -35,7 +35,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 7.  [Quantum Phase Estimation](Quantum_Phase_Estimation.md) Essential for understanding phase shifts, critical in quantum algorithms.
 8.  [Quantum singular value transformation and block-encoding](Quantum_Singular_Value_Transformation.md) Allows efficient transformations in data processing.
 
-## To learn Quantum Machine Learning, follow the steps below:
+## To learn Quantum Machine Learning using PennyLane library, follow the steps below:
 
 1. [What is Quantum Machine Learning](Quantum_Machine_Learning.md) ?  Covers how quantum mechanics intersects with traditional machine learning.
 2. Quantum Support Vector Machines A quantum adaptation of SVMs for classification problems.

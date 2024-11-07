@@ -33,7 +33,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 5.  [GAS: Grover Adaptive Search](Grover_Adaptive_Search.md) An enhanced search algorithm that speeds up finding optimal solutions.
 6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md) A method for finding eigenvalues in optimization and chemistry.
 7.  [Quantum Phase Estimation](Quantum_Phase_Estimation.md) Essential for understanding phase shifts, critical in quantum algorithms.
-8.  Quantum singular value transformation and block-encoding Allows efficient transformations in data processing.
+8.  [Quantum singular value transformation and block-encoding] (Quantum_Singular_Value_Transformation.md) Allows efficient transformations in data processing.
 
 ## To learn Quantum Machine Learning, follow the steps below:
 

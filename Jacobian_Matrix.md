@@ -186,7 +186,7 @@ def func(x):
     x1, x2 = x[0], x[1]
     return np.array([x1**2 + x2, np.sin(x1) + x2**2])
 
-# Example usage
+# Example
 x = np.array([1.0, 2.0])
 J_finite_diff = jacobian_finite_diff(func, x)
 print("Jacobian matrix computed using finite differences:")

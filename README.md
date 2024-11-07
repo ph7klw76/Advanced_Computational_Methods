@@ -37,7 +37,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn Quantum Machine Learning, follow the steps below:
 
-1. What is Quantum Machine Learning?  Covers how quantum mechanics intersects with traditional machine learning.
+1. [What is Quantum Machine Learning](Quantum_Machine_Learning.md) ?  Covers how quantum mechanics intersects with traditional machine learning.
 2. Quantum Support Vector Machines A quantum adaptation of SVMs for classification problems.
 3. Quantum Neural Networks Use quantum circuits to mimic neural networks, potentially boosting efficiency.
 4. The Best of Both Worlds: Hybrid Architectures  Combine classical and quantum resources for efficient problem-solving.

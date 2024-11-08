@@ -59,22 +59,11 @@ This guide provides structured pathways for mastering advanced topics in scienti
 10. Hamiltonian Learning
 11. Quantum Circuit Learning
 
-## To learn other Quantum Computing Methods using PennyLane library, follow the steps below
-1.  Quantum Chemistry Uses quantum mechanics to simulate chemical reactions and molecular structures.
-2.  Solving Linear Systems Quantum algorithms like HHL are used to solve linear systems faster than classical methods.
-3.  Quantum Random Number Generator Uses quantum properties to generate truly random numbers.
-4.  Quantum Walks Quantum analogs to classical random walks, used in algorithms and modeling.
-5.  Unification Framework for Quantum Algorithms Efforts to standardize quantum algorithms.
-6.  Dequantization   Techniques that approximate quantum advantages with classical algorithms.
+.
 
-## PennyLane Demostration 
+## PennyLane Tutorials  
 
 [Visit PennyLane Quantum Computing Demonstrations](https://pennylane.ai/qml/demonstrations/)
-
-## Solutions of PennyLane Codebook
-
-
-## Solutions of PennyLane Challenges 
 
 
 ## Agent-Based Modeling (ABM)

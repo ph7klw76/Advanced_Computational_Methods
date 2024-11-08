@@ -24,14 +24,10 @@ This guide provides structured pathways for mastering advanced topics in scienti
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning) Combines multiple models to improve predictive performance; commonly used in supervised learning.
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
-6. Q-Learning
-7. Deep Reinforcement Learning
-8. Variational Autoencoders
-9. Generative Adversarial Networks
-10. Transfer Learning
-11. Multi-Agent Reinforcement Learning
-12. Active Learning
-13. Multi-Task Learning
+6. Graph Neural Networks 
+7. Transfer Learning 
+8. Meta-Learning and Few-Shot Learning
+
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:
 1.  [Foundation of Quantum Computing](Foundation_QC.md) Basic principles and qubit operations form the groundwork.
@@ -42,7 +38,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md) A method for finding eigenvalues in optimization and chemistry.
 7.  [Quantum Phase Estimation](Quantum_Phase_Estimation.md) Essential for understanding phase shifts, critical in quantum algorithms.
 8.  [Quantum singular value transformation and block-encoding](Quantum_Singular_Value_Transformation.md) Allows efficient transformations in data processing.
-9.  Quantum Monte Carlo Methods
+9.  Quantum-Inspired Machine Learning Algorithms
 10. [Hamiltonian Simulation Algorithms](Hamiltonian_Simulation_Algorithms.md)
 
 ## To learn Quantum Machine Learning using PennyLane library, follow the steps below:
@@ -53,9 +49,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 4. Quantum Neural Networks 
 5. Quantum Random Forest
 6. Hamiltonian Learning
-7. Quantum Circuit Learning
 
-.
 
 ## PennyLane Tutorials  
 

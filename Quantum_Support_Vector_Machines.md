@@ -146,7 +146,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from joblib import Parallel, delayed
-import matplotlib.pyplot as plt
 
 # Download and load the Glass Identification dataset
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/glass/glass.data"
@@ -204,32 +203,12 @@ accuracy = accuracy_score(y_test, y_pred)
 print(f"Best parameters: {best_params}")
 print(f"Test accuracy: {accuracy}")
 
-# Visualize the decision boundary
-def plot_decision_boundary(X, y, model, kernel_matrix_func):
-    # Create a mesh grid
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
-                         np.arange(y_min, y_max, 0.02))
-    
-    # Flatten the grid to pass into the kernel function
-    grid_points = np.c_[xx.ravel(), yy.ravel()]
-    
-    # Compute the kernel matrix for the grid points
-    K_grid = kernel_matrix_func(grid_points, X_train)
-    
-    # Predict the class for each grid point
-    Z = model.predict(K_grid)
-    Z = Z.reshape(xx.shape)
-    
-    # Plot the decision boundary
-    plt.contourf(xx, yy, Z, alpha=0.8, cmap='coolwarm')
-    plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o', cmap='coolwarm')
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
-    plt.title("QSVM Decision Boundary")
-    plt.show()
+# Plot the results
+import matplotlib.pyplot as plt
 
-# Plot the decision boundary for the test set
-plot_decision_boundary(X_test, y_test, best_model, kernel_matrix)
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_pred, cmap='coolwarm', marker='o')
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.title("QSVM Classification Results")
+plt.show()
 ```

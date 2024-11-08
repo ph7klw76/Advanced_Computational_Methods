@@ -380,7 +380,7 @@ class BoltzmannMachine2D:
         
         return min_spins, min_energy, energies, spins_list, steps
 
-# Example Usage
+# Example
 if __name__ == "__main__":
     # Define the grid size (e.g., 5x5 grid) and temperature
     grid_size = 25

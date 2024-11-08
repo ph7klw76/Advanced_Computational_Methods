@@ -146,7 +146,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from joblib import Parallel, delayed
-import joblib
 import matplotlib.pyplot as plt
 
 # Download and load the Glass Identification dataset
@@ -198,19 +197,12 @@ grid_search.fit(K_train, y_train)
 best_params = grid_search.best_params_
 best_model = grid_search.best_estimator_
 
-# Save the trained model to a file
-model_filename = 'qsvm_model.joblib'
-joblib.dump(best_model, model_filename)
-print(f"Model saved to {model_filename}")
+# Evaluate the model
+y_pred = best_model.predict(K_test)
+accuracy = accuracy_score(y_test, y_pred)
 
-# Load the trained model from a file
-loaded_model = joblib.load(model_filename)
-print("Model loaded from", model_filename)
-
-# Evaluate the loaded model
-y_pred_loaded = loaded_model.predict(K_test)
-accuracy_loaded = accuracy_score(y_test, y_pred_loaded)
-print(f"Test accuracy of loaded model: {accuracy_loaded}")
+print(f"Best parameters: {best_params}")
+print(f"Test accuracy: {accuracy}")
 
 # Visualize the decision boundary
 def plot_decision_boundary(X, y, model, kernel_matrix_func):
@@ -239,8 +231,5 @@ def plot_decision_boundary(X, y, model, kernel_matrix_func):
     plt.show()
 
 # Plot the decision boundary for the test set
-plot_decision_boundary(X_test, y_test, loaded_model, kernel_matrix)
+plot_decision_boundary(X_test, y_test, best_model, kernel_matrix)
 ```
-
-The visualization of the decision boundary can take a long time due to the computation of the quantum kernel for each point in the mesh grid. This involves a large number of quantum circuit evaluations, which can be computationally expensive.
-

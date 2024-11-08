@@ -136,3 +136,70 @@ While QSVMs offer theoretical advantages, practical challenges remain:
 
 Quantum Support Vector Machines extend the power of classical SVMs by leveraging quantum computing to enhance feature mapping and kernel computation. By embedding data into high-dimensional quantum spaces, QSVMs can potentially achieve faster and more powerful classification, offering a glimpse into the potential advantages of quantum machine learning.
 
+
+```python
+import pennylane as qml
+from pennylane import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+
+
+# Download and load the Glass Identification dataset
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/glass/glass.data"
+column_names = ["Id", "RI", "Na", "Mg", "Al", "Si", "K", "Ca", "Ba", "Fe", "Type"]
+data = pd.read_csv(url, names=column_names, index_col="Id")
+
+# Preprocess the data
+X = data.drop(columns=["Type"]).values
+y = data["Type"].values
+y = np.where(y == 1, 1, -1)  # Convert labels to {-1, 1}
+
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define the quantum device
+n_qubits = X_train.shape[1]
+dev = qml.device("default.qubit", wires=n_qubits)
+
+# Define the quantum kernel
+@qml.qnode(dev)
+def quantum_kernel(x1, x2):
+    for i in range(n_qubits):
+        qml.Hadamard(wires=i)
+        qml.RZ(x1[i], wires=i)
+        qml.RZ(x2[i], wires=i)
+    qml.broadcast(qml.CNOT, wires=range(n_qubits), pattern="ring")
+    return qml.expval(qml.PauliZ(0))
+
+def kernel_matrix(X1, X2):
+    return np.array([[quantum_kernel(x1, x2) for x2 in X2] for x1 in X1])
+
+# Compute the kernel matrices
+K_train = kernel_matrix(X_train, X_train)
+K_test = kernel_matrix(X_test, X_train)
+
+# Train the QSVM
+svm = SVC(kernel='precomputed')
+svm.fit(K_train, y_train)
+
+# Evaluate the model
+y_pred = svm.predict(K_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+print(f"Test accuracy: {accuracy}")
+
+# Plot the results
+import matplotlib.pyplot as plt
+
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_pred, cmap='coolwarm', marker='o')
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.title("QSVM Classification Results")
+plt.show()
+```
+
+Note the above code can take a while. 

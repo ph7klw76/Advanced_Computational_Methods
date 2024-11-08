@@ -428,12 +428,14 @@ The Trotterized evolution alternates between applying the magnetic field and int
   `qml.RX(-2 * h * dt, wires=i)` applies an RX rotation around the x-axis to each qubit. This term corresponds to the evolution under the magnetic field component.
 
 - **Controlled Gates for Interaction Term:**
-  - **CNOT and RZ Combination:**  
-    This sequence simulates the evolution of the interaction term  
+  **CNOT and RZ Combination:**  
+    This sequence simulates the evolution of the interaction term
+
 $$
-  -J \sigma_z \otimes \sigma_z.
+J \sigma_z \otimes \sigma_z.
 $$  
-    The CNOT gates create an entangling interaction, while the RZ gate performs a rotation around the z-axis on the target qubit. The combination of two CNOT gates around the RZ achieves a controlled-Z-like evolution.
+
+The CNOT gates create an entangling interaction, while the RZ gate performs a rotation around the z-axis on the target qubit. The combination of two CNOT gates around the RZ achieves a controlled-Z-like evolution.
 
 ##  Quantum Circuit Definition:
 

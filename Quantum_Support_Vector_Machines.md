@@ -142,10 +142,12 @@ import pennylane as qml
 from pennylane import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-
+from joblib import Parallel, delayed
+import joblib
+import matplotlib.pyplot as plt
 
 # Download and load the Glass Identification dataset
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/glass/glass.data"
@@ -175,31 +177,69 @@ def quantum_kernel(x1, x2):
     qml.broadcast(qml.CNOT, wires=range(n_qubits), pattern="ring")
     return qml.expval(qml.PauliZ(0))
 
+def compute_kernel_row(x1, X2):
+    return [quantum_kernel(x1, x2) for x2 in X2]
+
 def kernel_matrix(X1, X2):
-    return np.array([[quantum_kernel(x1, x2) for x2 in X2] for x1 in X1])
+    n_jobs = -1  # Use all available CPU cores
+    return np.array(Parallel(n_jobs=n_jobs)(delayed(compute_kernel_row)(x1, X2) for x1 in X1))
 
 # Compute the kernel matrices
 K_train = kernel_matrix(X_train, X_train)
 K_test = kernel_matrix(X_test, X_train)
 
-# Train the QSVM
+# Hyperparameter tuning using GridSearchCV
+param_grid = {'C': [0.1, 1, 10, 100, 1000]}
 svm = SVC(kernel='precomputed')
-svm.fit(K_train, y_train)
+grid_search = GridSearchCV(svm, param_grid, cv=5)
+grid_search.fit(K_train, y_train)
 
-# Evaluate the model
-y_pred = svm.predict(K_test)
-accuracy = accuracy_score(y_test, y_pred)
+# Best parameters and model
+best_params = grid_search.best_params_
+best_model = grid_search.best_estimator_
 
-print(f"Test accuracy: {accuracy}")
+# Save the trained model to a file
+model_filename = 'qsvm_model.joblib'
+joblib.dump(best_model, model_filename)
+print(f"Model saved to {model_filename}")
 
-# Plot the results
-import matplotlib.pyplot as plt
+# Load the trained model from a file
+loaded_model = joblib.load(model_filename)
+print("Model loaded from", model_filename)
 
-plt.scatter(X_test[:, 0], X_test[:, 1], c=y_pred, cmap='coolwarm', marker='o')
-plt.xlabel("Feature 1")
-plt.ylabel("Feature 2")
-plt.title("QSVM Classification Results")
-plt.show()
+# Evaluate the loaded model
+y_pred_loaded = loaded_model.predict(K_test)
+accuracy_loaded = accuracy_score(y_test, y_pred_loaded)
+print(f"Test accuracy of loaded model: {accuracy_loaded}")
+
+# Visualize the decision boundary
+def plot_decision_boundary(X, y, model, kernel_matrix_func):
+    # Create a mesh grid
+    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
+                         np.arange(y_min, y_max, 0.02))
+    
+    # Flatten the grid to pass into the kernel function
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    
+    # Compute the kernel matrix for the grid points
+    K_grid = kernel_matrix_func(grid_points, X_train)
+    
+    # Predict the class for each grid point
+    Z = model.predict(K_grid)
+    Z = Z.reshape(xx.shape)
+    
+    # Plot the decision boundary
+    plt.contourf(xx, yy, Z, alpha=0.8, cmap='coolwarm')
+    plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o', cmap='coolwarm')
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
+    plt.title("QSVM Decision Boundary")
+    plt.show()
+
+# Plot the decision boundary for the test set
+plot_decision_boundary(X_test, y_test, loaded_model, kernel_matrix)
 ```
 
 Note the above code can take a while. 

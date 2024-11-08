@@ -132,10 +132,10 @@ While QSVMs offer theoretical advantages, practical challenges remain:
 - **Noise and decoherence:** Quantum computers are still noisy, which affects the accuracy of quantum state preparation and measurements.
 - **Scalability:** The size of the quantum kernel matrix grows quadratically with the number of data points, posing challenges for large datasets.
 
-### Conclusion
 
 Quantum Support Vector Machines extend the power of classical SVMs by leveraging quantum computing to enhance feature mapping and kernel computation. By embedding data into high-dimensional quantum spaces, QSVMs can potentially achieve faster and more powerful classification, offering a glimpse into the potential advantages of quantum machine learning.
 
+Example of the code:
 
 ```python
 import pennylane as qml

@@ -145,6 +145,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
+from sklearn.decomposition import PCA
 from joblib import Parallel, delayed
 import joblib
 import matplotlib.pyplot as plt
@@ -159,8 +160,15 @@ X = data.drop(columns=["Type"]).values
 y = data["Type"].values
 y = np.where(y == 1, 1, -1)  # Convert labels to {-1, 1}
 
+# Standardize the features
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
+
+# Reduce dimensionality to 2 features using PCA
+pca = PCA(n_components=2)
+X = pca.fit_transform(X)
+
+# Split the data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Define the quantum device

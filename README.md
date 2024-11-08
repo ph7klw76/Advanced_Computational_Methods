@@ -51,13 +51,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 2. [Quantum Support Vector Machines](Quantum_Support_Vector_Machines.md) A quantum adaptation of SVMs for classification problems.
 3. Quantum Principal Component Analysis
 4. Quantum Neural Networks Use quantum circuits to mimic neural networks, potentially boosting efficiency.
-5. Quantum Generative Adversarial Network
-6. Quantum Reinforcement Learning
-7. The Best of Both Worlds: Hybrid Architectures  Combine classical and quantum resources for efficient problem-solving.
-8. Quantum Generative Adversarial Networks A quantum variation of GANs, used for generative tasks.
-9. Quantum Boltzmann Machines
-10. Hamiltonian Learning
-11. Quantum Circuit Learning
+5. Quantum Random Forest
+6. Hamiltonian Learning
+7. Quantum Circuit Learning
 
 .
 

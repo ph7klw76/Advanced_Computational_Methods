@@ -238,16 +238,13 @@ def plot_decision_boundary(X, y, model, kernel_matrix_func):
     Z = model.predict(K_grid)
     Z = Z.reshape(xx.shape)
     
-    # Plot the decision boundary
+    # Plot the decision boundar
     plt.contourf(xx, yy, Z, alpha=0.8, cmap='coolwarm')
     plt.scatter(X[:, 0], X[:, 1], c=y, edgecolors='k', marker='o', cmap='coolwarm')
     plt.xlabel("Feature 1")
     plt.ylabel("Feature 2")
     plt.title("QSVM Decision Boundary")
     plt.show()
-
-# Plot the decision boundary for the test set
-plot_decision_boundary(X_test, y_test, loaded_model, kernel_matrix)
 ```
+The visualization of the decision boundary can take a long time due to the computation of the quantum kernel for each point in the mesh grid. This involves a large number of quantum circuit evaluations, which can be computationally expensive.
 
-Note the above code can take a while. 

@@ -25,11 +25,11 @@ This guide provides structured pathways for mastering advanced topics in scienti
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
 6. Q-Learning
-7. Multi-Agent Reinforcement Learning
+7. Deep Reinforcement Learning
 8. Variational Autoencoders
 9. Generative Adversarial Networks
 10. Transfer Learning
-11. Deep Reinforcement Learning
+11. Multi-Agent Reinforcement Learning
 12. Active Learning
 13. Multi-Task Learning
 
@@ -59,7 +59,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 10. Hamiltonian Learning
 11. Quantum Circuit Learning
 
-## To learn other Quantum Computing Methods, follow the steps below
+## To learn other Quantum Computing Methods using PennyLane library, follow the steps below
 1.  Quantum Chemistry Uses quantum mechanics to simulate chemical reactions and molecular structures.
 2.  Solving Linear Systems Quantum algorithms like HHL are used to solve linear systems faster than classical methods.
 3.  Quantum Random Number Generator Uses quantum properties to generate truly random numbers.
@@ -165,6 +165,13 @@ This guide provides structured pathways for mastering advanced topics in scienti
 9. Real-World Applications
 10. Best Practices and Common Pitfalls
 11. Future Trends in GPU Programming
+
+
+## Quantum Chemistry
+
+## Molecular Dynamics
+
+## Ab Initio Molecular Dynamics
 
 
 

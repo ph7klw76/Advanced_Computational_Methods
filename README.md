@@ -58,6 +58,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 ## Then you have sufficient background to move to the Cookbook and Demostration
 
 [PennyLane Quantum Cookbook](https://pennylane.ai/codebook)
+
 [Visit PennyLane Quantum Computing Demonstrations](https://pennylane.ai/qml/demonstrations/)
 
 

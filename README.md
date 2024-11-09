@@ -42,8 +42,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md) A method for finding eigenvalues in optimization and chemistry.
 7.  [Quantum Phase Estimation](Quantum_Phase_Estimation.md) Essential for understanding phase shifts, critical in quantum algorithms.
 8.  [Quantum singular value transformation and block-encoding](Quantum_Singular_Value_Transformation.md) Allows efficient transformations in data processing.
-9.  Quantum-Inspired Machine Learning Algorithms
-10. [Hamiltonian Simulation Algorithms](Hamiltonian_Simulation_Algorithms.md)
+9.  [Hamiltonian Simulation Algorithms](Hamiltonian_Simulation_Algorithms.md)
 
 ## To learn Quantum Machine Learning using PennyLane library, follow the steps below:
 

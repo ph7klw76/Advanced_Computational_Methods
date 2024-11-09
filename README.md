@@ -51,7 +51,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 2. [Quantum Support Vector Machines](Quantum_Support_Vector_Machines.md) A quantum adaptation of SVMs for classification problems.
 3. [Quantum Principal Component Analysis](QPCA.md)
 4. [Quantum Neural Networks](Quantum_Neural_Networks.md)
-5. Quantum Random Forest
+5. [Quantum Random Forest](QRF.md)
 6. Hamiltonian Learning
 
 

@@ -46,15 +46,15 @@ Classical data $x \in \mathbb{R}^d$ must be encoded into quantum states to be pr
 
 - **Amplitude Encoding**: Encodes data into the amplitudes of a quantum state:
 
-  $$
+$$
   \lvert x \rangle = \frac{1}{\lVert x \rVert} \sum_{i=1}^d x_i \lvert i \rangle.
-  $$
+$$
 
 - **Angle Encoding**: Encodes data as rotation angles on qubits:
 
-  $$
+$$
   R_y(x_i) \lvert 0 \rangle = \cos\left(\frac{x_i}{2}\right) \lvert 0 \rangle + \sin\left(\frac{x_i}{2}\right) \lvert 1 \rangle.
-  $$
+$$
 
 ### 3.2 Quantum Decision Tree Construction
 
@@ -67,9 +67,9 @@ A quantum decision tree is constructed using a series of quantum gates that impl
   - Classical decision trees split based on an impurity measure (e.g., Gini index). Quantum trees can use a quantum version of this measure, represented by a quantum observable $O$.
   - Given a quantum state $\lvert \psi(x) \rangle$, compute the expectation value of the observable:
 
-    $$
+$$
     \langle O \rangle = \langle \psi(x) \lvert O \lvert \psi(x) \rangle.
-    $$
+$$
 
   - This value guides the decision-making process for node splitting.
 - **Quantum Superposition and Entanglement**:

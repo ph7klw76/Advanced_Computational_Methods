@@ -28,7 +28,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning) Combines multiple models to improve predictive performance; commonly used in supervised learning.
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
-6. [Principal Component Analysis](PCA.md)
+6. [Principal Component Analysis](PCA.md) Dimensionality reduction 
 7. Graph Neural Networks 
 8. Transfer Learning 
 9. Meta-Learning and Few-Shot Learning
@@ -43,16 +43,16 @@ This guide provides structured pathways for mastering advanced topics in scienti
 6.  [VQE: Variational Quantum Eigensolver](Variational_Quantum_Eigensolver.md) A method for finding eigenvalues in optimization and chemistry.
 7.  [Quantum Phase Estimation](Quantum_Phase_Estimation.md) Essential for understanding phase shifts, critical in quantum algorithms.
 8.  [Quantum singular value transformation and block-encoding](Quantum_Singular_Value_Transformation.md) Allows efficient transformations in data processing.
-9.  [Hamiltonian Simulation Algorithms](Hamiltonian_Simulation_Algorithms.md)
+9.  [Hamiltonian Simulation Algorithms](Hamiltonian_Simulation_Algorithms.md) Simulating quantum systems' evolution for computational and physical insights.
 
 ## To learn Quantum Machine Learning using PennyLane library, follow the steps below:
 
 1. [What is Quantum Machine Learning](Quantum_Machine_Learning.md) ?  Covers how quantum mechanics intersects with traditional machine learning.
 2. [Quantum Support Vector Machines](Quantum_Support_Vector_Machines.md) A quantum adaptation of SVMs for classification problems.
-3. [Quantum Principal Component Analysis](QPCA.md)
-4. [Quantum Neural Networks](Quantum_Neural_Networks.md)
-5. [Quantum Random Forest](QRF.md)
-6. [Hamiltonian Learning](Hamiltonian_Simulation_Algorithms.md)
+3. [Quantum Principal Component Analysis](QPCA.md) Dimensionality reduction using quantum techniques for data analysis.
+4. [Quantum Neural Networks](Quantum_Neural_Networks.md) Neural networks leveraging quantum computations for complex tasks.
+5. [Quantum Random Forest](QRF.md) Combining quantum and classical decision trees for predictions.
+6. [Hamiltonian Learning](Hamiltonian_Simulation_Algorithms.md) Estimating quantum system parameters using measurements and optimizations.
 
 
 ## Then you have sufficient background to move to the Cookbook and Demostration

@@ -52,7 +52,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 3. [Quantum Principal Component Analysis](QPCA.md)
 4. [Quantum Neural Networks](Quantum_Neural_Networks.md)
 5. [Quantum Random Forest](QRF.md)
-6. Hamiltonian Learning
+6. [Hamiltonian Learning](Hamiltonian_Simulation_Algorithms.md)
 
 
 ## PennyLane Tutorials  

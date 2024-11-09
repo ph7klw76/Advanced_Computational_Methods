@@ -1,5 +1,8 @@
 # Advanced Computational Methods
 
+<img src="https://github.com/user-attachments/assets/03fe4773-c529-4de7-8ccf-66e925084214" alt="WhatsApp Image" width="600" height="600" />
+
+
 This guide provides structured pathways for mastering advanced topics in scientific computing, machine learning, and quantum computing. It covers essential methods in non-linear regression, foundational concepts in Nobel Physics 2024 topics, and machine learning models, including physics-informed approaches. In quantum optimization, it reviews algorithms like QAOA and VQE, alongside quantum machine learning techniques and practical tools like PennyLane for hybrid models. Additional quantum methods address applications in chemistry and random number generation. Finally, it includes data structures, algorithms, and Python design patterns for efficient computation, offering a comprehensive learning roadmap across these fields.
 
 ## To learn the magic of non-linear regression in scipy, follow the steps below:

@@ -28,9 +28,10 @@ This guide provides structured pathways for mastering advanced topics in scienti
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning) Combines multiple models to improve predictive performance; commonly used in supervised learning.
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
-6. Graph Neural Networks 
-7. Transfer Learning 
-8. Meta-Learning and Few-Shot Learning
+6. Principal Component Analysis
+7. Graph Neural Networks 
+8. Transfer Learning 
+9. Meta-Learning and Few-Shot Learning
 
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:

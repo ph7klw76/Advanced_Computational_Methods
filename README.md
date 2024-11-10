@@ -28,6 +28,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## To learn Machine Learning, follow the steps below:
+
+### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at [Coursera] (https://www.coursera.org/specializations/machine-learning-introduction)
+
 1. [Generalized_Linear_Models](Generalized_Linear_Models.md) (Supervised learning) GLMs extend linear regression to non-linear relationships, common in supervised learning.
 2. [k-Nearest_Neighbors](k-Nearest_Neighbors.md) (Supervised learning) A supervised learning method, k-NN uses proximity in feature space to make predictions.
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning) Combines multiple models to improve predictive performance; commonly used in supervised learning.

@@ -15,11 +15,12 @@ This guide provides structured pathways for mastering advanced topics in scienti
 ### Scipy is a powerful libraray for scientists and engineers as it extend the ability of Numpy. It is recommended that you learn from the [website](https://docs.scipy.org/doc/scipy/tutorial/index.html#user-guide)
 1.  [Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)
     Non-linear regression is often used in scientific contexts where parameter uncertainty plays a critical role. Gradients help in understanding the sensitivity of parameters.
-2.  [Computational_Thinking](Computational_Thinking.md) How to think like a computer
-3.  [SciPy's _curve_fit](SciPy's_curve_fit.md) A common tool in SciPy, curve_fit allows fitting a curve to data by optimizing parameters based on least squares.
-4.  [Jacobian_Matrix](Jacobian_Matrix.md) The Jacobian matrix represents the partial derivatives of functions, which is crucial in minimizing errors in non-linear regression.
-5.  [Levenberg-Marquardt](Levenberg-Marquardt.md) his optimization method is particularly useful for non-linear least squares problems, balancing between gradient descent and Gauss-Newton methods.
-6.  [Covariance_Matrix](Covariance_Matrix.md)  In non-linear regression, the covariance matrix is essential for quantifying uncertainty in parameter estimates.
+2.  [Computational_Thinking](Computational_Thinking.md) How to think like a computer.
+3.  [Computational_Thinking beforr Machine Learning](https://www.youtube.com/watch?v=V9Xy18YEK9M)
+4.  [SciPy's _curve_fit](SciPy's_curve_fit.md) A common tool in SciPy, curve_fit allows fitting a curve to data by optimizing parameters based on least squares.
+5.  [Jacobian_Matrix](Jacobian_Matrix.md) The Jacobian matrix represents the partial derivatives of functions, which is crucial in minimizing errors in non-linear regression.
+6.  [Levenberg-Marquardt](Levenberg-Marquardt.md) his optimization method is particularly useful for non-linear least squares problems, balancing between gradient descent and Gauss-Newton methods.
+7.  [Covariance_Matrix](Covariance_Matrix.md)  In non-linear regression, the covariance matrix is essential for quantifying uncertainty in parameter estimates.
 
 
 ## To learn the evolution of Nobel Physics 2024, follow the steps below:
@@ -31,7 +32,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn Machine Learning, follow the steps below:
 
-### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at[Coursera](https://www.coursera.org/specializations/machine-learning-introduction)
+### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at [Coursera](https://www.coursera.org/specializations/machine-learning-introduction)
 
 1. [Generalized_Linear_Models](Generalized_Linear_Models.md) (Supervised learning) GLMs extend linear regression to non-linear relationships, common in supervised learning.
 2. [k-Nearest_Neighbors](k-Nearest_Neighbors.md) (Supervised learning) A supervised learning method, k-NN uses proximity in feature space to make predictions.
@@ -43,6 +44,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 8. Transfer Learning 
 9. Meta-Learning and Few-Shot Learning
 
+### There are numerous libraries which are useful including [scikit-learn](https://scikit-learn.org/stable/), [Tensorflow](https://www.tensorflow.org/tutorials?authuser=1) and [pytorch](https://pytorch.org/get-started/locally/)
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:
 

@@ -92,6 +92,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## Advanced Algorithms
+
+[Advanced Algorithms](https://www.youtube.com/watch?v=omsr-55nG7s&list=PLMDFPuH4ZxUELJN4dBgchm2bqfQzOrPA6&index=1)
+
 1.  Graphs 
 2.  Weighted Graphs  
 3.  Hash Tables
@@ -111,6 +114,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## Concurrency and Parallelism
+
+[Concurrency and Parallelism](https://www.youtube.com/watch?v=S05-MZAJqNM)
+
 1. Introduction to Concurrency and Parallelism
 2. Python's Global Interpreter Lock (GIL)
 3. Threading in Python
@@ -125,6 +131,8 @@ This guide provides structured pathways for mastering advanced topics in scienti
 12. Project and Case Study
 
 ## Design Pattern in Python
+
+[Design Pattern](https://www.youtube.com/watch?v=kNXDHjIkP_0&list=PLKWUX7aMnlEJzRvCXnwFEdk_WJDNjMDOo&index=1)
 
 1. Introduction to Design Patterns
 2. Creational Design Patterns
@@ -159,6 +167,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## GPU Programming in Python
+
+[GPU Programming](https://www.youtube.com/watch?v=c8mQYGbT310&list=PL5XwKDZZlwaY7t0M5OLprpkJUIrF8Lc9j&index=1)
+
 1. Introduction to GPU Programming
 2. Basics of Parallel Computing
 3. Setting Up the Environment
@@ -174,9 +185,16 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## Quantum Chemistry
 
+[Quantum Chemistry](https://www.youtube.com/watch?v=cd2Ua9dKEl8&list=PLcxq_TlK-AyjEdMxhhrte2b8PKe0AHpsr)
+
 ## Molecular Dynamics
 
+[Molecular Dynamics](https://www.youtube.com/watch?v=BnT6Onll1eQ&list=PLm8ZSArAXicKIzMfkR0Y0GVx9AA1zge-P)
+[Molecular Dynamics in Python](https://www.youtube.com/watch?v=6gVoPVosXRs&list=PLP_iHNbRbB3eN3VhO76qiZlDZEyrU88rJ&index=1)
+
 ## Ab Initio Molecular Dynamics
+
+[Ab Initio Molecular Dynamics](https://www.youtube.com/watch?v=cGDiVSWpXLc)
 
 
 

@@ -11,6 +11,8 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## To learn the magic of non-linear regression in scipy, follow the steps below:
+
+### scipy is a powerful libraray for scientists and engineers. It is recommended that you learn from the [website](https://docs.scipy.org/doc/scipy/tutorial/index.html#user-guide)
 1.  [Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)
     Non-linear regression is often used in scientific contexts where parameter uncertainty plays a critical role. Gradients help in understanding the sensitivity of parameters.
 2.  [Computational_Thinking](Computational_Thinking.md) How to think like a computer
@@ -29,7 +31,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn Machine Learning, follow the steps below:
 
-### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at [Coursera] (https://www.coursera.org/specializations/machine-learning-introduction)
+### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at[Coursera]https://www.coursera.org/specializations/machine-learning-introduction)
 
 1. [Generalized_Linear_Models](Generalized_Linear_Models.md) (Supervised learning) GLMs extend linear regression to non-linear relationships, common in supervised learning.
 2. [k-Nearest_Neighbors](k-Nearest_Neighbors.md) (Supervised learning) A supervised learning method, k-NN uses proximity in feature space to make predictions.
@@ -43,6 +45,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:
+
 1.  [Foundation of Quantum Computing](Foundation_QC.md) Basic principles and qubit operations form the groundwork.
 2.  [Working with Quadratic Unconstrained Binary Optimization](Quadratic_Unconstrained_Binary_Optimization.md)  A formulation for optimization problems solvable by quantum computers.
 3.  [Adiabatic Quantum Computing and Quantum Annealing](Adiabatic_Quantum_Computing_Quantum_Annealing.md) Techniques for optimization problems, using gradual transitions or energy minimization.

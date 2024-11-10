@@ -4,7 +4,7 @@
   <img src="https://github.com/user-attachments/assets/03fe4773-c529-4de7-8ccf-66e925084214" alt="WhatsApp Image" width="600" height="600" />
 </div>
 
-### This assumes that you have a good grasp of Python coding based on the passing standard of [MITx Computational Thinking using Python](https://www.edx.org/xseries/mitx-computational-thinking-using-python)
+### This assumes that you have a good grasp of Python coding based on the passing standard of [MITx Computational Thinking using Python](https://www.edx.org/xseries/mitx-computational-thinking-using-python) or else take the course and get certified. Alternatively learn and do exercises from [Introduction to Computer Science and Programming in Python](https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/)
 
 This guide provides structured pathways for mastering advanced topics in scientific computing, machine learning, and quantum computing. It covers essential methods in non-linear regression, foundational concepts in Nobel Physics 2024 topics, and machine learning models, including physics-informed approaches. In quantum optimization, it reviews algorithms like QAOA and VQE, alongside quantum machine learning techniques. Additional quantum methods address applications in chemistry. Finally, it includes data structures, algorithms, and Python design patterns for efficient computation, offering a comprehensive learning roadmap across these fields.
 

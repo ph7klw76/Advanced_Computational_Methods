@@ -4,7 +4,7 @@
   <img src="https://github.com/user-attachments/assets/03fe4773-c529-4de7-8ccf-66e925084214" alt="WhatsApp Image" width="600" height="600" />
 </div>
 
-### This assumes that you have a good grasp of Python coding based on the passing standard of [MITx Computational Thinking using Python](https://www.edx.org/xseries/mitx-computational-thinking-using-python) or else take the course and get certified. Alternatively learn and do exercises from [Introduction to Computer Science and Programming in Python](https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/)
+### This assumes that you have a good grasp of Python coding based on the passing standard of [MITx Computational Thinking using Python](https://www.edx.org/xseries/mitx-computational-thinking-using-python) or else take the course and get certified. Alternatively you learn and do exercises from [Introduction to Computer Science and Programming in Python](https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/)
 
 This guide provides structured pathways for mastering advanced topics in scientific computing, machine learning, and quantum computing. It covers essential methods in non-linear regression, foundational concepts in Nobel Physics 2024 topics, and machine learning models, including physics-informed approaches. In quantum optimization, it reviews algorithms like QAOA and VQE, alongside quantum machine learning techniques. Additional quantum methods address applications in chemistry. Finally, it includes data structures, algorithms, and Python design patterns for efficient computation, offering a comprehensive learning roadmap across these fields.
 
@@ -31,7 +31,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn Machine Learning, follow the steps below:
 
-### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at[Coursera]https://www.coursera.org/specializations/machine-learning-introduction)
+### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at[Coursera](https://www.coursera.org/specializations/machine-learning-introduction)
 
 1. [Generalized_Linear_Models](Generalized_Linear_Models.md) (Supervised learning) GLMs extend linear regression to non-linear relationships, common in supervised learning.
 2. [k-Nearest_Neighbors](k-Nearest_Neighbors.md) (Supervised learning) A supervised learning method, k-NN uses proximity in feature space to make predictions.

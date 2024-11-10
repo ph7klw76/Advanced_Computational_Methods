@@ -32,7 +32,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn Machine Learning, follow the steps below:
 
-### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certifeid get the same course at [Coursera](https://www.coursera.org/specializations/machine-learning-introduction)
+### Ideally you also take the lectures on [Machine Learning given by by Professor Andrew Ng](https://www.youtube.com/watch?v=gb262LDH1So&list=PLiPvV5TNogxIS4bHQVW4pMkj4CHA8COdX) for deeper understanding or you want to get certified at [Coursera](https://www.coursera.org/specializations/machine-learning-introduction)
 
 1. [Generalized_Linear_Models](Generalized_Linear_Models.md) (Supervised learning) GLMs extend linear regression to non-linear relationships, common in supervised learning.
 2. [k-Nearest_Neighbors](k-Nearest_Neighbors.md) (Supervised learning) A supervised learning method, k-NN uses proximity in feature space to make predictions.
@@ -44,7 +44,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 8. Transfer Learning 
 9. Meta-Learning and Few-Shot Learning
 
-### There are numerous libraries which are useful including [scikit-learn](https://scikit-learn.org/stable/), [Tensorflow](https://www.tensorflow.org/tutorials?authuser=1) and [pytorch](https://pytorch.org/get-started/locally/)
+### There are numerous libraries which are useful including [Scikit-learn](https://scikit-learn.org/stable/), [Tensorflow](https://www.tensorflow.org/tutorials?authuser=1) and [Pytorch](https://pytorch.org/get-started/locally/)
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:
 
@@ -59,6 +59,8 @@ This guide provides structured pathways for mastering advanced topics in scienti
 9.  [Hamiltonian Simulation Algorithms](Hamiltonian_Simulation_Algorithms.md) Simulating quantum systems' evolution for computational and physical insights.
 
 ## To learn Quantum Machine Learning using PennyLane library, follow the steps below:
+
+### [To learn more of Quantum Machine Learning visit the website here](https://www.youtube.com/watch?v=QtWCmO_KIlg&list=PLmRxgFnCIhaMgvot-Xuym_hn69lmzIokg)
 
 1. [What is Quantum Machine Learning](Quantum_Machine_Learning.md) ?  Covers how quantum mechanics intersects with traditional machine learning.
 2. [Quantum Support Vector Machines](Quantum_Support_Vector_Machines.md) A quantum adaptation of SVMs for classification problems.

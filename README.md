@@ -48,6 +48,8 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn Quantum Optimization using PennyLane library, follow the steps below:
 
+### To learn more of quantum computing without strong quantum mechanics background, please also visit (here)[https://www.youtube.com/watch?v=c0D8X4eN_Cg&list=PLnK6MrIqGXsJfcBdppW3CKJ858zR8P4eP&index=1] 
+
 1.  [Foundation of Quantum Computing](Foundation_QC.md) Basic principles and qubit operations form the groundwork.
 2.  [Working with Quadratic Unconstrained Binary Optimization](Quadratic_Unconstrained_Binary_Optimization.md)  A formulation for optimization problems solvable by quantum computers.
 3.  [Adiabatic Quantum Computing and Quantum Annealing](Adiabatic_Quantum_Computing_Quantum_Annealing.md) Techniques for optimization problems, using gradual transitions or energy minimization.

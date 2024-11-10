@@ -12,7 +12,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 ## To learn the magic of non-linear regression in scipy, follow the steps below:
 
-### scipy is a powerful libraray for scientists and engineers. It is recommended that you learn from the [website](https://docs.scipy.org/doc/scipy/tutorial/index.html#user-guide)
+### Scipy is a powerful libraray for scientists and engineers as it extend the ability of Numpy. It is recommended that you learn from the [website](https://docs.scipy.org/doc/scipy/tutorial/index.html#user-guide)
 1.  [Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)
     Non-linear regression is often used in scientific contexts where parameter uncertainty plays a critical role. Gradients help in understanding the sensitivity of parameters.
 2.  [Computational_Thinking](Computational_Thinking.md) How to think like a computer

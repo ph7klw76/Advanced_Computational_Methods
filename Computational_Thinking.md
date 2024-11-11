@@ -14,27 +14,67 @@ where $A \in R^{n \times n}$ is a matrix, $x \in R^n$ is the vector of unknowns,
 Decomposition Steps:
 
 Matrix Factorization: If possible, decompose $A$ into simpler matrices, such as an LU decomposition:
-$A = LU$,
+
+$$
+A = LU
+$$
+
 where $L$ is a lower triangular matrix and $U$ is an upper triangular matrix.
 Solve Subproblems:
 First, solve the system $Ly = b$ using forward substitution.
 Then, solve $Ux = y$ using backward substitution.
 Mathematical Derivation: Consider a system where:
-$A = \begin{bmatrix} 2 & 3 \ 1 & 4 \end{bmatrix}, \quad b = \begin{bmatrix} 5 \ 6 \end{bmatrix}.$
+
+$$
+A = \begin{bmatrix} 2 & 3 \\
+1 & 4 \end{bmatrix}, \quad b = \begin{bmatrix} 5 \\
+6 \end{bmatrix}.
+$$
+
 We perform LU decomposition:
-$L = \begin{bmatrix} 1 & 0 \ 0.5 & 1 \end{bmatrix}, \quad U = \begin{bmatrix} 2 & 3 \ 0 & 2.5 \end{bmatrix}.$
+
+$$
+L = \begin{bmatrix} 1 & 0 \\
+0.5 & 1 \end{bmatrix}, \quad U = \begin{bmatrix} 2 & 3 \\
+0 & 2.5 \end{bmatrix}.
+$$
 
 To solve $Ly = b$:
-$\begin{bmatrix} 1 & 0 \ 0.5 & 1 \end{bmatrix} \begin{bmatrix} y_1 \ y_2 \end{bmatrix} = \begin{bmatrix} 5 \ 6 \end{bmatrix}.$
+
+$$
+\begin{bmatrix} 1 & 0 \\
+0.5 & 1 \end{bmatrix} \begin{bmatrix} y_1 \\
+y_2 \end{bmatrix} = \begin{bmatrix} 5 \\
+6 \end{bmatrix}.
+$$
+
 Forward substitution gives:
-$y_1 = 5, \quad y_2 = 6 - 0.5 \times 5 = 3.5.$
+
+$$
+y_1 = 5, \quad y_2 = 6 - 0.5 \times 5 = 3.5.
+$$
 
 Next, solve $Ux = y$:
-$\begin{bmatrix} 2 & 3 \ 0 & 2.5 \end{bmatrix} \begin{bmatrix} x_1 \ x_2 \end{bmatrix} = \begin{bmatrix} 5 \ 3.5 \end{bmatrix}.$
+
+$$
+\begin{bmatrix} 2 & 3 \\
+0 & 2.5 \end{bmatrix} \begin{bmatrix} x_1 \\
+x_2 \end{bmatrix} = \begin{bmatrix} 5 \\
+3.5 \end{bmatrix}.
+$$
+
 Backward substitution yields:
-$x_2 = \frac{3.5}{2.5} = 1.4, \quad x_1 = \frac{5 - 3 \times 1.4}{2} = 0.4.$
+
+$$
+x_2 = \frac{3.5}{2.5} = 1.4, \quad x_1 = \frac{5 - 3 \times 1.4}{2} = 0.4.
+$$
+
 Thus, the solution is:
-$x = \begin{bmatrix} 0.4 \ 1.4 \end{bmatrix}.$
+
+$$
+x = \begin{bmatrix} 0.4 \\
+1.4 \end{bmatrix}.
+$$
 
 ### 1.2 Abstraction
 Definition: Abstraction focuses on reducing complexity by filtering out unnecessary details and focusing on the essential aspects of a problem.
@@ -53,7 +93,13 @@ User 1 is connected to User 2.
 User 2 is connected to User 3.
 User 3 is connected to User 4.
 Represent the network using an adjacency matrix $A$:
-$A = \begin{bmatrix} 0 & 1 & 0 & 0 \ 1 & 0 & 1 & 0 \ 0 & 1 & 0 & 1 \ 0 & 0 & 1 & 0 \end{bmatrix}.$
+
+$$
+A = \begin{bmatrix} 0 & 1 & 0 & 0 \\
+1 & 0 & 1 & 0 \\
+0 & 1 & 0 & 1 \\
+0 & 0 & 1 & 0 \end{bmatrix}.
+$$
 
 Here, $A_{ij} = 1$ indicates a connection between users $i$ and $j$.
 

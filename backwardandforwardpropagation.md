@@ -4,7 +4,7 @@
 ## Introduction  
 Artificial Neural Networks (ANNs) have revolutionized machine learning and artificial intelligence, enabling models to learn complex patterns from data. At the heart of training ANNs lies the **backpropagation algorithm**, a method used to compute gradients for updating the network's weights. 
 
-This blog post delves into the mathematical underpinnings of **forward** and **backward propagation** with rigorous technical accuracy. We will then apply these concepts to a simple example: finding the gradient and intercept of a linear equation using gradient descent.
+This blog post delves into the mathematical underpinnings of **forward** and **backward propagation**. We will then apply these concepts to a simple example: finding the gradient and intercept of a linear equation using gradient descent.
 
 ## 1. Forward Propagation
 

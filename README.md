@@ -192,6 +192,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 [Molecular Dynamics](https://www.youtube.com/watch?v=BnT6Onll1eQ&list=PLm8ZSArAXicKIzMfkR0Y0GVx9AA1zge-P)
 [Molecular Dynamics in Python](https://www.youtube.com/watch?v=6gVoPVosXRs&list=PLP_iHNbRbB3eN3VhO76qiZlDZEyrU88rJ&index=1)
 
+[https://github.com/ChunHou20c/Monte-Carlo-simulation]
 ## Ab Initio Molecular Dynamics
 
 [Ab Initio Molecular Dynamics](https://www.youtube.com/watch?v=cGDiVSWpXLc)

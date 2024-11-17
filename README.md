@@ -40,7 +40,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
 6. [Principal Component Analysis](PCA.md) Dimensionality reduction 
-7. Graph Neural Networks 
+7. Graph Neural Networks (https://github.com/Wanlin-Cai/ML_GCN)
 8. Transfer Learning 
 9. Meta-Learning and Few-Shot Learning
 

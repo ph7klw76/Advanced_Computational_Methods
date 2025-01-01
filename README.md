@@ -182,7 +182,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 10. Best Practices and Common Pitfalls
 11. Future Trends in GPU Programming
 
-## Advanced Numerical Method
+## Advanced Numerical Methods
 
 ### A.Differential Equations
 Finite Difference Methods (FDM):

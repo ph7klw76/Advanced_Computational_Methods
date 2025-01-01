@@ -184,8 +184,47 @@ This guide provides structured pathways for mastering advanced topics in scienti
 
 
 ## Quantum Chemistry
-
 [Quantum Chemistry](https://www.youtube.com/watch?v=cd2Ua9dKEl8&list=PLcxq_TlK-AyjEdMxhhrte2b8PKe0AHpsr)
+
+### A. Electronic Structure AND Excited-State Properties
+1. [Hartree-Fock_Theory](Hartree-Fock_Theory.md)  Foundation for understanding wavefunctions and molecular orbitals.
+
+2. [Density Functional Theory and Time-dependent-DFT](DFT.md) Density Functional Theory (DFT): Crucial for predicting electronic properties of large organic molecules, such as HOMO-LUMO gaps and charge densities. Time-Dependent Density Functional Theory (TD-DFT): For studying optical absorption, emission spectra, and exciton behavior.
+   
+3. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
+
+4. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
+
+5. Multireference Methods: For systems with significant electron correlation, such as biradicals.
+
+### B Charge Transport Mechanisms
+
+1. Reorganization Energy: Key parameter in charge hopping and mobility in organic semiconductors.
+   
+2. Marcus Theory: For understanding electron and hole transport through hopping mechanisms.
+
+### C. Molecular Interactions and Aggregation
+
+1. Non-Covalent Interactions: π-π stacking, van der Waals forces, and hydrogen bonding in organic crystals and films.
+   
+2. Charge Transfer Complexes: Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
+
+### D.Spectroscopic Properties
+
+1. Vibrational Analysis: Using quantum methods to predict and analyze IR and Raman spectra.
+   
+2. UV-Vis and Fluorescence Spectroscopy: Modeling absorption and emission processes.
+   
+3. Spin-Orbit Coupling: Relevant for phosphorescence in OLEDs and spintronic applications.
+
+### E. Photophysics and Photochemistry
+
+1. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
+   
+2. Singlet and Triplet Exciton Dynamics: For designing efficient OLED materials.
+
+3. Energy Transfer Mechanisms: Förster Resonance Energy Transfer (FRET) and Dexter transfer
+
 
 ## Molecular Dynamics
 

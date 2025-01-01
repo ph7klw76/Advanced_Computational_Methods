@@ -182,6 +182,105 @@ This guide provides structured pathways for mastering advanced topics in scienti
 10. Best Practices and Common Pitfalls
 11. Future Trends in GPU Programming
 
+## Advanced Numerical Method
+
+### A.Differential Equations
+Finite Difference Methods (FDM):
+
+Solves partial and ordinary differential equations (ODEs/PDEs) by discretizing them.
+Application: Heat conduction, wave equations, diffusion problems.
+Finite Element Methods (FEM):
+
+Breaks a problem into smaller, simpler parts (finite elements).
+Application: Stress analysis, quantum mechanics, electromagnetism.
+Spectral Methods:
+
+Uses orthogonal functions (e.g., Fourier, Chebyshev) for high-accuracy solutions to PDEs.
+Application: Fluid dynamics, turbulence modeling.
+Runge-Kutta Methods:
+
+High-precision solutions for ODEs.
+Application: Planetary motion, quantum trajectory calculations.
+
+### B. Linear Algebra Techniques
+
+LU and QR Decompositions:
+
+Efficiently solve systems of linear equations.
+Application: Eigenvalue problems in quantum mechanics.
+Iterative Solvers (e.g., Conjugate Gradient, GMRES):
+
+Solve large, sparse linear systems.
+Application: Computational electrodynamics, lattice QCD.
+Singular Value Decomposition (SVD):
+
+Decomposes matrices for data reduction and system identification.
+Application: Quantum state tomography, data compression.
+
+### C. Monte Carlo Methods
+
+Markov Chain Monte Carlo (MCMC):
+
+Generates samples from a probability distribution.
+Application: Statistical mechanics, Bayesian inference, path integrals.
+Importance Sampling:
+
+Improves efficiency in Monte Carlo simulations.
+Application: High-dimensional integrals in quantum systems.
+
+### D. Optimization and Variational Methods
+
+Gradient-Based Optimization:
+
+Algorithms like steepest descent and conjugate gradient.
+Application: Energy minimization in molecular dynamics.
+Simulated Annealing and Genetic Algorithms:
+
+Global optimization methods.
+Application: Protein folding, material design.
+Variational Methods:
+
+Approximate solutions to quantum mechanical systems using trial wavefunctions.
+Application: Variational Monte Carlo, density functional theory.
+
+
+### E. Spectral and Fourier Methods
+
+Fast Fourier Transform (FFT):
+
+Efficiently computes discrete Fourier transforms.
+Application: Signal processing, solving PDEs in periodic systems.
+Wavelet Transforms:
+
+Decomposes signals into localized time-frequency components.
+Application: Analyzing turbulent flows, quantum wavepackets.
+
+### F.  Matrix Methods in Quantum Mechanics
+
+Diagonalization Techniques:
+
+Solves eigenvalue problems for Hamiltonians.
+Application: Quantum spectra, vibrational modes.
+Time Evolution Operators:
+
+Methods like Crank-Nicolson for time-dependent quantum problems.
+Application: Real-time dynamics in quantum mechanics.
+
+
+### G.  Parallel Computing and High-Performance Methods
+
+Domain Decomposition:
+
+Divide problems for distributed computing.
+Application: Molecular dynamics, climate models.
+GPU Computing:
+
+Accelerates large-scale simulations.
+Application: AIMD, real-time quantum dynamics.
+Sparse Matrix Operations:
+
+Optimized for large, sparse systems.
+Application: Finite element simulations, quantum lattice models.
 
 ## Quantum Chemistry
 [Quantum Chemistry](https://www.youtube.com/watch?v=cd2Ua9dKEl8&list=PLcxq_TlK-AyjEdMxhhrte2b8PKe0AHpsr)
@@ -231,8 +330,112 @@ This guide provides structured pathways for mastering advanced topics in scienti
 [Molecular Dynamics](https://www.youtube.com/watch?v=BnT6Onll1eQ&list=PLm8ZSArAXicKIzMfkR0Y0GVx9AA1zge-P)
 [Molecular Dynamics in Python](https://www.youtube.com/watch?v=6gVoPVosXRs&list=PLP_iHNbRbB3eN3VhO76qiZlDZEyrU88rJ&index=1)
 
+### A. Fundamentals of Molecular Dynamics
+
+Classical mechanics: Newton’s equations of motion.
+Time integration algorithms (e.g., Verlet, leapfrog).
+Periodic boundary conditions.
+Temperature and pressure control (thermostats and barostats, e.g., Nosé-Hoover, Berendsen).
+
+### B. Force Fields and Potential Energy Surfaces
+
+Parameterization of force fields for π-conjugated systems 
+Bonded and non-bonded interactions:
+Bond stretching, angle bending, dihedral torsions.
+van der Waals interactions and electrostatics.
+Customization of force fields for organic semiconductors.
+
+### C. Sampling Techniques
+
+Enhanced sampling methods (e.g., metadynamics, umbrella sampling).
+Free energy calculations (e.g., thermodynamic integration, FEP).
+Importance sampling for rare event dynamics.
+
+### D. Dynamic Properties
+
+Molecular vibrations and phonon modes.
+Diffusion coefficients and mean square displacement.
+Time correlation functions (e.g., velocity autocorrelation).
+
+### E.  Structural and Vibrational Analysis
+
+Radial distribution functions (RDF) for structural ordering.
+Pair correlation functions and packing density analysis.
+Root-mean-square deviation (RMSD) and radius of gyration.
+Normal mode analysis (NMA).
+Vibrational density of states (VDOS).
+Phonon spectra and their coupling with electronic states.
+
+### F. Charge Transport Models
+
+Marcus theory and nonadiabatic transitions.
+Polaron formation and hopping mechanisms.
+Kinetic Monte Carlo (KMC) simulations using MD data.
+
+
+### G. Interface and Morphology Effects
+
+Molecular dynamics at donor-acceptor interfaces.
+Grain boundary and defect dynamics.
+Role of surface energy and molecular orientation.
+
+
+### H. Nonadiabatic Molecular Dynamics
+
+Ehrenfest and surface hopping approaches.
+Role of nonadiabatic coupling in charge transfer.
+QM/MM methods for combining MD with quantum chemistry.
+
+### I. Advanced Techniques
+
+Reactive MD (ReaxFF) for studying chemical reactions.
+Coarse-grained MD for large-scale morphology analysis.
+Machine learning force fields for accelerated simulations.
+
 [https://github.com/ChunHou20c/Monte-Carlo-simulation]
 ## Ab Initio Molecular Dynamics
+
+### A. Fundamentals of AIMD
+
+Born-Oppenheimer approximation: Separation of electronic and nuclear motion.
+Car-Parrinello molecular dynamics (CPMD): Simultaneous evolution of electronic and ionic degrees of freedom.
+Difference between classical MD and AIMD.
+
+### B. Quantum Mechanical Forces
+
+Hellmann-Feynman forces.
+Pulay corrections (for basis set incompleteness).
+Forces from Hartree-Fock and post-Hartree-Fock methods.
+
+### C. Electronic Structure Dynamics
+
+Real-time propagation of electronic wavefunctions.
+Electronic excitation and nonadiabatic effects.
+Time-dependent DFT (TDDFT) for exciton dynamics.
+
+### D. Vibrational Coupling and Phonons
+
+Phonon modes from AIMD trajectories.
+Vibrational energy transfer pathways.
+Coupling of phonons with electronic states.
+
+### E. Dynamic Disorder and Charge Transport
+
+Time-dependent variation in electronic properties due to nuclear motion.
+Impact of dynamic disorder on bandgap and charge mobility.
+Marcus theory and nonadiabatic transitions in AIMD.
+
+### F. Exciton Dynamics and Energy Transfer
+
+Förster and Dexter energy transfer mechanisms.
+Role of molecular vibrations in exciton recombination.
+
+### G. Nonadiabatic Dynamics
+
+Surface hopping methods (e.g., Tully’s algorithm).
+Nonadiabatic couplings from AIMD trajectories.
+Ehrenfest dynamics vs. surface hopping.
+
 
 [Ab Initio Molecular Dynamics](https://www.youtube.com/watch?v=cGDiVSWpXLc)
 

@@ -243,11 +243,13 @@ $$
 
 ### Non-Covalent Interaction (NCI) Plot or Reduced Density Gradient (RDG) Analysis:
 1. Tools like **Multiwfn**, **NCIPlot**, or built-in scripts in computational packages can compute the RDG:
-   $$
+   
+$$
    s(r) = \frac{1}{2} \left( \frac{3}{\pi^2} \right)^{1/3} \frac{|\nabla \rho(r)|}{\rho(r)^{4/3}}
-   $$
+$$
    where **$\rho(r)$** is the electron density.
-2. Intermolecular interactions appear as **isosurfaces** of low density and low gradient, colored by the sign of the second Hessian eigenvalue (**$\lambda_2$**) to distinguish:
+   
+3. Intermolecular interactions appear as **isosurfaces** of low density and low gradient, colored by the sign of the second Hessian eigenvalue (**$\lambda_2$**) to distinguish:
    - **Attractive (negative $\lambda_2$)**.
    - **Repulsive (positive $\lambda_2$)** interactions.
 

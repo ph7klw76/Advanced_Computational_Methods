@@ -225,3 +225,127 @@ where $S$ is the Huang–Rhys factor quantifying the electron–phonon coupling.
 By thoroughly understanding reorganization energy and its role in Marcus-based charge transfer, researchers can better interpret measured mobilities, rationalize trends in molecular design, and guide synthetic efforts toward high-performance organic semiconductors.
 While the (semi-)classical Marcus framework and the reorganization energy concept are incredibly useful, real materials can deviate from simple assumptions if they exhibit strong electronic coupling, polaronic band formation, or large-scale structural disorder. Nonetheless, 
 λ remains a principal design parameter for understanding and optimizing charge transport in organic electronic materials.
+
+# Complication: Multiple Nearly Degenerate Orbitals
+
+If the next orbital (LUMO+1) lies very close in energy to the LUMO—within a few meV to a few tens of meV—then an electron may occupy either orbital. In such a scenario:
+
+### Thermal Population:
+At room temperature ($k_B T \approx 0.025$ eV), both orbitals can be significantly occupied if their energy splitting ($\Delta E \approx E_\text{LUMO+1} - E_\text{LUMO}$) is comparable to or smaller than $k_B T$.
+
+### Multiple Conduction Channels:
+Each orbital on site $i$ can transfer to each orbital on site $j$, yielding four possible transitions: 
+- LUMO $\to$ LUMO
+- LUMO $\to$ LUMO+1
+- LUMO+1 $\to$ LUMO
+- LUMO+1 $\to$ LUMO+1
+
+### Distinct Reorganization Energies and Couplings:
+The electron–phonon coupling (hence $\lambda$) and the electronic coupling $|V_{ij}|$ could differ slightly between these orbital channels.
+
+Hence, a more multi-state or multi-orbital approach is required.
+
+---
+
+# 2. Multi-State Marcus-Type Formalism
+
+## 2.1 Defining the Relevant States
+
+### Site-Orbital Basis:
+For each site $i$, define two local states:
+- $|i, L\rangle$ for the electron in the LUMO of site $i$.
+- $|i, L+\rangle$ for the electron in the LUMO+1 of site $i$.
+
+### Energies:
+Let $E_i(L)$ be the energy of LUMO at site $i$, and $E_i(L+)$ be the energy of LUMO+1 at site $i$.
+
+If $\Delta E = E_i(L+) - E_i(L) \approx 0.03$ eV or less, both levels can be thermally occupied.
+
+### Couplings:
+Define the electronic coupling:
+
+$$
+V_{ij}(L \to L), \, V_{ij}(L \to L+), \, V_{ij}(L+ \to L), \, V_{ij}(L+ \to L+).
+$$
+
+These can be estimated from quantum-chemical calculations (e.g., projecting wavefunctions of LUMO, LUMO+1 on neighboring sites).
+
+### Reorganization Energies:
+Each pair of orbitals may have its own reorganization energy $\lambda_{ij}(L \to L)$, etc., since geometry changes upon electron transfer can vary with orbital character. While $\lambda$ often does not differ drastically, they can be distinct.
+
+---
+
+## 2.2 Individual Hopping Rates
+
+Each pair of states can be treated via Marcus Theory:
+
+$$
+k(|i, \alpha\rangle \to |j, \beta\rangle) = \frac{|V_{ij}(\alpha \to \beta)|^2}{\hbar} \sqrt{\frac{\pi}{\lambda_{ij}(\alpha \to \beta) k_B T}} \exp\left[-\frac{(\lambda_{ij}(\alpha \to \beta) + \Delta G_{ij}(\alpha \to \beta))^2}{4 \lambda_{ij}(\alpha \to \beta) k_B T}\right],
+$$
+
+where:
+- $\alpha, \beta \in \{L, L+\}$
+- $\Delta G_{ij}(\alpha \to \beta) = E_j(\beta) - E_i(\alpha)$ is the free-energy difference for the electron moving from orbital $\alpha$ on site $i$ to orbital $\beta$ on site $j$.
+- $\lambda_{ij}(\alpha \to \beta)$ is the reorganization energy specifically for that transition.
+
+---
+
+## 2.3 Master Equation or Kinetic Monte Carlo
+
+### Master Equation:
+For the population $P(i, \alpha)$ of state $|i, \alpha\rangle$:
+
+$$
+\frac{dP(i, \alpha)}{dt} = \sum_{j, \beta} \left[P(j, \beta) k(|j, \beta\rangle \to |i, \alpha\rangle) - P(i, \alpha) k(|i, \alpha\rangle \to |j, \beta\rangle)\right].
+$$
+
+### Kinetic Monte Carlo (KMC) Approach:
+- Each site-orbital state is a node in the KMC graph.
+- The rates $k(|i, \alpha\rangle \to |j, \beta\rangle)$ define the transition probabilities.
+- Random hops in continuous time are sampled, tracking electron movement through the network.
+
+---
+
+# 3. Practical Considerations
+
+### 3.1 Are LUMO and LUMO+1 Truly Degenerate?
+- If $\Delta E \lesssim 0.01$ eV, treat them as nearly degenerate.
+- If $\Delta E \gtrsim 3 k_B T$ (e.g., $\gtrsim 0.075$ eV at 300 K), the higher orbital may have negligible population unless shifted by a large injection bias or doping.
+
+### 3.2 Summation of Rates vs. Explicit Populations:
+If $\Delta E \ll k_B T$ and $\lambda$, $|V|$ are similar, approximate as a single effective conduction channel. Otherwise, keep states distinct in simulations for accurate population dynamics.
+
+### 3.3 Electronic Coupling and Orbital Mixing:
+In extended systems, conduction bands may form from linear combinations of LUMO and LUMO+1. For localized wavefunctions, a multi-state Marcus approach remains valid.
+
+### 3.4 Reorganization Energy Differences:
+Differences in $\lambda$ for LUMO vs. LUMO+1 are often small but should be accounted for if significant.
+
+### 3.5 Temperature Dependence:
+Near-degenerate orbitals are more relevant at higher temperatures, as thermal populations approach unity.
+
+---
+
+# 4. Summary of the Multi-Orbital Marcus Procedure
+
+1. Identify relevant orbitals (e.g., LUMO and LUMO+1).
+2. Compute/estimate their energies $E_i(L)$, $E_i(L+)$.
+3. Compute/estimate electronic coupling $|V_{ij}(\alpha \to \beta)|$.
+4. Compute/assign reorganization energies $\lambda_{ij}(\alpha \to \beta)$.
+5. Write all transition rates using Marcus-type expressions:
+   
+$$
+k(|i, \alpha\rangle \to |j, \beta\rangle) = \frac{|V_{ij}(\alpha \to \beta)|^2}{\hbar} \sqrt{\frac{\pi}{\lambda_{ij}(\alpha \to \beta) k_B T}} \exp\left[-\frac{(\lambda_{ij}(\alpha \to \beta) + \Delta G_{ij}(\alpha \to \beta))^2}{4 \lambda_{ij}(\alpha \to \beta) k_B T}\right].
+$$
+
+7. Incorporate these rates into a Master Equation or KMC simulation.
+8. Analyze steady-state or transient transport properties.
+
+---
+
+# 5. Concluding Remarks
+
+- Near-degenerate orbitals (e.g., LUMO and LUMO+1) require a multi-state Marcus approach for accurate transport modeling.
+- Depending on the system, one may approximate these orbitals as a single conduction channel or treat them explicitly for rigor.
+- Proper estimates of $\Delta E$, $|V|$, and $\lambda$ are crucial for reliable predictions of charge transfer kinetics and device performance.
+

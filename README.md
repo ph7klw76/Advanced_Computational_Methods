@@ -300,7 +300,7 @@ Application: Finite element simulations, quantum lattice models.
 
 1. Reorganization Energy: Key parameter in charge hopping and mobility in organic semiconductors.
    
-2. Marcus Theory: For understanding electron and hole transport through hopping mechanisms.
+2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
 
 ### C. Molecular Interactions and Aggregation
 

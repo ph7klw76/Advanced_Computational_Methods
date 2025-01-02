@@ -85,6 +85,7 @@ $$
 $$
 G_i(Q) = \frac{k}{2} (Q - Q_i^0)^2 + G_i^0,
 $$
+
 where $k$ is the force constant related to the reorganization, $Q_i^0$ is the equilibrium coordinate for state $i$, and $G_i^0$ is the free energy at that equilibrium point.
 
 - The reorganization energy $\lambda$ relates to the shift between these two parabolas:

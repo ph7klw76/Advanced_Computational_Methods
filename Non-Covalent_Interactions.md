@@ -217,12 +217,14 @@ This section outlines a generalized workflow for analyzing NCIs in organic semic
 1. Calculate **$E_{\text{dimer}}$**, the total energy of the combined system (e.g., two molecules interacting via π–π stacking).
 2. Calculate **$E_{\text{monoA}}$** and **$E_{\text{monoB}}$**, the energies of each monomer in isolation (often at the same geometry as in the dimer).
 3. Compute the interaction energy **$\Delta E_{\text{int}}$** as:
-   $$
+   
+$$
    \Delta E_{\text{int}} = E_{\text{dimer}} - (E_{\text{monoA}} + E_{\text{monoB}})
-   $$
+$$
 
 ### Correct for Basis Set Superposition Error (BSSE):
 Using schemes like the **Counterpoise (CP) method**:
+
 $$
 \Delta E_{\text{int}}^{\text{CP-corrected}} = E_{\text{dimer}}^{\text{CP}} - (E_{\text{monoA}}^{\text{CP}} + E_{\text{monoB}}^{\text{CP}})
 $$

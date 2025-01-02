@@ -44,14 +44,16 @@ The interaction energy **$E_{\pi-\pi}$** of two parallel, displaced benzene ring
 $$
 E_{QQ} \propto \frac{Q^2}{R^5}
 $$
-   where **$Q$** is the quadrupole moment, and **$R$** is the intermolecular separation.
+
+where **$Q$** is the quadrupole moment, and **$R$** is the intermolecular separation.
 
 3. A dispersion term (London-type):
    
 $$
 E_{\text{disp}} \propto -\frac{C_6}{R^6}
 $$
-   where **$C_6$** is the dispersion coefficient dependent on the polarizabilities and ionization potentials of the rings.
+
+where **$C_6$** is the dispersion coefficient dependent on the polarizabilities and ionization potentials of the rings.
 
 A simplified expression:
 

@@ -304,7 +304,7 @@ Application: Finite element simulations, quantum lattice models.
 
 ### C. Molecular Interactions and Aggregation
 
-1. Non-Covalent Interactions: π-π stacking, van der Waals forces, and hydrogen bonding in organic crystals and films.
+1. Non-Covalent Interactions: π-π stacking, van der Waals forces, and hydrogen bonding in organic semiconductor.
    
 2. Charge Transfer Complexes: Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
 

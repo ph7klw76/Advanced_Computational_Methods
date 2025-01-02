@@ -249,7 +249,8 @@ $$
 $$
    s(r) = \frac{1}{2} \left( \frac{3}{\pi^2} \right)^{1/3} \frac{|\nabla \rho(r)|}{\rho(r)^{4/3}}
 $$
-   where **$\rho(r)$** is the electron density.
+
+where **$\rho(r)$** is the electron density.
    
 3. Intermolecular interactions appear as **isosurfaces** of low density and low gradient, colored by the sign of the second Hessian eigenvalue (**$\lambda_2$**) to distinguish:
    - **Attractive (negative $\lambda_2$)**.

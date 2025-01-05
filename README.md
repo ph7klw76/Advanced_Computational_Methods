@@ -310,7 +310,7 @@ Application: Finite element simulations, quantum lattice models.
 
 ### D.Spectroscopic Properties
 
-1. Vibrational Analysis: Using quantum methods to predict and analyze IR and Raman spectra.
+1. [Vibrational Analysis](vibrational_analysis.md): Using quantum methods to predict and analyze IR and Raman spectra.
    
 2. UV-Vis and Fluorescence Spectroscopy: Modeling absorption and emission processes.
    

@@ -152,6 +152,8 @@ This result comes from expanding the displaced harmonic oscillator wavefunctions
 - **$S$ Large** $\implies$ The excited-state PES is significantly displaced from the ground-state PES, leading to significant vibronic structure and strong intensity for higher $v_f$ transitions.
 - **$S$ Small** $\implies$ Minimal displacement, meaning transitions predominantly occur from $v_i = 0$ to $v_f = 0$ (the so-called 0-0 transition), with little vibrational progression.
 
+![image](https://github.com/user-attachments/assets/63ce1394-941e-4953-973a-67d44922252f)
+
 ---
 
 ### 3.3.3 Significance of FC Factors and Huang–Rhys Factor

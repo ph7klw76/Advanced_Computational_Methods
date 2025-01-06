@@ -312,7 +312,7 @@ Application: Finite element simulations, quantum lattice models.
 
 1. [Vibrational Analysis](vibrational_analysis.md): Using quantum methods to predict and analyze IR and Raman spectra.
    
-2. UV-Vis and Fluorescence Spectroscopy: Modeling absorption and emission processes.
+2. [UV-Vis and Fluorescence Spectroscopy](absorption_emission.md): Modeling absorption and emission processes.
    
 3. Spin-Orbit Coupling: Relevant for phosphorescence in OLEDs and spintronic applications.
 

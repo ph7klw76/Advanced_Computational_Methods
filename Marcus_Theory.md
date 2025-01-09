@@ -423,6 +423,7 @@ with open(output_file, 'w') as file:
 print(f"Updated file with k_ij values saved as '{output_file}'")
 
 import random
+from scipy.stats import linregress
 
 # Constants
 kB = 1.380649e-23  # Boltzmann constant (Joule/K)
@@ -481,11 +482,16 @@ def simulate_hops(data, num_hops):
     return positions, times
 
 def calculate_diffusivity(positions, times):
-    """Calculate diffusivity from MSD and time."""
-    msd = np.mean(np.sum((positions - positions[0])**2, axis=1))  # Mean squared displacement
-    total_time = times[-1]
+    """Calculate diffusivity from the slope of MSD vs. time plot."""
+    # Calculate MSD for each time step
+    msd = np.sum((positions - positions[0])**2, axis=1)  # Mean squared displacement
+
+    # Perform linear regression on MSD vs time
+    slope, _, _, _, _ = linregress(times, msd)
+
+    # Diffusivity is slope / (2 * n)
     n = 3  # Number of dimensions
-    diffusivity = msd / (2 * n * total_time)
+    diffusivity = slope / (2 * n)
     return diffusivity
 
 def calculate_mobility(diffusivity):

@@ -407,7 +407,7 @@ def load_raw_data(file):
             if len(parts) < 3:
                 continue
             
-            # Example: parts[1] = V_ij (eV), parts[2] = distance (Angstrom)
+            # Example: parts[1] = V_ij (eV), parts[2] = distance (nm)
             V_ij_eV   = float(parts[1])
             distanceA = float(parts[2])
             

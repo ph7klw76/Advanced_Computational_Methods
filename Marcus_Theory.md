@@ -369,3 +369,143 @@ In typical bulk organic semiconductor modeling where each hopping site is roughl
 
 However, whether you can safely ignore $\Delta G$ depends on the specific physical context—especially in cases with doping gradients, large electric fields, or heterogeneous blends where $\Delta G$ can be substantial. Always compare $\Delta G$ to $\lambda$ and $k_B T$; if it is small by comparison, you can set it aside in your Marcus rate calculations for most practical purposes.
 
+
+```python
+import numpy as np
+
+# Define constants
+hbar = 1.0545718e-34  # Reduced Planck's constant (Joule·s)
+kB = 1.380649e-23     # Boltzmann constant (Joule/K)
+T = 300               # Temperature in Kelvin
+
+# Load the data from the text file
+input_file = 'model.txt'
+output_file = 'model_with_kij.txt'
+
+# Define the reorganization energy (lambda_ij) and free-energy difference (Delta_G_ij^0)
+lambda_ij = 0.478  # eV (updated value)
+Delta_G_ij_0 = 0.0 # Free-energy difference assumed to be zero
+
+# Conversion factor for eV to Joules
+eV_to_Joule = 1.60218e-19
+lambda_ij *= eV_to_Joule
+Delta_G_ij_0 *= eV_to_Joule
+
+# Read the data
+with open(input_file, 'r') as file:
+    lines = file.readlines()
+
+# Prepare to store output lines
+output_lines = []
+
+# Process each line
+for line in lines:
+    parts = line.strip().split()
+    if len(parts) < 3:
+        continue
+
+    # Extract values
+    V_ij = float(parts[1]) * eV_to_Joule          # Convert to Joules
+
+    # Calculate k_ij using the given formula
+    pre_factor = (V_ij**2) / hbar
+    exp_factor = np.exp(-((lambda_ij + Delta_G_ij_0)**2) / (4 * lambda_ij * kB * T))
+    k_ij = pre_factor * np.sqrt(np.pi / (lambda_ij * kB * T)) * exp_factor
+
+    # Append the calculated k_ij to the line
+    new_line = line.strip() + f"\t{k_ij:.6e}"
+    output_lines.append(new_line)
+
+# Write the updated data to a new file
+with open(output_file, 'w') as file:
+    file.write("\n".join(output_lines))
+
+print(f"Updated file with k_ij values saved as '{output_file}'")
+
+import random
+
+# Constants
+kB = 1.380649e-23  # Boltzmann constant (Joule/K)
+T = 300            # Temperature in Kelvin
+q = 1.60218e-19    # Elementary charge (Coulomb)
+
+# Simulation parameters
+num_hops = 1000000
+
+# Load the data from the text file
+input_file = 'model_with_kij.txt'
+
+def load_data(file):
+    """Load data from the model file."""
+    data = []
+    with open(file, 'r') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) >= 4:
+                distance = (float(parts[1]))/10**9  # Distance (2nd column)
+                rate = float(parts[3])      # Marcus transfer rate (4th column)
+                data.append((distance, rate))
+    return data
+
+def random_direction_3d(distance):
+    """Generate a random 3D direction vector scaled by distance."""
+    theta = np.arccos(2 * random.random() - 1)  # Polar angle
+    phi = 2 * np.pi * random.random()          # Azimuthal angle
+    x = distance * np.sin(theta) * np.cos(phi)
+    y = distance * np.sin(theta) * np.sin(phi)
+    z = distance * np.cos(theta)
+    return np.array([x, y, z])
+
+def simulate_hops(data, num_hops):
+    """Simulate the hopping process and calculate MSD and times."""
+    positions = [np.zeros(3)]  # Start at origin
+    times = [0]
+
+    for _ in range(num_hops):
+        # Randomly select a row
+        distance, rate = random.choice(data)
+
+        # Calculate waiting time based on P(t, λ) ~ λe^(-λt)
+        waiting_time = np.random.exponential(1 / rate)
+
+        # Random direction in 3D space
+        hop = random_direction_3d(distance)
+
+        # Update position and time
+        new_position = positions[-1] + hop
+        positions.append(new_position)
+        times.append(times[-1] + waiting_time)
+
+    positions = np.array(positions)
+    times = np.array(times)
+    return positions, times
+
+def calculate_diffusivity(positions, times):
+    """Calculate diffusivity from MSD and time."""
+    msd = np.mean(np.sum((positions - positions[0])**2, axis=1))  # Mean squared displacement
+    total_time = times[-1]
+    n = 3  # Number of dimensions
+    diffusivity = msd / (2 * n * total_time)
+    return diffusivity
+
+def calculate_mobility(diffusivity):
+    """Calculate zero-field mobility."""
+    mobility = q * diffusivity / (kB * T)
+    return mobility
+
+# Load the data
+data = load_data(input_file)
+
+# Simulate hopping process
+positions, times = simulate_hops(data, num_hops)
+
+# Calculate diffusivity
+diffusivity = calculate_diffusivity(positions, times)
+
+# Calculate zero-field mobility
+mobility = calculate_mobility(diffusivity)
+
+print(f"Diffusivity (D): {diffusivity:.6e} m^2/s")
+print(f"Zero-field mobility (μ_0): {mobility:.6e} m^2/Vs")
+```
+

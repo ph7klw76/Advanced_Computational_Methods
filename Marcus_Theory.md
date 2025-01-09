@@ -372,146 +372,173 @@ However, whether you can safely ignore $\Delta G$ depends on the specific physic
 
 ```python
 import numpy as np
-
-# Define constants
-hbar = 1.0545718e-34  # Reduced Planck's constant (Joule·s)
-kB = 1.380649e-23     # Boltzmann constant (Joule/K)
-T = 300               # Temperature in Kelvin
-
-# Load the data from the text file
-input_file = 'model.txt'
-output_file = 'model_with_kij.txt'
-
-# Define the reorganization energy (lambda_ij) and free-energy difference (Delta_G_ij^0)
-lambda_ij = 0.478  # eV (updated value)
-Delta_G_ij_0 = 0.0 # Free-energy difference assumed to be zero
-
-# Conversion factor for eV to Joules
-eV_to_Joule = 1.60218e-19
-lambda_ij *= eV_to_Joule
-Delta_G_ij_0 *= eV_to_Joule
-
-# Read the data
-with open(input_file, 'r') as file:
-    lines = file.readlines()
-
-# Prepare to store output lines
-output_lines = []
-
-# Process each line
-for line in lines:
-    parts = line.strip().split()
-    if len(parts) < 3:
-        continue
-
-    # Extract values
-    V_ij = float(parts[1]) * eV_to_Joule          # Convert to Joules
-
-    # Calculate k_ij using the given formula
-    pre_factor = (V_ij**2) / hbar
-    exp_factor = np.exp(-((lambda_ij + Delta_G_ij_0)**2) / (4 * lambda_ij * kB * T))
-    k_ij = pre_factor * np.sqrt(np.pi / (lambda_ij * kB * T)) * exp_factor
-
-    # Append the calculated k_ij to the line
-    new_line = line.strip() + f"\t{k_ij:.6e}"
-    output_lines.append(new_line)
-
-# Write the updated data to a new file
-with open(output_file, 'w') as file:
-    file.write("\n".join(output_lines))
-
-print(f"Updated file with k_ij values saved as '{output_file}'")
-
 import random
 from scipy.stats import linregress
 
-# Constants
-kB = 1.380649e-23  # Boltzmann constant (Joule/K)
-T = 300            # Temperature in Kelvin
-q = 1.60218e-19    # Elementary charge (Coulomb)
+# --- Constants ---
+hbar = 1.0545718e-34   # Reduced Planck constant (J·s)
+kB   = 1.380649e-23    # Boltzmann constant (J/K)
+T    = 300             # Temperature (K)
 
-# Simulation parameters
-num_hops = 1000000
+q = 1.60218e-19        # Elementary charge (C)
+eV_to_Joule = 1.60218e-19  # eV -> J conversion
 
-# Load the data from the text file
-input_file = 'model_with_kij.txt'
+# --- Disorder and reorganization parameters ---
+disorder_std_eV = 0.12     # standard deviation for Delta G_ij^0 in eV
+lambda_ij_eV    = 0.478    # reorganization energy in eV
+lambda_ij       = lambda_ij_eV * eV_to_Joule  # convert to Joules
 
-def load_data(file):
-    """Load data from the model file."""
+# --- Input file and simulation parameters ---
+input_file = 'model.txt'   # e.g., with columns [site_i, V_ij(eV), distance(A), ...]
+num_hops   = 10000000
+
+# --------------------------------------------------------------------
+# 1. LOAD ONLY RAW DATA
+# --------------------------------------------------------------------
+def load_raw_data(file):
+    """
+    Load raw data from 'file' (e.g., distance in Angstroms,
+    V_ij in eV). Return a list of tuples (distance_in_meters, V_ij_in_Joules).
+    """
     data = []
     with open(file, 'r') as f:
         for line in f:
             parts = line.strip().split()
-            if len(parts) >= 4:
-                distance = (float(parts[1]))/10**9  # Distance (2nd column)
-                rate = float(parts[3])      # Marcus transfer rate (4th column)
-                data.append((distance, rate))
+            if len(parts) < 3:
+                continue
+            
+            # Example: parts[1] = V_ij (eV), parts[2] = distance (Angstrom)
+            V_ij_eV   = float(parts[1])
+            distanceA = float(parts[2])
+            
+            # Convert eV -> Joules
+            V_ij = V_ij_eV * eV_to_Joule
+            
+            # Convert distance in Å -> meters (1 Å = 1e-10 m)
+            distance_m = distanceA * 1e-9
+            
+            data.append((distance_m, V_ij))
+    
     return data
 
+# --------------------------------------------------------------------
+# 2. HELPER FUNCTIONS
+# --------------------------------------------------------------------
 def random_direction_3d(distance):
-    """Generate a random 3D direction vector scaled by distance."""
-    theta = np.arccos(2 * random.random() - 1)  # Polar angle
-    phi = 2 * np.pi * random.random()          # Azimuthal angle
+    """
+    Generate a random 3D direction vector, scaled by 'distance'.
+    This ensures a uniform direction over the sphere.
+    """
+    theta = np.arccos(2 * random.random() - 1)  # polar angle
+    phi   = 2 * np.pi * random.random()         # azimuthal angle
+    
     x = distance * np.sin(theta) * np.cos(phi)
     y = distance * np.sin(theta) * np.sin(phi)
     z = distance * np.cos(theta)
     return np.array([x, y, z])
 
-def simulate_hops(data, num_hops):
-    """Simulate the hopping process and calculate MSD and times."""
-    positions = [np.zeros(3)]  # Start at origin
-    times = [0]
+def calculate_marcus_rate(V_ij, DeltaG_ij_0):
+    """
+    Compute the Marcus transfer rate k_ij on the fly:
+      k_ij = (V_ij^2 / hbar) * sqrt(pi / (lambda_ij * kB * T))
+             * exp(-(lambda_ij + DeltaG_ij_0)^2 / (4 * lambda_ij * kB * T))
+    where all energy terms must be in Joules.
+    """
+    global lambda_ij, kB, T, hbar  # or pass them as parameters if preferred
+    
+    # Pre-factor
+    pre_factor = (V_ij**2) / hbar
+    
+    # Exponential factor
+    exp_factor = np.exp(
+        -((lambda_ij + DeltaG_ij_0)**2) / (4.0 * lambda_ij * kB * T)
+    )
+    
+    # Overall rate
+    k_ij = pre_factor * np.sqrt(np.pi / (lambda_ij * kB * T)) * exp_factor
+    return k_ij
 
+# --------------------------------------------------------------------
+# 3. MONTE CARLO SIMULATION (ON THE FLY)
+# --------------------------------------------------------------------
+def simulate_hops_on_the_fly(data, num_hops):
+    """
+    For each hop:
+      1) Randomly choose (distance, V_ij) from 'data'.
+      2) Draw Delta_G_ij^0 from a Gaussian with mean=0, std=disorder_std_eV.
+      3) Compute k_ij from the Marcus formula.
+      4) waiting_time ~ Exp(1 / k_ij).
+      5) Move in a random 3D direction of magnitude 'distance'.
+    """
+    positions = [np.zeros(3)]  # start at origin
+    times     = [0.0]
+    
     for _ in range(num_hops):
-        # Randomly select a row
-        distance, rate = random.choice(data)
-
-        # Calculate waiting time based on P(t, λ) ~ λe^(-λt)
-        waiting_time = np.random.exponential(1 / rate)
-
-        # Random direction in 3D space
-        hop = random_direction_3d(distance)
-
-        # Update position and time
+        # (distance_m, V_ij_J)
+        distance_m, V_ij_J = random.choice(data)
+        
+        # Draw a random Delta G from Gaussian distribution, in Joules
+        DeltaG_ij_0_J = np.random.normal(0.0, disorder_std_eV) * eV_to_Joule
+        
+        # Compute Marcus transfer rate k_ij (1/s)
+        k_ij = calculate_marcus_rate(V_ij_J, DeltaG_ij_0_J)
+        
+        # Waiting time: exponentially distributed with parameter k_ij
+        waiting_time = np.random.exponential(1.0 / k_ij)
+        
+        # Random hop direction
+        hop = random_direction_3d(distance_m)
+        
+        # Update positions and times
         new_position = positions[-1] + hop
         positions.append(new_position)
         times.append(times[-1] + waiting_time)
-
-    positions = np.array(positions)
-    times = np.array(times)
-    return positions, times
+    
+    return np.array(positions), np.array(times)
 
 def calculate_diffusivity(positions, times):
-    """Calculate diffusivity from the slope of MSD vs. time plot."""
-    # Calculate MSD for each time step
-    msd = np.sum((positions - positions[0])**2, axis=1)  # Mean squared displacement
-
-    # Perform linear regression on MSD vs time
+    """
+    Calculate diffusivity from the slope of MSD vs. time in 3D.
+    MSD(t) ~ 2 * n * D * t  =>  slope = 2*n*D,   n=3
+    """
+    msd = np.sum((positions - positions[0])**2, axis=1)
     slope, _, _, _, _ = linregress(times, msd)
+    
+    n = 3
+    D_m2_s = slope / (2.0 * n)  # slope = 2nD => D = slope / (2n)
+    
+    # Convert to cm^2/s
+    D_cm2_s = D_m2_s * 1e4
+    return D_cm2_s
 
-    # Diffusivity is slope / (2 * n)
-    n = 3  # Number of dimensions
-    diffusivity = slope / (2 * n)
-    return diffusivity
+def calculate_mobility(diffusivity_cm2_s):
+    """
+    Zero-field mobility via Einstein relation:
+      mu = q * D / (kB * T)
+    Returned in cm^2/(V·s).
+    """
+    return (q * diffusivity_cm2_s) / (kB * T)
 
-def calculate_mobility(diffusivity):
-    """Calculate zero-field mobility."""
-    mobility = q * diffusivity / (kB * T)
-    return mobility
+# --------------------------------------------------------------------
+# 4. MAIN WORKFLOW
+# --------------------------------------------------------------------
+if __name__ == "__main__":
+    
+    # Load raw data (distance, V_ij), but do not compute k_ij yet
+    data = load_raw_data(input_file)
+    
+    # Run Monte Carlo simulation, computing k_ij on the fly
+    positions, times = simulate_hops_on_the_fly(data, num_hops)
+    
+    # Calculate diffusivity in cm^2/s
+    diffusivity = calculate_diffusivity(positions, times)
+    
+    # Calculate zero-field mobility in cm^2/(V·s)
+    mobility = calculate_mobility(diffusivity)
+    
+    # Print results
+    print(f"Diffusivity (D):         {diffusivity:.6e} cm^2/s")
+    print(f"Zero-field mobility (μo): {mobility:.6e} cm^2/Vs")
 
-# Load the data
-data = load_data(input_file)
-
-# Simulate hopping process
-positions, times = simulate_hops(data, num_hops)
-
-# Calculate diffusivity
-diffusivity = calculate_diffusivity(positions, times)
-
-# Calculate zero-field mobility
-mobility = calculate_mobility(diffusivity)
-
-print(f"Diffusivity (D): {diffusivity:.6e} m^2/s")
-print(f"Zero-field mobility (μ_0): {mobility:.6e} m^2/Vs")
 ```
 

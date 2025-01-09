@@ -227,4 +227,145 @@ One can calculate site-to-site hopping rates that capture the essential physics 
 
 Marcus Theory remains indispensable for guiding synthetic strategies and understanding the interplay between structure and electronic properties in organic semiconductors.
 
+# Marcus Rate
+
+### $K_{ij}$ (or $\nu_{ij}$):
+
+In Marcus theory, the rate for a charge to hop from site $i$ to site $j$ is given by an expression (in its simplest form) like:
+
+$$
+K_{ij} = \nu_0 \exp[-\beta \Delta G_{ij}^\dagger],
+$$
+
+where:
+
+- $\nu_0$ is a prefactor (attempt frequency),
+- $\beta = 1 / (k_B T)$, where $k_B$ is Boltzmann’s constant and $T$ is temperature,
+- $\Delta G_{ij}^\dagger$ is the free energy barrier for hopping from site $i$ to $j$.
+
+More detailed forms of the Marcus rate can account for reorganization energy $\lambda_\text{reorg}$ and the energy difference $\Delta E_{ij}$ between sites $i$ and $j$.
+
+---
+
+## Exponential Waiting Time and $\lambda$:
+
+When we perform a kinetic Monte Carlo (KMC) simulation, we often pick the waiting time $t$ for an event (in this case, a hop) from an exponential distribution:
+
+$$
+P(t; \lambda) = \lambda e^{-\lambda t},
+$$
+
+where $\lambda$ is the total rate of an event occurring. In a KMC simulation of hopping transport, $\lambda$ is effectively the sum of all possible outgoing rates from the current site (or the relevant subset if the model enforces only a single possible hop at a time).
+
+If a site $i$ has possible hops to several neighboring sites $j \in \{1, 2, \dots\}$ with rates $K_{ij}$, then the total rate for a hop out of site $i$ is:
+
+$$
+\Lambda_i = \sum_j K_{ij}.
+$$
+
+The waiting time for the next hop out of site $i$ is then drawn from:
+
+$$
+P(t; \Lambda_i) = \Lambda_i e^{-\Lambda_i t}.
+$$
+
+---
+
+## Is $\lambda$ the same as $1 / K_{ij}$?
+
+If we are talking about a single transition $i \to j$ and ignoring any other possible transitions from $i$, then the event “a hop from $i$ to $j$ occurs” has a rate $K_{ij}$. The waiting time for that specific event follows an exponential distribution with parameter $K_{ij}$. Hence, for that single hop event, $\lambda = K_{ij}$. In that case, the mean waiting time for the hop $i \to j$ is:
+
+$$
+\langle t \rangle = \frac{1}{K_{ij}}.
+$$
+
+If there are multiple possible transitions from the current site $i$, then the KMC algorithm typically considers the total rate $\Lambda_i = \sum_j K_{ij}$. We sample the waiting time from $\Lambda_i$ and then choose a particular $j$ among the possible final sites with probabilities proportional to $K_{ij}$. In that more general case:
+
+$$
+\lambda \equiv \Lambda_i = \sum_j K_{ij},
+$$
+
+which is not necessarily equal to $1 / K_{ij}$, but rather the sum of all available hopping rates from site $i$. After we pick the waiting time (from $\Lambda_i$), the specific hop $i \to j$ is chosen according to:
+
+$$
+P(\text{hop is } i \to j) = \frac{K_{ij}}{\Lambda_i}.
+$$
+
+---
+
+## Summary
+
+### For a single hop event:
+- **Waiting time:** $t \sim \text{Exp}(K_{ij})$,
+- **Rate:** $\lambda = K_{ij}$,
+- **Mean waiting time:** $\langle t \rangle = \frac{1}{K_{ij}}$.
+
+### For multiple possible hops from one site:
+- **Waiting time:** $t \sim \text{Exp}(\Lambda_i)$,
+- **Total rate:** $\Lambda_i = \sum_j K_{ij}$.
+
+In this case, $\lambda \neq 1 / K_{ij}$; it is the sum of all transition rates out of the site.
+
+---
+
+## Conclusion
+
+Therefore, if your question is: “Is $\lambda$ the $1 / K_{ij}$ rate of the Marcus equation?”—the more precise statement is:
+
+- When there is only a single possible hop (rate $K_{ij}$), $\lambda = K_{ij}$, so the mean waiting time $\langle t \rangle$ is $1 / K_{ij}$.
+- Generally, in a KMC approach with multiple final states, $\lambda = \sum_j K_{ij}$, i.e., the total rate out of site $i$.
+
+Hence, $\lambda$ in the exponential waiting time distribution usually refers to the total outgoing rate from the current state in your simulation, which may (or may not) equal a single hop rate $K_{ij}$ depending on how many transitions are possible from that state.
+
+
+# 1. The Marcus Rate Equation (Refresher)
+
+Marcus theory provides the charge-transfer (CT) rate $k$ for an electron (or hole) hopping from one site (molecule) to another. In its simplest form for non-adiabatic reactions:
+
+$$
+k = \frac{\pi}{\lambda k_B T} V^2 \exp \left[ - \frac{( \Delta G + \lambda )^2}{4 \lambda k_B T} \right],
+$$
+
+where:
+
+- $V$ is the electronic coupling (transfer integral) between initial and final sites,
+- $\lambda$ is the reorganization energy (the energy required to reorganize the nuclear coordinates surrounding the charge),
+- $\Delta G$ is the free-energy difference between the initial and final electronic states,
+- $k_B$ is Boltzmann’s constant,
+- $T$ is the temperature.
+
+---
+
+# 2. Why One Often Sets $\Delta G \approx 0$ in Organic Semiconductors
+
+### Homogeneous Material & Symmetry
+In a device or film made of the same organic semiconductor (same molecule) with minimal doping gradients or big energetic offsets, each localized site (molecule) can be thought of as having roughly the same electrochemical potential. Thus, the net free-energy difference for moving a charge from one site to an equivalent neighboring site is close to zero.
+
+### Large Positional and Energetic Disorder
+- **Energetic Disorder:** Because the local environment (e.g., conformations, slight variations in packing) fluctuates, the local site energies vary in a “Gaussian-like” distribution. The effect of this distribution on $\Delta G$ can often be effectively averaged out, especially if there is no systematic bias.
+- **Positional Disorder:** Real organic films are not perfectly crystalline. The structural randomness averages out the site-to-site energy differences over many hops.
+
+In such cases, one focuses on the distribution of transfer integrals $V$ and reorganization energies $\lambda$, rather than $\Delta G$ itself.
+
+### Thermal Fluctuations
+If $\Delta G$ is smaller than a few $k_B T$, the exponential factor in Marcus theory is mainly determined by $\lambda$ (the reorganization energy). As a result, ignoring a small $\Delta G$ is practically valid.
+
+---
+
+# 3. When $\Delta G$ Might Matter
+
+### Doped or Strongly Polar Environments
+If you introduce doping or if there is an external electric field (e.g., a strong built-in field in a device stack), local site energies can shift significantly, making $\Delta G$ non-negligible.
+
+### Molecular Heterojunctions
+In blends or heterostructures (e.g., donor–acceptor systems), the difference in HOMO/LUMO levels between two distinct molecules can produce a substantial $\Delta G$.
+
+### Near Device Interfaces
+At an electrode interface or at grain boundaries, local energetic offsets can be large enough that ignoring $\Delta G$ underestimates the barrier for charge injection or extraction.
+
+# Conclusion
+
+In typical bulk organic semiconductor modeling where each hopping site is roughly equivalent, $\Delta G \approx 0$ is a standard and often justified approximation. The rationale hinges on the facts that local energy variations due to positional and energetic disorder average out and that the reorganization energy $\lambda$ plus thermal effects usually dominate the activation barrier.
+
+However, whether you can safely ignore $\Delta G$ depends on the specific physical context—especially in cases with doping gradients, large electric fields, or heterogeneous blends where $\Delta G$ can be substantial. Always compare $\Delta G$ to $\lambda$ and $k_B T$; if it is small by comparison, you can set it aside in your Marcus rate calculations for most practical purposes.
 

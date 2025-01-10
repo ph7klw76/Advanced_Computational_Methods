@@ -371,174 +371,212 @@ However, whether you can safely ignore $\Delta G$ depends on the specific physic
 
 
 ```python
-import numpy as np
 import random
+import numpy as np
 from scipy.stats import linregress
+import matplotlib.pyplot as plt
 
-# --- Constants ---
-hbar = 1.0545718e-34   # Reduced Planck constant (J·s)
-kB   = 1.380649e-23    # Boltzmann constant (J/K)
-T    = 300             # Temperature (K)
 
-q = 1.60218e-19        # Elementary charge (C)
-eV_to_Joule = 1.60218e-19  # eV -> J conversion
 
-# --- Disorder and reorganization parameters ---
-disorder_std_eV = 0.12     # standard deviation for Delta G_ij^0 in eV
-lambda_ij_eV    = 0.478    # reorganization energy in eV
-lambda_ij       = lambda_ij_eV * eV_to_Joule  # convert to Joules
+# Define constants
+hbar = 1.0545718e-34  # Reduced Planck's constant (Joule·s)
+kB = 1.380649e-23     # Boltzmann constant (Joule/K)
+T = 300               # Temperature in Kelvin
 
-# --- Input file and simulation parameters ---
-input_file = 'model.txt'   # e.g., with columns [site_i, V_ij(eV), distance(A), ...]
-num_hops   = 10000000
+# Load the data from the text file
+input_file = 'model.txt'
+output_file = 'model_with_kij.txt'
 
-# --------------------------------------------------------------------
-# 1. LOAD ONLY RAW DATA
-# --------------------------------------------------------------------
-def load_raw_data(file):
-    """
-    Load raw data from 'file' (e.g., distance in Angstroms,
-    V_ij in eV). Return a list of tuples (distance_in_meters, V_ij_in_Joules).
-    """
+# Define the reorganization energy (lambda_ij) and free-energy difference (Delta_G_ij^0)
+lambda_ij = 0.478  # eV (updated value)
+disorder_std_eV = 0.1308 # Free-energy difference assumed to be zero
+
+# Conversion factor for eV to Joules
+eV_to_Joule = 1.60218e-19
+lambda_ij *= eV_to_Joule
+
+
+def first(input_file):# Read the data
+    with open(input_file, 'r') as file:
+        lines = file.readlines()
+    
+    # Prepare to store output lines
+    output_lines = []
+    
+    # Process each line
+    for line in lines:
+        parts = line.strip().split()
+        # Extract values
+        print(parts[2])
+        V_ij = float(parts[2]) * eV_to_Joule          # Convert to Joules
+        Delta_G_ij_0 = np.random.normal(0.0, disorder_std_eV) * eV_to_Joule
+        # Calculate k_ij using the given formula
+        pre_factor = (V_ij**2) / hbar
+        exp_factor = np.exp(-((lambda_ij + Delta_G_ij_0)**2) / (4 * lambda_ij * kB * T))
+        k_ij = pre_factor * np.sqrt(np.pi / (lambda_ij * kB * T)) * exp_factor
+    
+        # Append the calculated k_ij to the line
+        new_line = line.strip() + f"\t{k_ij:.6e}"
+        output_lines.append(new_line)
+    
+    # Write the updated data to a new file
+    with open(output_file, 'w') as file:
+        file.write("\n".join(output_lines))
+    return None
+
+
+# Constants
+kB = 1.380649e-23  # Boltzmann constant (Joule/K)
+T = 300            # Temperature in Kelvin
+q = 1.60218e-19    # Elementary charge (Coulomb)
+
+# Simulation parameters
+num_hops = 10000
+
+# Load the data from the text file
+input_file = 'model_with_kij.txt'
+
+def load_data(file):
+    """Load data from the model file."""
     data = []
     with open(file, 'r') as f:
         for line in f:
             parts = line.strip().split()
-            if len(parts) < 3:
-                continue
-            
-            # Example: parts[1] = V_ij (eV), parts[2] = distance (nm)
-            V_ij_eV   = float(parts[1])
-            distanceA = float(parts[2])
-            
-            # Convert eV -> Joules
-            V_ij = V_ij_eV * eV_to_Joule
-            
-            # Convert distance in Å -> meters (1 Å = 1e-10 m)
-            distance_m = distanceA * 1e-9
-            
-            data.append((distance_m, V_ij))
-    
+            if float(parts[1])<0.88:
+                distance = (float(parts[1]))*1e-9  # Distance (2nd column)
+                rate = float(parts[6])      # Marcus transfer rate (4th column)
+                x= float(parts[3])
+                y= float(parts[4])
+                z= float(parts[5])
+                data.append((distance, rate,x,y,z))
     return data
 
-# --------------------------------------------------------------------
-# 2. HELPER FUNCTIONS
-# --------------------------------------------------------------------
-def random_direction_3d(distance):
-    """
-    Generate a random 3D direction vector, scaled by 'distance'.
-    This ensures a uniform direction over the sphere.
-    """
-    theta = np.arccos(2 * random.random() - 1)  # polar angle
-    phi   = 2 * np.pi * random.random()         # azimuthal angle
-    
-    x = distance * np.sin(theta) * np.cos(phi)
-    y = distance * np.sin(theta) * np.sin(phi)
-    z = distance * np.cos(theta)
-    return np.array([x, y, z])
 
-def calculate_marcus_rate(V_ij, DeltaG_ij_0):
+def random_direction_3d(distance, Nx, Ny, Nz):
     """
-    Compute the Marcus transfer rate k_ij on the fly:
-      k_ij = (V_ij^2 / hbar) * sqrt(pi / (lambda_ij * kB * T))
-             * exp(-(lambda_ij + DeltaG_ij_0)^2 / (4 * lambda_ij * kB * T))
-    where all energy terms must be in Joules.
+    Modify the direction to include a 50% probability of mirror reflection.
+    (Nx, Ny, Nz) is expected to be a unit vector. We scale that unit vector
+    by 'distance' and randomly decide to apply a mirror reflection.
     """
-    global lambda_ij, kB, T, hbar  # or pass them as parameters if preferred
-    
-    # Pre-factor
-    pre_factor = (V_ij**2) / hbar
-    
-    # Exponential factor
-    exp_factor = np.exp(
-        -((lambda_ij + DeltaG_ij_0)**2) / (4.0 * lambda_ij * kB * T)
-    )
-    
-    # Overall rate
-    k_ij = pre_factor * np.sqrt(np.pi / (lambda_ij * kB * T)) * exp_factor
-    return k_ij
+    # Randomly decide whether to reflect the direction
+    reflect = random.choice([True, False])  # 50% chance for reflection
+   
+    # Apply reflection if selected
+    direction = np.array([Nx, Ny, Nz])
+    if reflect:
+        direction = -direction  # Mirror reflection
+   
+    # Scale by distance
+    return distance * direction
 
-# --------------------------------------------------------------------
-# 3. MONTE CARLO SIMULATION (ON THE FLY)
-# --------------------------------------------------------------------
-def simulate_hops_on_the_fly(data, num_hops):
-    """
-    For each hop:
-      1) Randomly choose (distance, V_ij) from 'data'.
-      2) Draw Delta_G_ij^0 from a Gaussian with mean=0, std=disorder_std_eV.
-      3) Compute k_ij from the Marcus formula.
-      4) waiting_time ~ Exp(1 / k_ij).
-      5) Move in a random 3D direction of magnitude 'distance'.
-    """
-    positions = [np.zeros(3)]  # start at origin
-    times     = [0.0]
-    
+def simulate_hops(data, num_hops):
+    """Simulate the hopping process and calculate MSD and times."""
+    positions = [np.zeros(3)]  # Start at origin
+    times = [0]
+
     for _ in range(num_hops):
-        # (distance_m, V_ij_J)
-        distance_m, V_ij_J = random.choice(data)
-        
-        # Draw a random Delta G from Gaussian distribution, in Joules
-        DeltaG_ij_0_J = np.random.normal(0.0, disorder_std_eV) * eV_to_Joule
-        
-        # Compute Marcus transfer rate k_ij (1/s)
-        k_ij = calculate_marcus_rate(V_ij_J, DeltaG_ij_0_J)
-        
-        # Waiting time: exponentially distributed with parameter k_ij
-        waiting_time = np.random.exponential(1.0 / k_ij)
-        
-        # Random hop direction
-        hop = random_direction_3d(distance_m)
-        
-        # Update positions and times
+        # Randomly select a row
+        distance, rate,x,y,z = random.choice(data)
+
+        # Calculate waiting time based on P(t, λ) ~ λe^(-λt)
+        waiting_time = np.random.exponential(1 / rate)
+
+        # Random direction in 3D space
+        hop = random_direction_3d(distance,x,y,z)
+
+        # Update position and time
         new_position = positions[-1] + hop
         positions.append(new_position)
         times.append(times[-1] + waiting_time)
-    
-    return np.array(positions), np.array(times)
+
+    positions = np.array(positions)
+    times = np.array(times)
+    return positions, times
 
 def calculate_diffusivity(positions, times):
-    """
-    Calculate diffusivity from the slope of MSD vs. time in 3D.
-    MSD(t) ~ 2 * n * D * t  =>  slope = 2*n*D,   n=3
-    """
-    msd = np.sum((positions - positions[0])**2, axis=1)
+    """Calculate diffusivity from the slope of MSD vs. time plot."""
+    # Calculate MSD for each time step
+    msd = np.sum((positions - positions[0])**2, axis=1)  # Mean squared displacement
+
+    # Perform linear regression on MSD vs time
     slope, _, _, _, _ = linregress(times, msd)
-    
-    n = 3
-    D_m2_s = slope / (2.0 * n)  # slope = 2nD => D = slope / (2n)
-    
-    # Convert to cm^2/s
-    D_cm2_s = D_m2_s * 1e4
-    return D_cm2_s
 
-def calculate_mobility(diffusivity_cm2_s):
-    """
-    Zero-field mobility via Einstein relation:
-      mu = q * D / (kB * T)
-    Returned in cm^2/(V·s).
-    """
-    return (q * diffusivity_cm2_s) / (kB * T)
+    # Diffusivity is slope / (2 * n)
+    n = 3  # Number of dimensions
+    diffusivity = slope / (2 * n)
+    diffusivity= diffusivity * 1e4
+    return diffusivity
 
-# --------------------------------------------------------------------
-# 4. MAIN WORKFLOW
-# --------------------------------------------------------------------
-if __name__ == "__main__":
-    
-    # Load raw data (distance, V_ij), but do not compute k_ij yet
-    data = load_raw_data(input_file)
-    
-    # Run Monte Carlo simulation, computing k_ij on the fly
-    positions, times = simulate_hops_on_the_fly(data, num_hops)
-    
-    # Calculate diffusivity in cm^2/s
+def calculate_mobility(diffusivity):
+    """Calculate zero-field mobility."""  
+    mobility = q * diffusivity / (kB * T)
+    return mobility
+
+# ---------------------------
+# Wrapper function to run a single simulation
+# ---------------------------
+def single_run(input_file='model_with_kij.txt', num_hops=10000):
+    """
+    Runs one instance of the simulation and returns the zero-field mobility.
+    """
+    first(input_file='model.txt')
+    data = load_data(input_file)
+    positions, times = simulate_hops(data, num_hops)
     diffusivity = calculate_diffusivity(positions, times)
-    
-    # Calculate zero-field mobility in cm^2/(V·s)
     mobility = calculate_mobility(diffusivity)
+    return mobility
+
+# ---------------------------
+# Main loop for 100 simulations + plotting
+# ---------------------------
+if __name__ == "__main__":
+    num_runs = 100
+    num_hops = 100000
+    input_file = 'model_with_kij.txt'
     
-    # Print results
-    print(f"Diffusivity (D):         {diffusivity:.6e} cm^2/s")
-    print(f"Zero-field mobility (μo): {mobility:.6e} cm^2/Vs")
+    # Collect mobility values
+    mobilities = []
+    
+    for i in range(num_runs):
+        mu_0 = single_run(input_file, num_hops)
+        mobilities.append(mu_0)
+    
+    mobilities = np.array(mobilities)
+    
+    # -- Compute statistics --
+    mean_mobility = np.mean(mobilities)
+    median_mobility = np.median(mobilities)
+    
+    # Approximate mode by the center of the histogram bin with the largest count
+    counts, bin_edges = np.histogram(mobilities, bins=15, density=False)
+    mode_bin_idx = np.argmax(counts)
+    # The "mode" is halfway between the bin's lower and upper edges
+    mode_mobility = 0.5 * (bin_edges[mode_bin_idx] + bin_edges[mode_bin_idx+1])
+
+    # Print the results
+    print(f"Number of runs: {num_runs}")
+    print(f"Mean μ_0        = {mean_mobility:.6e} cm^2/Vs")
+    print(f"Median μ_0      = {median_mobility:.6e} cm^2/Vs")
+    print(f"Mode μ_0 (hist) = {mode_mobility:.6e} cm^2/Vs")
+
+    # Plot probability density (histogram) of the mobility
+    plt.figure(figsize=(7,5))
+    n, bins, patches = plt.hist(mobilities, bins=15, density=True, alpha=0.6, color='g')
+    
+    # Mark mean, median, and mode
+    plt.axvline(mean_mobility, color='r', linestyle='--', 
+                label=f"Mean = {mean_mobility:.2e} cm^2/Vs")
+    plt.axvline(median_mobility, color='b', linestyle='--',
+                label=f"Median = {median_mobility:.2e} cm^2/Vs")
+    plt.axvline(mode_mobility, color='k', linestyle='--',
+                label=f"Mode = {mode_mobility:.2e} cm^2/Vs")
+    
+    plt.xlabel('Zero-field Mobility (cm^2/Vs)')
+    plt.ylabel('Probability Density')
+    plt.title('Distribution of Zero-field Mobility over 100 runs')
+    plt.legend()
+    plt.show()
+
 
 ```
 

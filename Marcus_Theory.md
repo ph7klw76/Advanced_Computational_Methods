@@ -370,212 +370,338 @@ In typical bulk organic semiconductor modeling where each hopping site is roughl
 However, whether you can safely ignore $\Delta G$ depends on the specific physical context—especially in cases with doping gradients, large electric fields, or heterogeneous blends where $\Delta G$ can be substantial. Always compare $\Delta G$ to $\lambda$ and $k_B T$; if it is small by comparison, you can set it aside in your Marcus rate calculations for most practical purposes.
 
 
+System with  nearly degnerate energy level
+
+
 ```python
 import random
 import numpy as np
 from scipy.stats import linregress
 import matplotlib.pyplot as plt
 
-
-
-# Define constants
-hbar = 1.0545718e-34  # Reduced Planck's constant (Joule·s)
-kB = 1.380649e-23     # Boltzmann constant (Joule/K)
-T = 300               # Temperature in Kelvin
-
-# Load the data from the text file
-input_file = 'model.txt'
-output_file = 'model_with_kij.txt'
-
-# Define the reorganization energy (lambda_ij) and free-energy difference (Delta_G_ij^0)
-lambda_ij = 0.478  # eV (updated value)
-disorder_std_eV = 0.1308 # Free-energy difference assumed to be zero
-
-# Conversion factor for eV to Joules
+# ---------------------------
+# Global Constants
+# ---------------------------
+hbar = 1.0545718e-34   # Reduced Planck's constant (Joule·s)
+kB = 1.380649e-23      # Boltzmann constant (Joule/K)
+T = 300                # Temperature in Kelvin
+q = 1.60218e-19        # Elementary charge (Coulomb)
 eV_to_Joule = 1.60218e-19
-lambda_ij *= eV_to_Joule
+
+# ---------------------------
+# Problem-Specific Globals
+# ---------------------------
+DELTA_E_EV = 0.10        # LUMO–LUMO+1 gap, in eV
+lambda_ij_eV = 0.044     # Reorganization energy in eV
+disorder_std_eV = 0.12   # Disorder standard deviation in eV
+
+# Convert energies to Joules
+lambda_ij = lambda_ij_eV * eV_to_Joule
+
+# ---------------------------
+# File paths
+# ---------------------------
+input_file = '5electronmodel.txt'
+output_file = '5electronmodelwith_kij.txt'
+
+# ---------------------------
+# Utility Functions
+# ---------------------------
+
+def occupancy_LUMO_plus_1(T=300):
+    """
+    Returns the equilibrium probability that an electron
+    resides in LUMO+1, given a global DELTA_E_EV between LUMO and LUMO+1.
+
+    Parameters
+    ----------
+    T : float
+        Temperature in Kelvin
+
+    Returns
+    -------
+    float
+        Probability p(LUMO+1) at temperature T
+    """
+    # Boltzmann constant in eV/K
+    kB_eV_per_K = 8.617333262145e-5
+    # Occupancy factor using the global DELTA_E_EV
+    return 1.0 / (1.0 + np.exp(DELTA_E_EV / (kB_eV_per_K * T)))
 
 
-def first(input_file):# Read the data
-    with open(input_file, 'r') as file:
-        lines = file.readlines()
-    
-    # Prepare to store output lines
+def calc_marcus_rate(Vij, Delta_G_ij, T, rate_factor):
+    """
+    Calculate the Marcus ET (electron transfer) rate k_{i->j} for
+    a given coupling Vij (in Joules), free-energy difference Delta_G_ij (J),
+    global reorganization energy lambda_ij (J), and temperature T (K).
+    'rate_factor' is a precomputed constant = sqrt(pi / (lambda_ij * kB * T)).
+    """
+    # Pre-factor: (Vij^2 / hbar)
+    prefactor = (Vij**2) / hbar
+
+    # Exponential factor from Marcus theory
+    exp_factor = np.exp(
+        -((lambda_ij + Delta_G_ij)**2) / (4 * lambda_ij * kB * T)
+    )
+
+    return prefactor * rate_factor * exp_factor
+
+
+def generate_Delta_G_list():
+    """
+    Generate the 4 free-energy differences, using:
+      1) N(0.0, disorder_std_eV)
+      2) N(+DELTA_E_EV, disorder_std_eV)
+      3) N(-DELTA_E_EV, disorder_std_eV)
+      4) N(0.0, disorder_std_eV)
+
+    Returns them in Joules.
+    """
+    return [
+        np.random.normal(0.0,        disorder_std_eV) * eV_to_Joule,
+        np.random.normal(DELTA_E_EV, disorder_std_eV) * eV_to_Joule,
+        np.random.normal(-DELTA_E_EV,disorder_std_eV) * eV_to_Joule,
+        np.random.normal(0.0,        disorder_std_eV) * eV_to_Joule
+    ]
+
+
+# ---------------------------
+# 1. Compute & Write Rates
+# ---------------------------
+def first(input_file, output_file):
+    """
+    Reads each line of input_file, computes 4 Marcus rates,
+    and writes them to output_file using the global DELTA_E_EV.
+    """
+    # Precompute the constant factor: sqrt(pi / (lambda_ij * kB * T))
+    rate_factor = np.sqrt(np.pi / (lambda_ij * kB * T))
+
     output_lines = []
     
-    # Process each line
-    for line in lines:
-        parts = line.strip().split()
-        # Extract values
-        print(parts[2])
-        V_ij = float(parts[2]) * eV_to_Joule          # Convert to Joules
-        Delta_G_ij_0 = np.random.normal(0.0, disorder_std_eV) * eV_to_Joule
-        # Calculate k_ij using the given formula
-        pre_factor = (V_ij**2) / hbar
-        exp_factor = np.exp(-((lambda_ij + Delta_G_ij_0)**2) / (4 * lambda_ij * kB * T))
-        k_ij = pre_factor * np.sqrt(np.pi / (lambda_ij * kB * T)) * exp_factor
-    
-        # Append the calculated k_ij to the line
-        new_line = line.strip() + f"\t{k_ij:.6e}"
-        output_lines.append(new_line)
-    
-    # Write the updated data to a new file
-    with open(output_file, 'w') as file:
-        file.write("\n".join(output_lines))
-    return None
+    with open(input_file, 'r') as file:
+        for line in file:
+            parts = line.strip().split()
+            
+            # Convert the 4 couplings (in eV) to Joules
+            Vij_values = [float(parts[i]) * eV_to_Joule for i in [5,6,7,8]]
+            
+            # Generate random free-energy differences
+            Delta_G_list = generate_Delta_G_list()
+
+            # Compute each of the 4 rates via Marcus theory
+            k_ij_list = [
+                calc_marcus_rate(Vij, dG, T, rate_factor)
+                for (Vij, dG) in zip(Vij_values, Delta_G_list)
+            ]
+
+            # Build new line with the 4 rates appended
+            new_line = line.strip() + "".join(f"\t{val:.6e}" for val in k_ij_list)
+            output_lines.append(new_line)
+
+    # Write to output_file
+    with open(output_file, 'w') as f:
+        f.write("\n".join(output_lines))
 
 
-# Constants
-kB = 1.380649e-23  # Boltzmann constant (Joule/K)
-T = 300            # Temperature in Kelvin
-q = 1.60218e-19    # Elementary charge (Coulomb)
-
-# Simulation parameters
-num_hops = 10000
-
-# Load the data from the text file
-input_file = 'model_with_kij.txt'
-
+# ---------------------------
+# 2. Load Data
+# ---------------------------
 def load_data(file):
-    """Load data from the model file."""
+    """
+    Load data lines (with the newly added k_{ij} columns) from file
+    and parse them. Filter by distance < 0.7 nm, as in original code.
+    Returns a list of tuples:
+       (distance, rate1, x, y, z, rate2, rate3, rate4)
+    """
     data = []
     with open(file, 'r') as f:
         for line in f:
             parts = line.strip().split()
-            if float(parts[1])<0.88:
-                distance = (float(parts[1]))*1e-9  # Distance (2nd column)
-                rate = float(parts[6])      # Marcus transfer rate (4th column)
-                x= float(parts[3])
-                y= float(parts[4])
-                z= float(parts[5])
-                data.append((distance, rate,x,y,z))
+            distance_nm = float(parts[1])
+            if distance_nm < 0.7:
+                distance = distance_nm * 1e-9   # Convert nm -> m
+                x = float(parts[2])
+                y = float(parts[3])
+                z = float(parts[4])
+                # The 4 rates are in columns [8..11]
+                rate1 = float(parts[8])
+                rate2 = float(parts[9])
+                rate3 = float(parts[10])
+                rate4 = float(parts[11])
+                
+                data.append((distance, rate1, x, y, z, rate2, rate3, rate4))
     return data
 
 
+# ---------------------------
+# 3. Two Direction Functions
+# ---------------------------
 def random_direction_3d(distance, Nx, Ny, Nz):
     """
-    Modify the direction to include a 50% probability of mirror reflection.
-    (Nx, Ny, Nz) is expected to be a unit vector. We scale that unit vector
-    by 'distance' and randomly decide to apply a mirror reflection.
+    Scale a unit vector (Nx, Ny, Nz) by 'distance'.
+    50% chance to mirror-reflect it.
     """
-    # Randomly decide whether to reflect the direction
-    reflect = random.choice([True, False])  # 50% chance for reflection
-   
-    # Apply reflection if selected
+    reflect = random.choice([True, False])  # 50% chance
     direction = np.array([Nx, Ny, Nz])
     if reflect:
-        direction = -direction  # Mirror reflection
-   
-    # Scale by distance
+        direction = -direction
     return distance * direction
 
-def simulate_hops(data, num_hops):
-    """Simulate the hopping process and calculate MSD and times."""
-    positions = [np.zeros(3)]  # Start at origin
+
+def original_direction(distance, Nx, Ny, Nz):
+    """
+    'Original' direction: no random reflection, just scale (Nx, Ny, Nz).
+    """
+    return distance * np.array([Nx, Ny, Nz])
+
+
+# ---------------------------
+# 4. Simulate Hops
+# ---------------------------
+def simulate_hops(data, num_hops=10000, use_random_direction=False):
+    """
+    Simulate the hopping process and calculate the random walk
+    in 3D space. Occupancy of LUMO+1 vs. LUMO is chosen by the
+    global DELTA_E_EV inside occupancy_LUMO_plus_1().
+
+    If use_random_direction=True, apply random_direction_3d().
+    Otherwise, apply original_direction().
+    """
+    positions = [np.zeros(3)]
     times = [0]
 
     for _ in range(num_hops):
         # Randomly select a row
-        distance, rate,x,y,z = random.choice(data)
+        distance, rate1, x, y, z, rate2, rate3, rate4 = random.choice(data)
+        
+        # Draw exponential waiting times from each rate (avoid 1/0)
+        wt1 = np.random.exponential(1 / rate1) if rate1 != 0 else np.inf
+        wt2 = np.random.exponential(1 / rate2) if rate2 != 0 else np.inf
+        wt3 = np.random.exponential(1 / rate3) if rate3 != 0 else np.inf
+        wt4 = np.random.exponential(1 / rate4) if rate4 != 0 else np.inf
 
-        # Calculate waiting time based on P(t, λ) ~ λe^(-λt)
-        waiting_time = np.random.exponential(1 / rate)
+        # Decide whether LUMO or LUMO+1 is occupied
+        if np.random.random() < occupancy_LUMO_plus_1(T):
+            waiting_time = min(wt3, wt4)
+        else:
+            waiting_time = min(wt1, wt2)
 
-        # Random direction in 3D space
-        hop = random_direction_3d(distance,x,y,z)
+        # Pick direction function
+        if use_random_direction:
+            hop = random_direction_3d(distance, x, y, z)
+        else:
+            hop = original_direction(distance, x, y, z)
 
-        # Update position and time
-        new_position = positions[-1] + hop
-        positions.append(new_position)
+        # Update position, time
+        positions.append(positions[-1] + hop)
         times.append(times[-1] + waiting_time)
 
-    positions = np.array(positions)
-    times = np.array(times)
-    return positions, times
+    return np.array(positions), np.array(times)
 
+
+# ---------------------------
+# 5. Diffusivity & Mobility
+# ---------------------------
 def calculate_diffusivity(positions, times):
-    """Calculate diffusivity from the slope of MSD vs. time plot."""
-    # Calculate MSD for each time step
-    msd = np.sum((positions - positions[0])**2, axis=1)  # Mean squared displacement
-
-    # Perform linear regression on MSD vs time
+    """
+    Calculate diffusivity from the slope of MSD vs. time.
+    """
+    msd = np.sum((positions - positions[0])**2, axis=1)
     slope, _, _, _, _ = linregress(times, msd)
-
-    # Diffusivity is slope / (2 * n)
-    n = 3  # Number of dimensions
-    diffusivity = slope / (2 * n)
-    diffusivity= diffusivity * 1e4
+    n_dim = 3
+    diffusivity = slope / (2 * n_dim)
+    # Convert from m^2/s to cm^2/s
+    diffusivity *= 1e4
     return diffusivity
 
+
 def calculate_mobility(diffusivity):
-    """Calculate zero-field mobility."""  
-    mobility = q * diffusivity / (kB * T)
-    return mobility
+    """Calculate zero-field mobility in cm^2/Vs."""
+    return q * diffusivity / (kB * T)
+
 
 # ---------------------------
-# Wrapper function to run a single simulation
+# 6. Single-run Wrapper
 # ---------------------------
-def single_run(input_file='model_with_kij.txt', num_hops=10000):
+def single_run(use_random_direction=True, num_hops=10000):
     """
-    Runs one instance of the simulation and returns the zero-field mobility.
+    Runs one instance of the simulation:
+      - Compute k_ij for each line (using global DELTA_E_EV),
+      - Load data,
+      - Simulate hops,
+      - Compute mobility.
+
+    Returns the zero-field mobility (cm^2/Vs).
     """
-    first(input_file='model.txt')
-    data = load_data(input_file)
-    positions, times = simulate_hops(data, num_hops)
-    diffusivity = calculate_diffusivity(positions, times)
-    mobility = calculate_mobility(diffusivity)
-    return mobility
+    # Compute and write rates
+    first(input_file, output_file)
+
+    # Load data with newly computed rates
+    data = load_data(output_file)
+
+    # Run the hopping simulation
+    positions, times = simulate_hops(data, num_hops=num_hops, 
+                                     use_random_direction=False)
+
+    # Compute diffusivity & mobility
+    D = calculate_diffusivity(positions, times)
+    mu_0 = calculate_mobility(D)
+    return mu_0
+
 
 # ---------------------------
-# Main loop for 100 simulations + plotting
+# 7. Main
 # ---------------------------
 if __name__ == "__main__":
     num_runs = 100
     num_hops = 100000
-    input_file = 'model_with_kij.txt'
-    
-    # Collect mobility values
+    use_random_reflection = True  # or False
+
     mobilities = []
-    
-    for i in range(num_runs):
-        mu_0 = single_run(input_file, num_hops)
+    for _ in range(num_runs):
+        mu_0 = single_run(use_random_direction=use_random_reflection,
+                          num_hops=num_hops)
         mobilities.append(mu_0)
-    
+
     mobilities = np.array(mobilities)
-    
-    # -- Compute statistics --
+
+    # Statistics
     mean_mobility = np.mean(mobilities)
     median_mobility = np.median(mobilities)
-    
-    # Approximate mode by the center of the histogram bin with the largest count
+
     counts, bin_edges = np.histogram(mobilities, bins=15, density=False)
     mode_bin_idx = np.argmax(counts)
-    # The "mode" is halfway between the bin's lower and upper edges
     mode_mobility = 0.5 * (bin_edges[mode_bin_idx] + bin_edges[mode_bin_idx+1])
 
-    # Print the results
-    print(f"Number of runs: {num_runs}")
+    log_mobilities = np.log(mobilities)
+    geometric_mean = np.exp(np.mean(log_mobilities))
+
+    # Print results
+    print(f"Number of runs:         {num_runs}")
     print(f"Mean μ_0        = {mean_mobility:.6e} cm^2/Vs")
     print(f"Median μ_0      = {median_mobility:.6e} cm^2/Vs")
     print(f"Mode μ_0 (hist) = {mode_mobility:.6e} cm^2/Vs")
+    print(f"Geometric Mean μ_0 = {geometric_mean:.6e} cm^2/Vs")
 
-    # Plot probability density (histogram) of the mobility
+    # Plot histogram
     plt.figure(figsize=(7,5))
     n, bins, patches = plt.hist(mobilities, bins=15, density=True, alpha=0.6, color='g')
-    
-    # Mark mean, median, and mode
-    plt.axvline(mean_mobility, color='r', linestyle='--', 
+    plt.axvline(mean_mobility,   color='r', linestyle='--', 
                 label=f"Mean = {mean_mobility:.2e} cm^2/Vs")
     plt.axvline(median_mobility, color='b', linestyle='--',
                 label=f"Median = {median_mobility:.2e} cm^2/Vs")
-    plt.axvline(mode_mobility, color='k', linestyle='--',
+    plt.axvline(mode_mobility,   color='k', linestyle='--',
                 label=f"Mode = {mode_mobility:.2e} cm^2/Vs")
-    
+
     plt.xlabel('Zero-field Mobility (cm^2/Vs)')
     plt.ylabel('Probability Density')
-    plt.title('Distribution of Zero-field Mobility over 100 runs')
+    plt.title(f'Distribution of Zero-field Mobility\n(ΔE={DELTA_E_EV} eV, random={use_random_reflection})')
     plt.legend()
     plt.show()
 
+    # Save mobilities
+    np.savetxt("test.csv", mobilities, delimiter=",", 
+               header="Mobility (cm^2/Vs)", comments="")
 ```
+
 

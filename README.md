@@ -332,23 +332,22 @@ Application: Finite element simulations, quantum lattice models.
 [Molecular Dynamics](https://www.youtube.com/watch?v=BnT6Onll1eQ&list=PLm8ZSArAXicKIzMfkR0Y0GVx9AA1zge-P)
 [Molecular Dynamics in Python](https://www.youtube.com/watch?v=6gVoPVosXRs&list=PLP_iHNbRbB3eN3VhO76qiZlDZEyrU88rJ&index=1)
 
-### A. Fundamentals of Molecular Dynamics
+### A. [Fundamentals of Molecular Dynamics](Molecular_Dynamics.md)
 
-[Classical mechanics](Molecular_Dynamics.md): Newton’s equations of motion.
+Newton’s equations of motion.
 Time integration algorithms (e.g., Verlet, leapfrog).
 Periodic boundary conditions.
 Temperature and pressure control (thermostats and barostats, e.g., Nosé-Hoover, Berendsen).
 
-### B. Force Fields and Potential Energy Surfaces
+### B. [Force Fields and Potential Energy Surfaces](Force_Fields.md)
 
-[Force Fields](Force_Fields.md) Parameterization of force fields for π-conjugated systems 
+Parameterization of force fields for π-conjugated systems 
 Bonded and non-bonded interactions:
 Bond stretching, angle bending, dihedral torsions.
 van der Waals interactions and electrostatics.
 Customization of force fields for organic semiconductors.
 
-### C. Sampling Techniques
-
+### C. [Sampling Techniques](Advanced_Sampling_Techniques.md)
 Enhanced sampling methods (e.g., metadynamics, umbrella sampling).
 Free energy calculations (e.g., thermodynamic integration, FEP).
 Importance sampling for rare event dynamics.

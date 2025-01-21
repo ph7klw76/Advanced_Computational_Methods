@@ -334,7 +334,7 @@ Application: Finite element simulations, quantum lattice models.
 
 ### A. Fundamentals of Molecular Dynamics
 
-Classical mechanics: Newton’s equations of motion.
+[Classical mechanics](Molecular_Dynamics.md): Newton’s equations of motion.
 Time integration algorithms (e.g., Verlet, leapfrog).
 Periodic boundary conditions.
 Temperature and pressure control (thermostats and barostats, e.g., Nosé-Hoover, Berendsen).

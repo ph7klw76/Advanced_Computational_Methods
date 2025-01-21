@@ -132,7 +132,7 @@ Recent experimental and theoretical studies highlight the importance of second-o
 
 ORCA to calculate Spin-orbit coupling with DOSOC TRUE keyword
 ```text
-! DEF2-SVP CPCM(toluene)
+! DEF2-SVP CPCMC(toluene)
 %TDDFT  NROOTS  20
         DOSOC   TRUE         
 END

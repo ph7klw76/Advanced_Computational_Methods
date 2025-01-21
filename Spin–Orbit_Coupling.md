@@ -146,7 +146,7 @@ END
 * XYZFILE 0 1 30.06454915028125263.xyz
 ```
 
-To extract out the spin-orbit coupling use the python code below
+To extract out the spin-orbit coupling use the python code below along with singlet and triplet energy
 
 ```python
 import re
@@ -208,7 +208,7 @@ def calculate_spin_orbit_coupling(filename):
         return {}
 
 if __name__ == "__main__":
-    filename = "3.out"  # change your file you want to extract
+    filename = "3.out"
     output_filename = "spin_orbit_couplings.txt"
     
     if os.path.exists(filename):
@@ -224,4 +224,58 @@ if __name__ == "__main__":
                 output_file.write("No spin-orbit coupling data found in the file.\n")
     else:
         print(f"File {filename} does not exist. Please provide a valid file.")
+        
+
+# File paths
+input_file_path = filename
+output_file_path = 'singlet_triplet_energies.txt'
+
+# Regular expressions to match the start of relevant sections
+td_singlet_section_pattern = re.compile(r'TD-DFT/TDA EXCITED STATES \(SINGLETS\)')
+td_triplet_section_pattern = re.compile(r'TD-DFT/TDA EXCITED STATES \(TRIPLETS\)')
+
+# Flags to track when within relevant sections
+in_singlet_section = False
+in_triplet_section = False
+
+# Lists to store extracted energies
+singlet_energies = []
+triplet_energies = []
+
+# Read the file and process line by line
+with open(input_file_path, 'r') as file:
+    for line in file:
+        if td_singlet_section_pattern.search(line):
+            in_singlet_section = True
+            in_triplet_section = False
+            continue
+        elif td_triplet_section_pattern.search(line):
+            in_triplet_section = True
+            in_singlet_section = False
+            continue
+
+        if in_singlet_section or in_triplet_section:
+            if line.strip().startswith("STATE"):
+                # Extract the fifth element when split by spaces
+                parts = line.split()
+                if len(parts) > 5:
+                    state_energy = float(parts[5])
+                    if in_singlet_section:
+                        singlet_energies.append((parts[0], state_energy))
+                    elif in_triplet_section:
+                        triplet_energies.append((parts[0], state_energy))
+
+# Write the filtered results to the output file
+with open(output_file_path, 'w') as output_file:
+    output_file.write("TD-DFT/TDA Singlet State Energies:\n")
+    for state, energy in singlet_energies:
+        output_file.write(f"{state}: {energy:.6f} eV\n")
+    
+    output_file.write("\nTD-DFT/TDA Triplet State Energies:\n")
+    for state, energy in triplet_energies:
+        output_file.write(f"{state}: {energy:.6f} eV\n")
+
+# Print file path to indicate completion
+print(f"Energies extracted and saved to: {output_file_path}")
+
 ```

@@ -308,7 +308,7 @@ Application: Finite element simulations, quantum lattice models.
    
 2. Charge Transfer Complexes: Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
    
-3. Torsional Potential 
+3. [Torsional Potential](Torsion.md)
 
 ### D.Spectroscopic Properties
 

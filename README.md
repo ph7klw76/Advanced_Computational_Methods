@@ -396,7 +396,7 @@ Machine learning force fields for accelerated simulations.
 [https://github.com/ChunHou20c/Monte-Carlo-simulation]
 ## Ab Initio Molecular Dynamics
 
-### A. Fundamentals of AIMD
+### A. [Fundamentals of AIMD](AIMD.md)
 
 Born-Oppenheimer approximation: Separation of electronic and nuclear motion.
 Car-Parrinello molecular dynamics (CPMD): Simultaneous evolution of electronic and ionic degrees of freedom.

@@ -289,12 +289,16 @@ Application: Finite element simulations, quantum lattice models.
 1. [Hartree-Fock_Theory](Hartree-Fock_Theory.md)  Foundation for understanding wavefunctions and molecular orbitals.
 
 2. [Density Functional Theory and Time-dependent-DFT](DFT.md) Density Functional Theory (DFT): Crucial for predicting electronic properties of large organic molecules, such as HOMO-LUMO gaps and charge densities. Time-Dependent Density Functional Theory (TD-DFT): For studying optical absorption, emission spectra, and exciton behavior.
+
+3.  Implicit solvation models
+
+4. Explicit solvation model
    
-3. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
+5. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
 
-4. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
+6. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
 
-5. Multireference Methods: For systems with significant electron correlation, such as biradicals.
+7. Multireference Methods: For systems with significant electron correlation, such as biradicals.
 
 ### B Charge Transport Mechanisms
 

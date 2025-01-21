@@ -281,7 +281,7 @@ Below is an illustrative workflow for analyzing a dimer of a polyaromatic hydroc
 - Use **Gaussian** with a command like:
   
   ```plaintext
-  #P B3LYP-D3/6-31G(d) Opt
+  # Opt=Tight freq wb97xd/Def2SVP geom=connectivity
    ```
 This includes Grimme’s D3 dispersion correction.  
 Inspect the optimized geometry to ensure ring–ring separation is around 3.3–3.5 Å.  
@@ -289,12 +289,20 @@ Inspect the optimized geometry to ensure ring–ring separation is around 3.3–
 ### Single-Point Energy & BSSE
 
 Calculate the dimer energy at a higher level (if possible), e.g.,
+you need to setup fragment in [Gausview](https://www.youtube.com/watch?app=desktop&v=JSoEjEq5pmg&t=4s)
 
 ```plaintext
-#P B3LYP-D3/def2-TZVP Geom=Check Guess=Read
+# Opt=Tight freq wb97xd/Def2SVP geom=connectivity counterpoise=2
+
+Title Card Required
+
+0 1 0 1 0 1
+ C(Fragment=2)     36.27582037   70.65476900   39.48970051
+ C(Fragment=1)      6.27582037    0.65476900    9.48970051
 ```
 
 Perform counterpoise calculations for the dimer and monomers to get the CP-corrected interaction energy.  
+use this form to get the [interaction energy](int-energy-2.xlsx)
 
 ### NCI Analysis  
 Generate wavefunction or cube files (electron density, gradient, etc.) with a keyword like `Density=Current` in Gaussian.  

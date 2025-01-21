@@ -129,3 +129,20 @@ Recent experimental and theoretical studies highlight the importance of second-o
 - **Host Effects:** Environmental factors such as host polarity and rigidity shift energy levels of the CT states relative to $^3$LE, leading to distinct TADF regimes. In the optimal Type II regime, $^3$LE is nearly degenerate with $^3$CT, facilitating efficient triplet harvesting.  
 - **Design Strategies:** Molecular designs targeting orthogonal D–A orientations further minimize $\Delta E_{ST}$, while suppressing non-radiative losses, critical for maintaining high TADF efficiency.
 
+
+ORCA to calculate Spin-orbit coupling with DOSOC TRUE keyword
+```text
+! DEF2-SVP CPCM(toluene)
+%TDDFT  NROOTS  20
+        DOSOC   TRUE         
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+	ExtParamXC "_omega" 0.0645
+END
+%maxcore 2000
+%pal nprocs 16 end
+* XYZFILE 0 1 30.06454915028125263.xyz
+```
+

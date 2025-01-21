@@ -316,7 +316,7 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [UV-Vis and Fluorescence Spectroscopy](absorption_emission.md): Modeling absorption and emission processes.
    
-3. Spin-Orbit Coupling: Relevant for phosphorescence in OLEDs.
+3. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
 
 ### E. Photophysics and Photochemistry
 

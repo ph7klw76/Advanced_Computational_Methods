@@ -279,3 +279,123 @@ with open(output_file_path, 'w') as output_file:
 print(f"Energies extracted and saved to: {output_file_path}")
 
 ```
+
+extract and draw energy levels
+```python
+def extract_and_process_data(file_path, output_file_singlet_triplet):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    extracted_data = []
+    singlet_data = []
+    triplet_data = []
+
+    # Find the line containing the target phrase and process subsequent lines
+    for i, line in enumerate(lines):
+        if "Root   Total Energy (a.u.)   Ex. Energy (eV)   Osc. (a.u.)   < S^2 >   Max CI Coeff.      Excitation" in line:
+            start_idx = i + 1  # Start processing after the target line
+            
+            # Extract until an empty line is encountered
+            for j in range(start_idx, len(lines)):
+                if not lines[j].strip():  # Stop on an empty line
+                    break
+                extracted_data.append(lines[j].strip())
+
+            # Process the extracted lines
+            for line in extracted_data:
+                parts = line.split()  # Split the line into parts
+                if len(parts) > 6:
+                    try:
+                        # Extract the necessary indices
+                        value2 = float(parts[2])
+                        value3 = float(parts[3])
+                        value4 = float(parts[4])
+
+                        # Classify data based on value4 and append to respective lists
+                        if 0.0 <= value4 <= 0.2:
+                            singlet_data.append((value2, value3))
+                        elif 1.8 <= value4 <= 2.0:
+                            triplet_data.append((value2, value3))
+                    except ValueError:
+                        continue
+
+            break  # Exit loop after processing the section
+
+    # Save singlet data to file
+    with open(output_file_singlet_triplet, 'w') as singlet_file:
+        singlet_file.write("Energy (eV) Osc\n")
+        for data in singlet_data:
+            singlet_file.write(f"{data[0]}\t{data[1]}\n")
+
+    # Save triplet data to file
+    with open(output_file_singlet_triplet, 'a') as triplet_file:
+        triplet_file.write("\n\n")
+        triplet_file.write("Energy (eV) Osc\n")
+        for data in triplet_data:
+            triplet_file.write(f"{data[0]}\t{data[1]}\n")
+    return singlet_data,triplet_data
+# File paths
+file_path = 'v5.out'
+output_file_singlet_triplet = 'singlet_triplet_data.txt'
+
+
+# Run the function
+singlet_data,triplet_data= extract_and_process_data(file_path, output_file_singlet_triplet)
+
+
+
+import matplotlib.pyplot as plt
+
+def draw_energy_levels(singlet_levels, triplet_levels, offset=0.05):
+    fig, ax = plt.subplots()
+
+    # Sort the energy levels
+    singlet_levels.sort()
+    triplet_levels.sort()
+
+    # Function to add small offset to near-degenerate states
+    def add_offset(levels):
+        new_levels = []
+        for i, level in enumerate(levels):
+            count = levels.count(level)
+            if count > 1:
+                for j in range(count):
+                    new_levels.append(level + j * offset - (count - 1) * offset / 2)
+            else:
+                new_levels.append(level)
+        return list(set(new_levels))
+
+    singlet_levels = add_offset(singlet_levels)
+    triplet_levels = add_offset(triplet_levels)
+
+    # Draw singlet energy levels
+    for i, level in enumerate(singlet_levels):
+        ax.hlines(level, xmin=0, xmax=1, color='b', linewidth=2, label='Singlet' if i == 0 else "")
+        alignment = 'left' if i % 2 == 0 else 'right'
+        ax.text(0.5, level, f"{level:.2f} eV", verticalalignment='bottom', horizontalalignment=alignment, fontsize=16, color='b')
+
+    # Draw triplet energy levels
+    for i, level in enumerate(triplet_levels):
+        ax.hlines(level, xmin=2, xmax=3, color='r', linewidth=2, label='Triplet' if i == 0 else "")
+        alignment = 'left' if i % 2 == 0 else 'right'
+        ax.text(2.5, level, f"{level:.2f} eV", verticalalignment='bottom', horizontalalignment=alignment, fontsize=16, color='r')
+
+    # Add labels and title
+    ax.set_title('Energy Level Diagram', fontsize=16)
+    ax.set_xlabel('Energy Levels', fontsize=16)
+    ax.set_ylabel('Energy (eV)', fontsize=16)
+    ax.yaxis.set_tick_params(labelsize=16)
+    
+    # Place the legend in the middle
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), fontsize=16)
+
+    # Show the plot
+    plt.show()
+
+# Sample singlet and triplet energy levels in eV
+limit=4.0
+singlet_levels = [item[0] for item in singlet_data if item[0]<limit]
+triplet_levels = [item[0] for item in triplet_data if item[0]<limit]
+
+draw_energy_levels(singlet_levels, triplet_levels)
+```

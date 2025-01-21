@@ -302,11 +302,13 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
 
-### C. Molecular Interactions and Aggregation
+### C. Molecular Interactions,Aggregation and Torsional Potential
 
 1. [Non-Covalent Interactions](Non-Covalent_Interactions.md) π-π stacking, van der Waals forces, and hydrogen bonding in organic semiconductor.
    
 2. Charge Transfer Complexes: Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
+   
+3. Torsional Potential 
 
 ### D.Spectroscopic Properties
 

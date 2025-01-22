@@ -616,3 +616,385 @@ $$
 $$
 
 
+code not fully functional
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
+
+###############################################################################
+# 1) HELPER FUNCTIONS FOR INITIAL CONDITIONS AND BOUNDARY CONDITIONS
+###############################################################################
+
+def build_initial_condition(N):
+    """
+    Define initial guesses for [phi, n, p, S].
+    We'll start with zero potential, low carrier densities, and no excitons.
+    """
+    phi0 = np.zeros(N)
+    n0   = np.full(N, 1e12)   # small background electron density
+    p0   = np.full(N, 1e12)   # small background hole density
+    S0   = np.zeros(N)
+    return np.concatenate([phi0, n0, p0, S0])
+
+def ramped_drive_voltage(t, params):
+    """
+    Returns the device boundary voltage at x=0 (anode) as a function of time.
+    - We ramp up from 0 to V_drive over time t_ramp
+    - Then hold that value until t_off
+    - After t_off, we drop to 0
+    """
+    V_drive   = params['V_drive']     # final drive voltage
+    t_ramp    = params['t_ramp']      # ramp time
+    t_off     = params['t_off']       # turn-off time
+
+    if t < t_ramp:
+        # ramp from 0 to V_drive linearly
+        return V_drive * (t / t_ramp)
+    elif t < t_off:
+        # hold at V_drive
+        return V_drive
+    else:
+        # after t_off, set to 0
+        return 0.0
+
+def apply_bc_phi(phi, t, params):
+    """
+    Dirichlet boundary conditions for phi at x=0 and x=d.
+    - x=0 : phi(0) = ramped_drive_voltage(t)
+    - x=N-1 : phi(N-1) = 0 (cathode reference)
+    """
+    V_anode = ramped_drive_voltage(t, params)
+    phi[0] = V_anode
+    phi[-1] = 0.0
+
+def apply_bc_carriers(n, p, t, params):
+    """
+    Simple 'ohmic-like' boundary conditions:
+    - At x=0 (anode): pinned hole density => p(0) = p_anode_bc
+    - At x=N-1 (cathode): pinned electron density => n(N-1) = n_cathode_bc
+    """
+    p_anode_bc    = params['p_anode_bc']
+    n_cathode_bc  = params['n_cathode_bc']
+
+    p[0]    = p_anode_bc
+    n[-1]   = n_cathode_bc
+
+def apply_bc_excitons(S, t, params):
+    """
+    Excitons vanish at both electrodes: S(0)=0, S(N-1)=0.
+    """
+    S[0]    = 0.0
+    S[-1]   = 0.0
+
+###############################################################################
+# 2) MAIN PDE (METHOD-OF-LINES) FUNCTION
+###############################################################################
+
+def ddp_equations(t, y, params):
+    """
+    Time-derivatives for [phi, n, p, S] in a 1D device using finite differences.
+
+    y is a 1D array: [phi(0..N-1), n(0..N-1), p(0..N-1), S(0..N-1)].
+    We'll reshape them internally, then compute derivatives.
+
+    Poisson eqn is solved in a 'relaxed' manner:
+      eps_phi * dphi/dt = - (d^2 phi/dx^2) - q/eps (p - n)
+
+    Electron & Hole continuity eqn w/ drift-diffusion.
+    Singlet exciton continuity eqn w/ optional diffusion, generation, decay.
+    """
+    # Unpack essential parameters
+    N      = params['N']
+    dL     = params['dL']
+    eps    = params['eps']
+    q      = params['q']
+
+    mu_n   = params['mu_n']
+    mu_p   = params['mu_p']
+    D_n    = params['D_n']
+    D_p    = params['D_p']
+
+    gamma  = params['gamma']
+    eta_exc= params['eta_exc']
+    kr     = params['kr']
+    knr    = params['knr']
+    Ds     = params['Ds']
+    eps_phi= params['eps_phi']
+
+    # Reshape state variables
+    phi = y[0:N]
+    n   = y[N:2*N]
+    p   = y[2*N:3*N]
+    S   = y[3*N:4*N]
+
+    # Prepare arrays for derivatives
+    dphi_dt = np.zeros(N)
+    dn_dt   = np.zeros(N)
+    dp_dt   = np.zeros(N)
+    dS_dt   = np.zeros(N)
+
+    #-----------------------------------------------------------------------
+    # (1) Poisson eq. with artificial time relaxation:
+    #     eps_phi * dphi/dt = - d2phi/dx^2 - (q/eps) (p - n)
+    for i in range(1, N-1):
+        d2phi_dx2 = (phi[i+1] - 2*phi[i] + phi[i-1]) / (dL**2)
+        charge_term = (q/eps)*(p[i] - n[i])
+        dphi_dt[i] = -(d2phi_dx2 + charge_term) / eps_phi
+
+    #-----------------------------------------------------------------------
+    # (2) Compute fluxes for electrons & holes
+    def flux_n(i):
+        """
+        Electron flux at boundary 'i' between cell i-1 and i.
+        Jn = q [ mu_n * n_face * E_face - D_n * grad_n ]
+        E_face = -(phi[i] - phi[i-1])/dL
+        n_face = 0.5*(n[i] + n[i-1])
+        grad_n = (n[i] - n[i-1])/dL
+        """
+        E_face = -(phi[i] - phi[i-1])/dL
+        n_face = 0.5*(n[i] + n[i-1])
+        grad_n = (n[i] - n[i-1]) / dL
+        return q*(mu_n*n_face*E_face - D_n*grad_n)
+
+    def flux_p(i):
+        """
+        Hole flux at boundary 'i' between cell i-1 and i.
+        Jp = q [ - mu_p * p_face * E_face - D_p * grad_p ]
+        E_face = -(phi[i] - phi[i-1])/dL
+        p_face = 0.5*(p[i] + p[i-1])
+        grad_p = (p[i] - p[i-1])/dL
+        """
+        E_face = -(phi[i] - phi[i-1])/dL
+        p_face = 0.5*(p[i] + p[i-1])
+        grad_p = (p[i] - p[i-1]) / dL
+        return q*(-mu_p*p_face*E_face - D_p*grad_p)
+
+    for i in range(1, N-1):
+        # electron flux at left & right boundaries
+        Jn_left  = flux_n(i)
+        Jn_right = flux_n(i+1)
+        dn_dx    = (Jn_right - Jn_left)/(dL*q)
+
+        # hole flux
+        Jp_left  = flux_p(i)
+        Jp_right = flux_p(i+1)
+        dp_dx    = (Jp_right - Jp_left)/(dL*q)
+
+        # Bimolecular recombination
+        recomb   = gamma*n[i]*p[i]
+
+        dn_dt[i] = -dn_dx - recomb
+        dp_dt[i] = -dp_dx - recomb
+
+    #-----------------------------------------------------------------------
+    # (3) Exciton PDE
+    # dS/dt = Ds d2S/dx^2 + eta_exc*gamma*n*p - (kr+knr)*S
+    for i in range(1, N-1):
+        d2S_dx2 = (S[i+1] - 2*S[i] + S[i-1]) / (dL**2)
+        gen     = eta_exc * gamma * n[i] * p[i]
+        loss    = (kr + knr)*S[i]
+        dS_dt[i] = Ds*d2S_dx2 + gen - loss
+
+    #-----------------------------------------------------------------------
+    # (4) Apply boundary conditions
+    # Potential:
+    apply_bc_phi(phi, t, params)
+    dphi_dt[0]   = 0.0
+    dphi_dt[-1]  = 0.0
+
+    # Carriers:
+    apply_bc_carriers(n, p, t, params)
+    dn_dt[0]     = 0.0
+    dn_dt[-1]    = 0.0
+    dp_dt[0]     = 0.0
+    dp_dt[-1]    = 0.0
+
+    # Excitons:
+    apply_bc_excitons(S, t, params)
+    dS_dt[0]     = 0.0
+    dS_dt[-1]    = 0.0
+
+    # Pack up derivatives
+    return np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt])
+
+###############################################################################
+# 3) MAIN SIMULATION FUNCTION
+###############################################################################
+
+def run_1d_oled_sim():
+    #-----------------------
+    # Define smaller device / mesh
+    N = 51             # number of mesh points (fewer => less stiff, easier to solve)
+    d = 50e-9          # 50 nm thickness (reduced from 100 nm)
+    dL = d/(N-1)       # spatial step
+
+    # Permittivity
+    eps0 = 8.854e-12
+    eps_r = 3.0
+    eps = eps0*eps_r
+
+    # Basic constants
+    q   = 1.602e-19
+    T   = 300.0        # temperature K
+    kB  = 1.38e-23
+    Vth = kB*T / q      # ~ 0.0259 eV at room temperature
+
+    # Mobility
+    mu_n = 1e-8   # m^2/Vs
+    mu_p = 1e-8   # m^2/Vs
+    # Diffusion (Einstein relation)
+    D_n  = mu_n*Vth
+    D_p  = mu_p*Vth
+
+    # Recombination & exciton parameters
+    gamma   = 1e-17     # reduce from 1e-16 to 1e-17
+    eta_exc = 0.25
+    kr      = 1e7
+    knr     = 1e6
+    Ds      = 1e-5      # exciton diffusion coefficient (slightly larger for test)
+
+    # "Artificial" time-relaxation factor for Poisson eq
+    eps_phi = 1e-8      # significantly increased from 1e-12
+
+    # Drive voltage & time settings
+    V_drive = 5.0
+    t_ramp  = 1e-7   # ramp from 0 -> 5V over 0.1 microseconds
+    t_off   = 3e-7   # after 0.3 microseconds, go to 0
+
+    # Time range for the simulation
+    t_end   = 2e-6   # total 2 microseconds
+    # We'll pick 2001 points for plotting
+    t_eval  = np.linspace(0, t_end, 2001)
+
+    # Boundary pinned densities (lower => less extreme doping at contacts)
+    n_cathode_bc = 1e14
+    p_anode_bc   = 1e14
+
+    # Pack parameters
+    params = {
+        'N': N,
+        'dL': dL,
+        'eps': eps,
+        'q': q,
+        'mu_n': mu_n,
+        'mu_p': mu_p,
+        'D_n': D_n,
+        'D_p': D_p,
+        'gamma': gamma,
+        'eta_exc': eta_exc,
+        'kr': kr,
+        'knr': knr,
+        'Ds': Ds,
+        'eps_phi': eps_phi,
+
+        'V_drive': V_drive,
+        't_ramp':  t_ramp,
+        't_off':   t_off,
+
+        'n_cathode_bc': n_cathode_bc,
+        'p_anode_bc':   p_anode_bc
+    }
+
+    # Build initial condition
+    y0 = build_initial_condition(N)
+
+    # Solve with solve_ivp, using BDF for stiff systems
+    sol = solve_ivp(
+        fun=lambda tt, yy: ddp_equations(tt, yy, params),
+        t_span=(0, t_end),
+        y0=y0,
+        t_eval=t_eval,
+        method='BDF',  
+        rtol=1e-3,
+        atol=1e-6,
+        max_step=1e-8  # allow the solver to refine steps as needed
+    )
+
+    # Check success
+    if not sol.success:
+        print("Warning: ODE solver did not converge or ended early!")
+        print(sol.message)
+
+    # Ensure we have at least 2 points to plot
+    if sol.t.size < 2:
+        raise RuntimeError("Solver returned < 2 time points; cannot plot a decay.")
+
+    # Extract solutions
+    phi_sol = sol.y[0:N, :]
+    n_sol   = sol.y[N:2*N, :]
+    p_sol   = sol.y[2*N:3*N, :]
+    S_sol   = sol.y[3*N:4*N, :]
+
+    return sol.t, phi_sol, n_sol, p_sol, S_sol, params
+
+###############################################################################
+# 4) MAIN FUNCTION FOR RUNNING AND PLOTTING
+###############################################################################
+
+def main():
+    # Run simulation
+    t, phi_sol, n_sol, p_sol, S_sol, params = run_1d_oled_sim()
+    N = params['N']
+    x = np.linspace(0, params['dL']*(N-1), N)
+
+    # Compute total emission:
+    # L(t) ~ \int kr * S(x,t) dx (in 1D, sum over mesh cells)
+    kr = params['kr']
+    dL = params['dL']
+    lum_vs_t = []
+    for it in range(len(t)):
+        S_t = S_sol[:, it]
+        # local rate = kr * S(x), integrate across domain
+        total_rate = np.sum(kr * S_t)*dL
+        lum_vs_t.append(total_rate)
+    lum_vs_t = np.array(lum_vs_t)
+
+    # Plot results
+    plt.figure(figsize=(10, 8))
+
+    # (1) Potential at final time
+    plt.subplot(2, 2, 1)
+    plt.plot(x*1e9, phi_sol[:, -1], label='phi(x) final')
+    plt.xlabel('x (nm)')
+    plt.ylabel('Potential (V)')
+    plt.title('Potential Distribution (final time)')
+    plt.legend()
+
+    # (2) Carrier distribution at final time
+    plt.subplot(2, 2, 2)
+    plt.plot(x*1e9, n_sol[:, -1], label='n(x)')
+    plt.plot(x*1e9, p_sol[:, -1], label='p(x)')
+    plt.yscale('log')
+    plt.xlabel('x (nm)')
+    plt.ylabel('Carrier Density (m^-3)')
+    plt.title('Carriers at final time')
+    plt.legend()
+
+    # (3) Exciton distribution at final time
+    plt.subplot(2, 2, 3)
+    plt.plot(x*1e9, S_sol[:, -1], label='S(x)')
+    plt.yscale('log')
+    plt.xlabel('x (nm)')
+    plt.ylabel('Exciton Density (m^-3)')
+    plt.title('Excitons at final time')
+    plt.legend()
+
+    # (4) Light emission vs time
+    plt.subplot(2, 2, 4)
+    plt.plot(t*1e6, lum_vs_t, label='Emission vs time')
+    plt.xlabel('Time (µs)')
+    plt.ylabel('Emission (arb. units)')
+    plt.title('Electroluminescence Decay')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+###############################################################################
+# 5) EXECUTE
+###############################################################################
+
+if __name__ == '__main__':
+    main()
+```

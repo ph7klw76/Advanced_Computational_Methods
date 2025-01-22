@@ -290,7 +290,7 @@ Application: Finite element simulations, quantum lattice models.
 
 2. [Density Functional Theory and Time-dependent-DFT](DFT.md) Density Functional Theory (DFT): Crucial for predicting electronic properties of large organic molecules, such as HOMO-LUMO gaps and charge densities. Time-Dependent Density Functional Theory (TD-DFT): For studying optical absorption, emission spectra, and exciton behavior.
 
-3. Implicit solvation models
+3. [Implicit solvation models](Implicit Solvation Models.md)
 
 4. Explicit solvation models
    

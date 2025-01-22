@@ -332,7 +332,7 @@ Application: Finite element simulations, quantum lattice models.
    
 2. Singlet and Triplet Exciton Dynamics: For designing efficient OLED materials.
 
-3. Energy Transfer Mechanisms: Förster Resonance Energy Transfer (FRET) and Dexter transfer
+3. [Energy Transfer Mechanisms](Energy_Transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
 
 
 ## Molecular Dynamics

@@ -323,6 +323,8 @@ Application: Finite element simulations, quantum lattice models.
 4. [Franck-Condon (FC) intensities (IntensityFC) and Herzberg-Teller (HT) intensities ](FC_HT.md)
    
 5. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
+   
+7. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
 
 ### E. Photophysics and Photochemistry
 

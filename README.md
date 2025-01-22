@@ -330,9 +330,13 @@ Application: Finite element simulations, quantum lattice models.
 
 1. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
    
-2. Singlet and Triplet Exciton Dynamics: For designing efficient OLED materials.
+2. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
 
-3. [Energy Transfer Mechanisms](Energy_transfer.md.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+3. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+
+### F: OLED Device Dynamics
+
+1:  [Electroluminescence Dynamics](EL.md)
 
 
 ## Molecular Dynamics

@@ -439,16 +439,16 @@ In PCM-based solvation models, the fast polarization ($ϕ_{fast}$) is handled by
   - During absorption, the solvent has not yet relaxed to the excited-state charge distribution.
   - The absorption energy includes contributions from the fast polarization of the solvent:
   
-  $$
-  E_{abs} = E_{elec}^{S_1} + G_{solv,fast}^{S_1} + G_{solv,slow}^{S_0}.
-  $$
+$$
+E_{abs} = E_{elec}^{S_1} + G_{solv,fast}^{S_1} + G_{solv,slow}^{S_0}.
+$$
 
 - **Fluorescence Spectra**:
   - During fluorescence, the solvent partially relaxes toward the equilibrium configuration of the excited state ($S_1$):
 
-  $$
-  E_{fluor} = E_{elec}^{S_1} + G_{solv,fast}^{S_1} + G_{solv,slow}^{S_1,partial}.
-  $$
+$$
+E_{fluor} = E_{elec}^{S_1} + G_{solv,fast}^{S_1} + G_{solv,slow}^{S_1,partial}.
+$$
 
 These solvent effects lead to characteristic Stokes shifts in fluorescence, which depend on the difference between $G_{solv,slow}^{S_0}$ and $G_{solv,slow}^{S_1}$.
 

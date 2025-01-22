@@ -649,5 +649,50 @@ Each of these terms can be estimated using Fermi’s Golden Rule approaches, as 
 
 
 
+analyse HR and reorganization energy
+
+```python
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the data (replace 'Book1.csv' with the actual path if necessary)
+file_path = 'Book1.csv' #Freq	HR-factor	reorganization energy
+data = pd.read_csv(file_path)
+
+# Extract relevant columns for plotting
+frequency = data['Freq']
+hr_factor = data['HR-factor']
+reorganization_energy = data['reorganization energy']
+
+# Create the plot with thicker bars
+fig, ax1 = plt.subplots(figsize=(12, 8))
+
+# Plot HR-factor as thicker blue bars on the left y-axis
+bar1= ax1.bar(frequency, hr_factor, label='HR-factor', color='tab:blue', alpha=0.8, width=5, align='center')
+ax1.set_xlabel('Frequency (cm⁻¹)', fontsize=16, fontweight='bold')
+ax1.set_ylabel('Huang-Rhys factor', color='tab:blue', fontsize=16, fontweight='bold')
+ax1.tick_params(axis='y', labelcolor='tab:blue', labelsize=16)
+ax1.tick_params(axis='x', labelsize=16)
+ax1.yaxis.label.set_fontweight('bold')
+ax1.xaxis.label.set_fontweight('bold')
+# Set the x-axis limits
+ax1.set_xlim(0, 2000)
+# Create a second y-axis for reorganization energy with far thicker red bars
+ax2 = ax1.twinx()
+bar2=ax2.bar(frequency, reorganization_energy, label='Reorganization Energy (cm⁻¹)', color='tab:red', alpha=0.8, width=5, align='edge')
+ax2.set_ylabel('Reorganization Energy (cm⁻¹)', color='tab:red', fontsize=16, fontweight='bold')
+ax2.tick_params(axis='y', labelcolor='tab:red', labelsize=16)
+ax2.yaxis.label.set_fontweight('bold')
+
+# Title and grid
+# fig.legend([bar1, bar2], ['HR-factor', 'Reorganization Energy'], loc='center left', fontsize=12)
+plt.title('', fontsize=16, fontweight='bold')
+fig.tight_layout()
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+
+# Show the plot
+plt.show()
+```
 
 

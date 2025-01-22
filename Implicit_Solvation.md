@@ -304,6 +304,153 @@ ORCA includes non-equilibrium solvation effects in its TD-DFT and ESD(FLUOR) cal
 | SMD       | PCM with parameterized effects   | Dispersion, cavitation, repulsion | Broad range of solvents    | Highly accurate for solvation free energies. | Parameterization limits flexibility. |
 
 ---
+# Implicit Solvation for Excited States
+
+When simulating the excited states ($S_1$, $S_2$, ...) of organic molecules, the role of solvent effects becomes critical, as solvation can significantly influence the electronic structure, absorption/emission energies, and the overall spectroscopic properties. Implicit solvation models efficiently capture these effects by representing the solvent as a polarizable continuum, allowing computational chemists to investigate solute-solvent interactions without explicitly simulating solvent molecules.
+
+This section delves deeper into the theory, mathematics, and implementation of implicit solvation models for excited states, with a focus on non-equilibrium solvation, which is particularly important for time-dependent processes such as absorption and fluorescence.
+
+---
+
+
+When a molecule undergoes an electronic excitation from its ground state ($S_0$) to an excited state ($S_1$, $S_2$, ...), the solvent’s polarization does not immediately adjust to the new charge distribution of the solute. This creates a situation where the solvent must dynamically respond to the solute's new electronic structure. Solvent effects in excited states are governed by two main processes:
+
+- **Fast Solvent Polarization (Electronic Polarization)**:
+  - The electronic cloud of the solvent polarizes nearly instantaneously in response to the new solute charge distribution.
+  - This process is fast because it occurs on the timescale of electronic excitation ($\sim 10^{-15}$ seconds).
+
+- **Slow Solvent Polarization (Nuclear Relaxation)**:
+  - The nuclei of solvent molecules reorient to minimize the free energy of the system in the excited state.
+  - This process is slower, occurring on the timescale of molecular vibrations and solvent diffusion ($\sim 10^{-12}$–$10^{-9}$ seconds).
+
+Implicit solvation models account for both of these polarization processes, but non-equilibrium solvation is particularly important for excited-state properties because it captures the dynamic nature of solvent relaxation.
+
+---
+
+## 2. Theory of Non-Equilibrium Solvation
+
+### 2.1 Key Concepts of Non-Equilibrium Solvation
+
+In an electronic excitation, the solvation free energy changes because the solvent polarization must adjust to the altered electronic structure of the solute. This adjustment is incomplete during certain processes (e.g., absorption) but may be partially or fully relaxed during others (e.g., fluorescence).
+
+- **Equilibrium Solvation**:
+  - In the ground state ($S_0$), the solvent is in equilibrium with the solute's charge distribution.
+  - The total solvation free energy ($G_{solv}^{eq}$) accounts for the full polarization of the solvent around the solute.
+
+- **Non-Equilibrium Solvation**:
+  - During absorption or emission, the solvent is not in equilibrium with the new electronic state.
+  - The solvent's electronic polarization (fast component) responds instantly to the solute's new charge distribution, but nuclear reorientation (slow component) lags behind.
+
+---
+
+### 2.2 Solvation Free Energy in Non-Equilibrium Regime
+
+The total solvation free energy ($G_{solv}$) in the non-equilibrium regime is partitioned into two components:
+
+$$
+G_{solv,non-eq} = G_{solv,fast} + G_{solv,slow},
+$$
+
+where:
+
+- $G_{solv,fast}$: Contribution from the fast electronic polarization of the solvent.
+- $G_{solv,slow}$: Contribution from the slow nuclear relaxation of the solvent.
+
+For a transition from the ground state ($S_0$) to an excited state ($S_1$):
+
+- **During absorption**, the solvent polarization is described as:
+  
+$$
+  G_{solv,non-eq}^{abs} = G_{solv,fast}^{S_1} + G_{solv,slow}^{S_0},
+$$
+  
+where the nuclear solvent polarization remains "frozen" in its equilibrium configuration for $S_0$, while the electronic polarization adjusts to $S_1$.
+
+- **During fluorescence**, the solvent polarization partially relaxes toward the excited-state equilibrium:
+
+$$
+G_{solv,non-eq}^{fluor} = G_{solv,fast}^{S_1} + G_{solv,slow}^{S_1,partial}.
+$$
+
+---
+
+### 2.3 Poisson Equation and Polarization in Non-Equilibrium
+
+Implicit solvation models, such as PCM, solve the Poisson equation to compute the solvent polarization. For the solute charge distribution $\rho(r)$ inside a dielectric medium, the equation is:
+
+$$
+∇⋅(ϵ(r)∇ϕ(r)) = -4πρ(r),
+$$
+
+where:
+
+- $ϕ(r)$: Electrostatic potential.
+- $ϵ(r)$: Dielectric constant of the medium.
+
+In the non-equilibrium regime, the dielectric constant is split into two components:
+
+- **Fast Polarization Dielectric Constant ($ϵ_\infty$)**:
+  - Represents the high-frequency response of the solvent (electronic polarization).
+
+- **Static Dielectric Constant ($ϵ_0$)**:
+  - Represents the full response of the solvent, including nuclear polarization.
+
+The solvent polarization is computed as:
+
+$$
+P_{non-eq} = P_{fast} + P_{slow},
+$$
+
+where:
+
+- $P_{fast}$: Polarization arising from $ϵ_\infty$.
+- $P_{slow}$: Polarization arising from $ϵ_0 - ϵ_\infty$.
+
+---
+
+### 2.4 Mathematical Treatment in PCM
+
+For a non-equilibrium excitation process:
+
+- The solute induces an apparent surface charge (ASC) on the solute-solvent boundary.
+
+- The ASC is decomposed into fast and slow components:
+
+$$
+σ_{ASC} = σ_{fast} + σ_{slow},
+$$
+  where:
+  - $σ_{fast}$: Surface charge from electronic polarization.
+  - $σ_{slow}$: Surface charge from nuclear polarization.
+
+The reaction field potential ($ϕ_{reaction}$) is computed separately for the fast and slow polarization responses:
+
+$$
+ϕ_{reaction} = ϕ_{fast} + ϕ_{slow}.
+$$
+
+In PCM-based solvation models, the fast polarization ($ϕ_{fast}$) is handled by using $ϵ_\infty$ instead of $ϵ_0$ in the Poisson equation.
+
+---
+
+### 2.5 Implications for Spectroscopy
+
+- **Absorption Spectra**:
+  - During absorption, the solvent has not yet relaxed to the excited-state charge distribution.
+  - The absorption energy includes contributions from the fast polarization of the solvent:
+  
+  $$
+  E_{abs} = E_{elec}^{S_1} + G_{solv,fast}^{S_1} + G_{solv,slow}^{S_0}.
+  $$
+
+- **Fluorescence Spectra**:
+  - During fluorescence, the solvent partially relaxes toward the equilibrium configuration of the excited state ($S_1$):
+
+  $$
+  E_{fluor} = E_{elec}^{S_1} + G_{solv,fast}^{S_1} + G_{solv,slow}^{S_1,partial}.
+  $$
+
+These solvent effects lead to characteristic Stokes shifts in fluorescence, which depend on the difference between $G_{solv,slow}^{S_0}$ and $G_{solv,slow}^{S_1}$.
 
 ## Conclusion
 

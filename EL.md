@@ -471,3 +471,149 @@ By solving Poisson’s equation (A), continuity equations for electrons and hole
 
 This drift-diffusion-exciton model is foundational for OLED device simulation, providing insights into both transient and steady-state operations.
 
+
+# 1. Governing Variables and Parameters
+
+We consider a one-dimensional representation along the thickness ($x$) of the device. The device extends from $x=0$ (anode) to $x=d$ (cathode). The main variables are:
+
+- $n(x,t)$: Electron density ($\text{m}^{-3}$)
+- $p(x,t)$: Hole density ($\text{m}^{-3}$)
+- $S(x,t)$: Singlet exciton density ($\text{m}^{-3}$)
+- $\phi(x,t)$: Electrostatic potential (V)
+- $E(x,t) = -\frac{d\phi}{dx}$: Electric field (V/m)
+
+We also define:
+
+- $\mu_n$, $\mu_p$: Electron and hole mobilities ($\text{m}^2/(\text{V·s})$)
+- $D_n$, $D_p$: Electron and hole diffusion coefficients ($\text{m}^2/\text{s}$)
+- $\epsilon$: Dielectric permittivity of the organic layer (F/m)
+- $q$: Elementary charge ($1.602 \times 10^{-19} \, \text{C}$)
+- $R_\text{tot}$: Net rate of electron-hole recombination ($\text{m}^{-3}/\text{s}$)
+- $R_\text{gen}(S)$: Rate of singlet exciton formation ($\text{m}^{-3}/\text{s}$)
+- $\Gamma_\text{loss}$: Net exciton decay rate ($\text{m}^{-3}/\text{s}$)
+
+Additionally, to incorporate device-level RC-effects and transient injection:
+
+- $C_\text{dev}$: Geometric/device capacitance (F) or a distributed $\epsilon$-based treatment.
+- $I(t)$ or $V_\text{ext}(t)$: External current/voltage supply as a function of time.
+
+---
+
+# 2. Poisson’s Equation (Electric Field / Potential)
+
+The electric field inside the organic layer is governed by Poisson’s equation:
+
+$$
+-\frac{d^2 \phi(x,t)}{dx^2} = \frac{q}{\epsilon} \, [p(x,t) - n(x,t) + N_\text{dop}(x)],
+$$
+
+where $N_\text{dop}(x)$ represents any (fixed) doping or trapped charges. In many OLEDs, doping may be small or absent, but we include it here for completeness. Numerically, one usually solves for $\phi(x,t)$ subject to electrode boundary conditions (i.e., specified voltages or zero-current conditions).
+
+---
+
+# 3. Charge Transport (Continuity Equations)
+
+## 3.1 Electron Continuity
+
+$$
+\frac{\partial n}{\partial t} = \frac{1}{q} \frac{\partial J_n}{\partial x} - R_\text{tot}(n,p) + \dots \tag{1}
+$$
+
+- $J_n$: Electron current density ($\text{A}/\text{m}^2$)
+- $R_\text{tot}(n,p)$: Net recombination rate of electrons and holes.
+
+In the drift-diffusion approximation:
+
+$$
+J_n = q \, (\mu_n \, n \, E + D_n \frac{\partial n}{\partial x}),
+$$
+
+hence:
+
+$$
+\frac{1}{q} \frac{\partial J_n}{\partial x} = \frac{\partial}{\partial x} \left( \mu_n \, n \, E + D_n \frac{\partial n}{\partial x} \right).
+$$
+
+The term $\dots$ can include additional processes such as:
+- Trapping/de-trapping (trap-limited transport),
+- Polaron-exciton annihilation,
+- Interfacial injection or extraction terms.
+
+---
+
+## 3.2 Hole Continuity
+
+$$
+\frac{\partial p}{\partial t} = -\frac{1}{q} \frac{\partial J_p}{\partial x} - R_\text{tot}(n,p) + \dots \tag{2}
+$$
+
+- $J_p$: Hole current density ($\text{A}/\text{m}^2$).
+
+Similarly:
+
+$$
+J_p = q \, (\mu_p \, p \, (-E) - D_p \frac{\partial p}{\partial x}) = q \, (-\mu_p \, p \, E - D_p \frac{\partial p}{\partial x}),
+$$
+
+hence:
+
+$$
+-\frac{1}{q} \frac{\partial J_p}{\partial x} = -\frac{\partial}{\partial x} \left( \mu_p \, p \, E + D_p \frac{\partial p}{\partial x} \right).
+$$
+
+---
+
+# 4. Exciton Formation and Dynamics
+
+Singlet excitons ($S$) are formed primarily via electron-hole recombination in an OLED. They can also be formed by optical absorption, but for electrically driven devices, the main source is $n+p$ recombination in the emissive layer.
+
+$$
+\frac{\partial S}{\partial t} = R_\text{gen}(S)(n,p) - \Gamma_\text{loss}(S,n,p) + \dots \tag{3}
+$$
+
+## 4.1 Exciton Generation
+
+A common approach is to write the total $e$–$h$ recombination rate as:
+
+$$
+R_\text{tot}(n,p) = \gamma n p \quad (\text{basic Langevin/Bimolecular form}),
+$$
+
+where a fraction $\eta_\text{exc}$ of these recombinations leads to excitons:
+
+$$
+R_\text{gen}(S)(n,p) = \eta_\text{exc} \, \gamma n p \implies (\text{rate of new singlets}).
+$$
+
+Further, incorporating spin statistics, if only 25% of excitons are singlets in a purely fluorescent material:
+
+$$
+R_\text{gen}(S)(n,p) = \eta_\text{exc} \, \eta_\text{singlet} \, \gamma n p \quad \text{with} \quad \eta_\text{singlet} \approx 0.25.
+$$
+
+---
+
+## 4.2 Exciton Decay and Loss
+
+Once formed, excitons can:
+1. Radiatively decay: $k_r(S) \, S$,
+2. Non-radiatively decay: $k_{nr}(S) \, S$,
+3. Undergo quenching by polarons or impurities:
+   - $k_q(n) \, n \, S$ (electron–exciton quenching),
+   - $k_q(p) \, p \, S$ (hole–exciton quenching),
+4. Exciton-Exciton Annihilation (e.g., $k_{SS} \, S^2$),
+5. Intersystem Crossing to triplets.
+
+Thus, a generic exciton loss term can be written:
+
+$$
+\Gamma_\text{loss}(S,n,p) = (k_r(S) + k_{nr}(S)) \, S + k_q(n) \, n \, S + k_q(p) \, p \, S + k_{SS} \, S^2 + \dots
+$$
+
+The exciton continuity (3) becomes:
+
+$$
+\frac{\partial S}{\partial t} = \eta_\text{exc} \, \gamma n p - (k_r(S) + k_{nr}(S)) \, S - k_q(n) \, n \, S - k_q(p) \, p \, S - k_{SS} \, S^2 - \dots
+$$
+
+

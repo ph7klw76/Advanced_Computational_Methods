@@ -182,3 +182,292 @@ $$
 $$
 
 These equations provide the foundation for modeling charge transport and exciton dynamics in OLEDs.
+
+# Governing Variables and Parameters
+
+We consider a one-dimensional representation along the thickness ($x$) of the device. The device extends from $x=0$ (anode) to $x=d$ (cathode). The main variables are:
+
+- $n(x,t)$: Electron density ($\text{m}^{-3}$),
+- $p(x,t)$: Hole density ($\text{m}^{-3}$),
+- $S(x,t)$: Singlet exciton density ($\text{m}^{-3}$),
+- $\phi(x,t)$: Electrostatic potential (V),
+- $E(x,t) = -\frac{d\phi}{dx}$: Electric field (V/m).
+
+We also define:
+
+- $\mu_n$, $\mu_p$: Electron and hole mobilities ($\text{m}^2/\text{V·s}$),
+- $D_n$, $D_p$: Electron and hole diffusion coefficients ($\text{m}^2/\text{s}$),
+- $\epsilon$: Dielectric permittivity of the organic layer (F/m),
+- $q$: Elementary charge ($1.602 \times 10^{-19} \, \text{C}$),
+- $R_\text{tot}$: Net rate of electron-hole recombination ($\text{m}^{-3}/\text{s}$),
+- $R_\text{gen}(S)$: Rate of singlet exciton formation ($\text{m}^{-3}/\text{s}$),
+- $\Gamma_\text{loss}$: Net exciton decay rate ($\text{m}^{-3}/\text{s}$).
+
+Additionally, to incorporate device-level RC-effects and transient injection:
+
+- $C_\text{dev}$: Geometric/device capacitance (F) or a distributed $\epsilon$-based treatment,
+- $I(t)$ or $V_\text{ext}(t)$: External current/voltage supply as a function of time.
+
+---
+
+# Poisson’s Equation (Electric Field / Potential)
+
+The electric field inside the organic layer is governed by Poisson’s equation:
+
+$$
+-\frac{d^2 \phi(x, t)}{dx^2} = \frac{q}{\epsilon} \, [p(x, t) - n(x, t) + N_\text{dop}(x)],
+$$
+
+where $N_\text{dop}(x)$ represents any (fixed) doping or trapped charges. In many OLEDs, doping may be small or absent, but we include it here for completeness. Numerically, one usually solves for $\phi(x, t)$ subject to electrode boundary conditions (i.e., specified voltages or zero-current conditions).
+
+---
+
+# Charge Transport (Continuity Equations)
+
+## 3.1 Electron Continuity
+
+$$
+\frac{\partial n}{\partial t} = \frac{1}{q} \frac{\partial J_n}{\partial x} - R_\text{tot}(n, p) + \dots \quad (1)
+$$
+
+- $J_n$: Electron current density ($\text{A}/\text{m}^2$),
+- $R_\text{tot}(n, p)$: Net recombination rate of electrons and holes.
+
+In the drift-diffusion approximation:
+
+$$
+J_n = q (\mu_n n E + D_n \frac{\partial n}{\partial x}),
+$$
+
+so:
+
+$$
+\frac{1}{q} \frac{\partial J_n}{\partial x} = \frac{\partial}{\partial x} \left( \mu_n n E + D_n \frac{\partial n}{\partial x} \right).
+$$
+
+The term $\dots$ can include additional processes such as:
+
+- Trapping/de-trapping (trap-limited transport),
+- Polaron-exciton annihilation (if one chooses to write it in the electron continuity),
+- Interfacial injection or extraction terms (if needed explicitly inside the bulk equations).
+
+---
+
+## 3.2 Hole Continuity
+
+$$
+\frac{\partial p}{\partial t} = -\frac{1}{q} \frac{\partial J_p}{\partial x} - R_\text{tot}(n, p) + \dots \quad (2)
+$$
+
+- $J_p$: Hole current density ($\text{A}/\text{m}^2$).
+
+Similarly:
+
+$$
+J_p = q \left( -\mu_p p E - D_p \frac{\partial p}{\partial x} \right),
+$$
+
+so:
+
+$$
+-\frac{1}{q} \frac{\partial J_p}{\partial x} = -\frac{\partial}{\partial x} \left( \mu_p p E + D_p \frac{\partial p}{\partial x} \right).
+$$
+
+The negative sign arises from the standard convention in semiconductor device equations.
+
+---
+
+# Exciton Formation and Dynamics
+
+Singlet excitons ($S$) are formed primarily via electron-hole recombination in an OLED. They can also be formed by optical absorption, but for electrically driven devices, the main source is $n + p$ recombination in the emissive layer.
+
+$$
+\frac{\partial S}{\partial t} = R_\text{gen}(S)(n, p) - \Gamma_\text{loss}(S, n, p) + \dots \quad (3)
+$$
+
+---
+
+## 4.1 Exciton Generation
+
+A common approach is to write the total $e$–$h$ recombination rate as:
+
+$$
+R_\text{tot}(n, p) = \gamma n p \quad (\text{basic Langevin/Bimolecular form}).
+$$
+
+Then, a fraction $\eta_\text{exc}$ of these recombinations leads to excitons:
+
+$$
+R_\text{gen}(S)(n, p) = \eta_\text{exc} \gamma n p \quad \Rightarrow \quad (\text{rate of new singlets}).
+$$
+
+Further, one can incorporate spin statistics: if only 25% of excitons are singlets in a purely fluorescent material, then:
+
+$$
+R_\text{gen}(S)(n, p) = \eta_\text{exc} \eta_\text{singlet} \gamma n p \quad \text{with} \quad \eta_\text{singlet} \approx 0.25.
+$$
+
+---
+
+## 4.2 Exciton Decay and Loss
+
+Once formed, excitons can:
+
+- **Radiatively decay**: $k_r(S) S$,
+- **Non-radiatively decay**: $k_{nr}(S) S$,
+- **Undergo quenching** by polarons or impurities:
+  - $k_q(n) n S$ (electron–exciton quenching),
+  - $k_q(p) p S$ (hole–exciton quenching),
+- **Exciton-Exciton Annihilation** (e.g., $k_{SS} S^2$ at high excitation densities),
+- **Intersystem Crossing** to triplets (not shown explicitly here but can be added).
+
+Hence, we write a generic exciton loss term:
+
+$$
+\Gamma_\text{loss}(S, n, p) = (k_r(S) + k_{nr}(S)) S + k_q(n) n S + k_q(p) p S + k_{SS} S^2 + \dots
+$$
+
+So, the exciton continuity (3) becomes:
+
+$$
+\frac{\partial S}{\partial t} = \eta_\text{exc} \gamma n p - (k_r(S) + k_{nr}(S)) S - k_q(n) n S - k_q(p) p S - k_{SS} S^2 - \dots
+$$
+
+---
+
+# 5. Incorporating Device Capacitance and Transient Injection
+
+When external injection (current or voltage) is suddenly stopped, the device does not instantaneously lose all charge because:
+
+- There is a capacitance associated with the organic stack and electrodes.
+- The carriers that accumulated in the device can continue to recombine, forming excitons and emitting light even after external bias is removed.
+
+## 5.1 Effective Circuit Model
+
+A simplified approach is to treat the device as a parallel plate capacitor of capacitance:
+
+$$
+C_\text{dev} \approx \frac{\epsilon A}{d},
+$$
+
+where:
+- $A$ is the device area, and
+- $d$ is the thickness.
+
+The current through the external circuit is:
+
+$$
+I_\text{ext}(t) = C_\text{dev} \frac{dV_\text{dev}}{dt} + I_\text{rec}(t) + I_\text{transport}(t),
+$$
+
+where:
+- $V_\text{dev}$ is the voltage across the device,
+- $I_\text{rec}$ is the net recombination current (due to electron-hole recombination inside the device),
+- $I_\text{transport}$ is the drift-diffusion current that flows to or from the contacts.
+
+When $I_\text{ext}(t) \to 0$ (i.e., the injection is turned off or the device is switched to open-circuit), the device can still have residual charge that discharges or recombines over time. These circuit-level equations link to the continuity and Poisson equations in the bulk, with boundary conditions reflecting contact behavior (e.g., injection-limited, ohmic, or blocking).
+
+---
+
+# 6. Full Set of Coupled PDEs (Generic Form)
+
+Combining everything, we arrive at a self-consistent system of PDEs:
+
+### (A) Poisson's Equation:
+
+$$
+-\frac{d^2 \phi}{dx^2} = \frac{q}{\epsilon} \, [p - n + N_\text{dop}(x)],
+$$
+
+### (B) Electron Continuity:
+
+$$
+\frac{\partial n}{\partial t} = \frac{1}{q} \frac{\partial}{\partial x} \left( q \mu_n n E + q D_n \frac{\partial n}{\partial x} \right) - R_\text{tot}(n, p),
+$$
+
+### (C) Hole Continuity:
+
+$$
+\frac{\partial p}{\partial t} = -\frac{1}{q} \frac{\partial}{\partial x} \left( q \mu_p p E + q D_p \frac{\partial p}{\partial x} \right) - R_\text{tot}(n, p),
+$$
+
+### (D) Exciton Continuity:
+
+$$
+\frac{\partial S}{\partial t} = \eta_\text{exc} \gamma n p - \Gamma_\text{loss}(S, n, p).
+$$
+
+### With:
+- $E = -\frac{d\phi}{dx}$,
+- $R_\text{tot}(n, p) = \gamma n p$ (or a more complex formula),
+- $\Gamma_\text{loss}(S, n, p) = (k_r(S) + k_{nr}(S)) S + k_q(n) n S + k_q(p) p S + k_{SS} S^2 + \dots$.
+
+---
+
+## 6.1 Boundary Conditions
+
+Boundary conditions must be specified at $x=0$ (anode) and $x=d$ (cathode):
+
+1. **Electrode Injection:**
+   - If the device is biased, $\phi(0, t) = \phi_\text{anode}(t)$ and $\phi(d, t) = \phi_\text{cathode}(t)$.
+   - If the device is disconnected, the net current at each contact is zero, implying Neumann boundary conditions on $n$ and $p$.
+
+2. **Charge Densities at Contacts:**
+   - May be set by thermionic emission or ohmic injection models,
+   - Or by matching the quasi-Fermi levels to the metal work function.
+
+When the external injection is turned off:
+
+$$
+I_\text{ext}(t > t_0) = 0,
+$$
+
+which enforces that no net current flows from the electrodes. The device potential evolves self-consistently based on the internal charge distribution and capacitance.
+
+---
+
+# 7. Modeling the Emission Decay After Injection Stops
+
+### Turn-Off Condition:
+- At $t = t_0$, set the external current (or voltage) to zero (open-circuit or short-circuit, depending on the experimental setup).
+
+### Transient Discharge:
+1. **Residual Charge:** Charges stored in the bulk and at interfaces start to recombine.
+2. **Relaxation:** The electric field $\phi(x, t)$ and carrier densities $n(x, t)$, $p(x, t)$ will relax.
+3. **Residual Exciton Formation:** While electrons and holes exist, recombination continues to form excitons, albeit at a diminishing rate.
+4. **Capacitive Effect:** The potential might not drop immediately to $0$; it discharges over an RC timescale.
+5. **Photon Emission:** The instantaneous light output at time $t$ can be estimated as:
+   $$
+   L(t) = \int_0^d k_r(S) S(x, t) F_\text{out}(x) \, dx,
+   $$
+   where $F_\text{out}(x)$ is an outcoupling factor or the fraction of photons escaping.
+
+This emission decay is measured as transient electroluminescence.
+
+---
+
+# 8. Practical Considerations and Extensions
+
+1. **Triplet States:** A complete OLED model might include triplet excitons ($T$) with rates for intersystem crossing, phosphorescence, TTA, etc.
+2. **Trap States:** Trap distributions can affect carrier transport and recombination, necessitating trap continuity equations or effective rates.
+3. **Inhomogeneous Layers:** Multilayer stacks (e.g., hole-injection, emission, electron-transport layers) require boundary matching conditions.
+4. **Numerical Methods:** Solving these coupled PDEs typically requires finite-element or finite-difference methods with iterative solvers (e.g., Gummel, Newton-Raphson).
+
+---
+
+# Final Summary
+
+This generic model captures the essential physics of:
+
+- **Carrier injection and transport (electrons and holes),**
+- **Exciton formation (from recombination) and subsequent emission,**
+- **Device-level capacitive effects during transient discharge.**
+
+By solving Poisson’s equation (A), continuity equations for electrons and holes (B, C), and the exciton rate equation (D) under time-dependent boundary conditions, one can:
+
+1. Predict emission decay curves (electroluminescence vs. time),
+2. Diagnose residual carrier and exciton behavior,
+3. Optimize device architectures (layer thickness, mobility, doping, etc.) for performance.
+
+This drift-diffusion-exciton model is foundational for OLED device simulation, providing insights into both transient and steady-state operations.
+

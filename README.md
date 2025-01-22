@@ -320,7 +320,9 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [UV-Vis and Fluorescence Spectroscopy](absorption_emission.md): Modeling absorption and emission processes.
    
-3. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
+4. [Franck-Condon (FC) intensities (IntensityFC) and Herzberg-Teller (HT) intensities ](FC_HT.md)
+   
+5. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
 
 ### E. Photophysics and Photochemistry
 

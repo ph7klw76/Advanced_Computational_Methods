@@ -196,3 +196,115 @@ In organic emitters, the ISC efficiency depends critically on:
    - Configuration mixing increases the density of states that can couple $S_1$ and $T_1$.
    - Molecules with strong multi-configurational character (e.g., those with lone pairs or extended π-systems) often exhibit enhanced ISC.
 
+# 3. Theoretical Framework of Internal Conversion
+
+## 3.1 Definition of Internal Conversion
+
+Internal conversion (IC) is a nonradiative transition between two electronic states (∣i⟩ and ∣j⟩) of the same spin multiplicity, typically a singlet ($S_1 \to S_0$) or triplet ($T_2 \to T_1$) transition. During IC, the electronic energy lost by the molecule is converted into vibrational energy, and the molecule relaxes to the lower electronic state.
+
+### Example Process: $S_1 \to S_0$
+1. A molecule absorbs light and reaches the first singlet excited state $S_1$.
+2. Through IC, the molecule transitions to the ground state $S_0$ without emitting a photon.
+3. The excess energy is transferred to vibrational modes of $S_0$.
+
+---
+
+## 3.2 Governing Equation: Fermi’s Golden Rule
+
+The rate of internal conversion ($k_{IC}$) is determined by Fermi’s Golden Rule:
+
+$$
+k_{IC} = \frac{2\pi}{\hbar} \vert \langle i \vert \hat{H}_{NA} \vert j \rangle \vert^2 \rho(E),
+$$
+
+where:
+- $\hat{H}_{NA}$: The nonadiabatic coupling Hamiltonian, describing coupling between electronic states via nuclear motion.
+- $\langle i \vert \hat{H}_{NA} \vert j \rangle$: The nonadiabatic coupling matrix element (NACME), which quantifies the strength of coupling between states ∣i⟩ and ∣j⟩.
+- $\rho(E)$: The vibrational density of states (VDOS) in the final electronic state ($S_0$), which determines how many vibrational modes are available to accept the energy difference between $S_1$ and $S_0$.
+
+### Key Factors Affecting $k_{IC}$:
+1. **Nonadiabatic Coupling ($\langle i \vert \hat{H}_{NA} \vert j \rangle$):**
+   - Strong NAC enhances the IC rate.
+2. **Energy Gap ($\Delta E_{ij}$):**
+   - Smaller energy gaps lead to stronger vibronic coupling, facilitating IC.
+3. **Vibrational Density of States ($\rho(E)$):**
+   - Higher $\rho(E)$ at the crossing point increases IC rates by providing more vibrational modes to accept the electronic energy.
+
+---
+
+## 3.3 The Role of the Nonadiabatic Coupling Hamiltonian ($\hat{H}_{NA}$)
+
+The nonadiabatic coupling Hamiltonian arises from the breakdown of the Born-Oppenheimer approximation, which assumes that nuclear and electronic motions can be separated. When electronic states are close in energy, this approximation fails, and coupling between electronic and nuclear motions becomes significant.
+
+### Nonadiabatic Coupling Hamiltonian:
+
+$$
+\hat{H}_{NA} = -\frac{\hbar}{M} \nabla_R,
+$$
+
+where:
+- $M$: Nuclear mass.
+- $\nabla_R$: Gradient operator with respect to nuclear coordinates $R$.
+
+This term couples electronic wavefunctions through the nuclear displacement $R$, allowing transitions between electronic states mediated by nuclear motion.
+
+### Nonadiabatic Coupling Matrix Element (NACME):
+The strength of nonadiabatic coupling between states ∣i⟩ and ∣j⟩ is quantified by:
+
+$$
+\langle i \vert \hat{H}_{NA} \vert j \rangle = \int \psi_i^*(r; R) \nabla_R \psi_j(r; R) \, dr,
+$$
+
+where:
+- $\psi_i(r; R)$: Electronic wavefunction of state ∣i⟩ at nuclear coordinate $R$.
+- $\nabla_R$: Nuclear derivative operator, which quantifies the sensitivity of the electronic wavefunction to nuclear displacement.
+
+---
+
+## 3.4 Energy Gap Law for IC
+
+The energy gap law describes how the rate of IC depends on the energy difference $\Delta E_{ij}$ between the initial ($i$) and final ($j$) electronic states:
+
+- **Small $\Delta E_{ij}$:**
+  - Small energy gaps lead to stronger vibronic coupling, increasing $k_{IC}$.
+  - The molecule requires less vibrational energy to bridge the gap between the two states.
+- **Large $\Delta E_{ij}$:**
+  - Large energy gaps reduce vibronic coupling, suppressing IC.
+  - Fewer vibrational modes in the final state ($S_0$) match the energy gap, reducing $\rho(E)$.
+
+### Implication:
+IC is most efficient when the initial and final states are close in energy (e.g., at conical intersections or near avoided crossings).
+
+---
+
+# 4. Physical Mechanisms of IC
+
+## 4.1 Vibronic Coupling
+
+Vibronic coupling describes the interaction between electronic and vibrational degrees of freedom. It enables IC by allowing the electronic wavefunction to mix with nuclear vibrations. Vibronic coupling depends on:
+- **Overlap of Vibrational Wavefunctions:** Stronger overlap enhances IC.
+- **Mode-Specific Coupling:** Certain vibrational modes (e.g., bond-stretching modes) contribute more strongly to IC.
+
+---
+
+## 4.2 Conical Intersections and Avoided Crossings
+
+Conical intersections (CIs) and avoided crossings are critical points where two electronic potential energy surfaces come close in energy, leading to strong nonadiabatic coupling.
+
+### Conical Intersections (CIs):
+- At a CI, the energy gap ($\Delta E_{ij}$) between $S_1$ and $S_0$ is nearly zero, and the NACME $\langle i \vert \hat{H}_{NA} \vert j \rangle$ becomes large.
+- CIs act as "funnels" for IC, allowing the molecule to efficiently transfer electronic energy into vibrational modes.
+
+---
+
+# 5. Factors Influencing IC Rates
+
+## 5.1 Molecular Size
+- Larger molecules have more vibrational modes, resulting in higher $\rho(E)$ at the crossing point.
+- This enhances IC rates because more vibrational states can accept the electronic energy.
+
+## 5.2 Energy Gap ($\Delta E_{ij}$)
+- Small $\Delta E_{ij}$ enhances vibronic coupling and increases $k_{IC}$.
+
+## 5.3 Vibrational Density of States ($\rho(E)$)
+- Higher $\rho(E)$ at the crossing point provides more pathways for the energy redistribution required for IC.

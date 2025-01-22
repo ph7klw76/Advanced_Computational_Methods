@@ -515,9 +515,9 @@ where $N_\text{dop}(x)$ represents any (fixed) doping or trapped charges. In man
 
 ## 3.1 Electron Continuity
 
-$$
-\frac{\partial n}{\partial t} = \frac{1}{q} \frac{\partial J_n}{\partial x} - R_\text{tot}(n,p) + \dots \tag{1}
-$$
+
+![image](https://github.com/user-attachments/assets/14c9abe1-81a7-4cdf-8fc1-a9969954124f)
+
 
 - $J_n$: Electron current density ($\text{A}/\text{m}^2$)
 - $R_\text{tot}(n,p)$: Net recombination rate of electrons and holes.
@@ -543,9 +543,9 @@ The term $\dots$ can include additional processes such as:
 
 ## 3.2 Hole Continuity
 
-$$
-\frac{\partial p}{\partial t} = -\frac{1}{q} \frac{\partial J_p}{\partial x} - R_\text{tot}(n,p) + \dots \tag{2}
-$$
+
+![image](https://github.com/user-attachments/assets/397379d9-29ad-4735-9c87-0ff4f9da8828)
+
 
 - $J_p$: Hole current density ($\text{A}/\text{m}^2$).
 
@@ -567,9 +567,8 @@ $$
 
 Singlet excitons ($S$) are formed primarily via electron-hole recombination in an OLED. They can also be formed by optical absorption, but for electrically driven devices, the main source is $n+p$ recombination in the emissive layer.
 
-$$
-\frac{\partial S}{\partial t} = R_\text{gen}(S)(n,p) - \Gamma_\text{loss}(S,n,p) + \dots \tag{3}
-$$
+
+![image](https://github.com/user-attachments/assets/6e19badc-cf65-41cf-ba18-a437aaa32377)
 
 ## 4.1 Exciton Generation
 

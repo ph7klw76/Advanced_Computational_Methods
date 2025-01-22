@@ -649,7 +649,7 @@ Each of these terms can be estimated using Fermi’s Golden Rule approaches, as 
 
 
 
-analyse HR and reorganization energy
+## analyse HR and reorganization energy
 
 ```python
 
@@ -694,5 +694,75 @@ plt.grid(axis='y', linestyle='--', alpha=0.5)
 # Show the plot
 plt.show()
 ```
+
+
+## analyse FC and energy shift
+
+
+![image](https://github.com/user-attachments/assets/e2e9220d-6d47-436c-95ae-8fefb8ad88d9)
+
+```python
+import pandas as pd
+import numpy as np
+import math  # Import the standard library math module
+import matplotlib.pyplot as plt
+
+# Load the data
+file_path = 'Book1.csv'
+data = pd.read_csv(file_path)
+
+# Extract relevant columns
+freq = data['Freq']
+hr_factors = data['HR-factor']
+
+# Define constants
+vibrational_spacing = 1400  # Vibrational energy spacing in cm⁻¹
+sigma = vibrational_spacing / 500  # Gaussian width (adjust for broadening)
+num_points = 100000  # Number of points in the spectrum
+energy_range = np.linspace(0, 10000, num_points)  # Energy range in cm⁻¹
+
+# Function to calculate Franck–Condon Factors
+def calculate_fcf(hr_factor, max_transition=100):
+    """
+    Calculate Franck–Condon Factors for transitions 0-0 to 0-n.
+
+    Parameters:
+        hr_factor (float): Huang–Rhys Factor
+        max_transition (int): Maximum transition level
+
+    Returns:
+        list: FCF values for transitions 0-0 to 0-n
+    """
+    fcf = [(hr_factor**n * np.exp(-hr_factor)) / math.factorial(n) for n in range(max_transition + 1)]
+    return fcf
+
+# Simulate the spectrum
+spectrum = np.zeros_like(energy_range)
+
+for _, row in data.iterrows():
+    # Calculate FCFs for the current HR-factor
+    fcf_values = calculate_fcf(row['HR-factor'], max_transition=4)
+    
+    # Add contributions from each transition to the spectrum
+    for n, fcf in enumerate(fcf_values):
+        peak_position = row['Freq'] + n * vibrational_spacing  # Energy of the n-th transition
+        spectrum += fcf * np.exp(-((energy_range - peak_position)**2) / (2 * sigma**2))
+
+# Normalize the spectrum
+spectrum /= spectrum.max()
+
+# Plot the simulated spectral profile
+plt.figure(figsize=(10, 6))
+plt.plot(energy_range, spectrum, label='Simulated Spectrum', color='blue')
+plt.xlabel('Energy (cm⁻¹)', fontsize=16, fontweight='bold')
+plt.ylabel('Intensity (Normalized)', fontsize=16, fontweight='bold')
+plt.title('Simulated Spectral Profile Based on FCFs', fontsize=16, fontweight='bold')
+plt.grid(alpha=0.3)
+plt.legend(fontsize=12)
+plt.tight_layout()
+plt.show()
+```
+
+
 
 

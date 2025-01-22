@@ -167,9 +167,8 @@ where:
 
 The SOCME, ⟨T ∣ 𝐻̂_SO ∣ S⟩, depends on how much the configurations in $S_1$ and $T_1$ overlap:
 
-$$
-\langle T \vert \hat{H}_{SO} \vert S \rangle = \sum_{i,j} c_i d_j \langle \psi_j \vert \hat{H}_{SO} \vert \psi_i \rangle.
-$$
+![image](https://github.com/user-attachments/assets/7400b013-0272-4968-8d18-4afc99927cb9)
+
 
 **Key Factors:**
 1. **Orbital Mixing via CI:**

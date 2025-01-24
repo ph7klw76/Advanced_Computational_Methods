@@ -640,7 +640,7 @@ Rapidly equilibrate the system by removing unphysical artifacts (e.g., overlaps,
 - **Key metrics**: Ensure temperature ($T$), pressure ($P$), and density ($\rho$) converge to reasonable values without abrupt oscillations.
 
 **Critical Corrections**:
-- Keep this phase short (e.g., 10-50 ps depending on system size). The Berendsen method artificially suppresses thermodynamic fluctuations, meaning it cannot provide physically correct ensemble sampling.
+- Keep this phase short (e.g., 1-5 ns depending on system size). The Berendsen method artificially suppresses thermodynamic fluctuations, meaning it cannot provide physically correct ensemble sampling.
 - Do not rely on this phase for production results—its purpose is solely to prepare the system for more rigorous equilibration.
 
 ---
@@ -662,7 +662,7 @@ Transition from the unphysical Berendsen method to a rigorous $NPT$ sampling reg
 - This phase ensures that the system is correctly sampled from the $NPT$ ensemble before transitioning to production runs.
 
 **Duration**:  
-Depending on the system size, equilibrate for 200-500 ps or longer to ensure convergence.
+Depending on the system size, equilibrate for 20-50 ns or longer to ensure convergence.
 
 ---
 
@@ -681,7 +681,7 @@ Remove volume fluctuations and stabilize the system in the $NVT$ ensemble to equ
 - Fixing the volume allows the system to relax internal stresses and stabilize structural properties, which is especially important for biomolecular or complex systems. This step is critical before running any analyses or property calculations.
 
 **Duration**:  
-Run this phase for 500 ps or longer, depending on the complexity of the system.
+Run this phase for 50 ns or longer, depending on the complexity of the system.
 
 ---
 
@@ -709,10 +709,10 @@ Production runs typically last for nanoseconds to microseconds, depending on the
 
 | **Phase**                  | **Ensemble** | **Thermostat**             | **Barostat**                 | **Duration**        | **Purpose**                                                                 |
 |-----------------------------|--------------|----------------------------|------------------------------|---------------------|-----------------------------------------------------------------------------|
-| **Phase 1 (Initial Equilibration)** | $NPT$       | Berendsen                 | Berendsen                   | 10-50 ps           | Quickly equilibrate temperature, pressure, and density to stabilize the initial structure. |
-| **Phase 2 (Rigorous Equilibration)** | $NPT$       | v-rescale or Nosé-Hoover  | Parrinello-Rahman or Nosé-Hoover | 200-500 ps         | Enforce correct $NPT$ sampling to ensure accurate temperature and pressure fluctuations. |
-| **Phase 3 (Stabilization)**         | $NVT$       | v-rescale                 | None                        | 500 ps or longer   | Stabilize internal structure and energy at fixed volume for accurate structural relaxation. |
-| **Phase 4 (Production)**            | $NPT$       | C-rescale                 | Parrinello-Rahman           | Nanoseconds         | Perform rigorous production simulations in $NPT$ for thermodynamic and structural analysis. |
+| **Phase 1 (Initial Equilibration)** | $NPT$       | Berendsen                 | Berendsen                   | 1-5 ns           | Quickly equilibrate temperature, pressure, and density to stabilize the initial structure. |
+| **Phase 2 (Rigorous Equilibration)** | $NPT$       | v-rescale or Nosé-Hoover  | Parrinello-Rahman or Nosé-Hoover | 20-50 ns         | Enforce correct $NPT$ sampling to ensure accurate temperature and pressure fluctuations. |
+| **Phase 3 (Stabilization)**         | $NVT$       | v-rescale                 | None                        | 50 ns or longer   | Stabilize internal structure and energy at fixed volume for accurate structural relaxation. |
+| **Phase 4 (Production)**            | $NPT$       | C-rescale                 | Parrinello-Rahman           | 100 Nanoseconds or more        | Perform rigorous production simulations in $NPT$ for thermodynamic and structural analysis. |
 
 ---
 

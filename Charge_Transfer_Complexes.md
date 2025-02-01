@@ -399,3 +399,17 @@ P_d(F) = \frac{k_d(F)}{k_d(F) + k_f}.
 $$
 
 This workflow rigorously connects **DFT calculations** with **macroscopic charge transfer dynamics** in **organic photovoltaic devices**.
+
+Foundational and Theoretical Works
+Braun’s Original Work:
+
+Braun, C. L. (1984). Electric field dependence of geminate recombination in amorphous organic solids. Journal of Chemical Physics, 80(9), 4157–4161.
+This seminal paper introduces Braun’s extension of Onsager’s theory by considering the competition between dissociation and geminate recombination. It lays out the derivation of the dissociation rate expression under the influence of an external electric field.
+Onsager’s Classic Paper:
+
+Onsager, L. (1938). Initial recombination of ions. Physical Review, 54(8), 554–557.
+Onsager’s original theory forms the foundation for later extensions, including Braun’s work. It provides the basic picture of ion-pair recombination that is modified by Braun to account for field effects and recombination kinetics.
+Comprehensive Reviews on Charge Separation:
+
+Ostroverkhova, O. (2016). Organic optoelectronic materials: Mechanisms and applications. Chemical Reviews, 116(22), 13279–13412.
+This review covers charge generation and separation in organic materials in detail, discussing both the Onsager-Braun framework and more advanced models. It offers a modern perspective on how these theories apply to organic photovoltaics and light-emitting devices.

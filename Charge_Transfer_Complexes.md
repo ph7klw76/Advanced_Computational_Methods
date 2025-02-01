@@ -156,9 +156,9 @@ This expression is significant because:
 4. **Calculate $E_b$:**  
    Finally, subtract the TDDFT-derived optical gap from the quasiparticle gap:
 
-   $$
-   E_b = E_g^{QP} - E_{opt}.
-   $$
+$$
+E_b = E_g^{QP} - E_{opt}.
+$$
 
 This workflow yields a rigorous quantification of the exciton binding energy, connecting fundamental quantum mechanical calculations with macroscopic observables in organic electronic devices.
 
@@ -372,27 +372,30 @@ Although the **external electric field ($F$)** is **experimentally controlled**,
    - Carry out **TDDFT calculations** to determine the **lowest excitation energy** $E_{opt}$.
 
 2. **Determine the Exciton Binding Energy $E_b$:**
-   $$
-   E_b = E_g^{QP} - E_{opt}.
-   $$
+   
+$$
+E_b = E_g^{QP} - E_{opt}.
+$$
 
-3. **Estimate $r_0$:**
+4. **Estimate $r_0$:**
    - Analyze the **spatial extent** of the donor and acceptor orbitals.
 
-4. **Calculate or Adopt $\epsilon_r$:**
+5. **Calculate or Adopt $\epsilon_r$:**
    - Use **DFT linear-response calculations** or experimental values.
 
-5. **Estimate the Mobilities $\mu$:**
+6. **Estimate the Mobilities $\mu$:**
    - Compute **effective masses** from **band structure**.
 
-6. **Insert Parameters into the Braun Expression:**
-   $$
-   k_d(F) = \frac{3 \mu}{4 \pi r_0^3} \exp \left( -\frac{E_b}{k_B T} \right) \cdot \frac{J_1(2b)}{b}.
-   $$
+7. **Insert Parameters into the Braun Expression:**
 
-7. **Obtain the Dissociation Probability:**
-   $$
-   P_d(F) = \frac{k_d(F)}{k_d(F) + k_f}.
-   $$
+$$
+k_d(F) = \frac{3 \mu}{4 \pi r_0^3} \exp \left( -\frac{E_b}{k_B T} \right) \cdot \frac{J_1(2b)}{b}.
+$$
+
+9. **Obtain the Dissociation Probability:**
+
+$$
+P_d(F) = \frac{k_d(F)}{k_d(F) + k_f}.
+$$
 
 This workflow rigorously connects **DFT calculations** with **macroscopic charge transfer dynamics** in **organic photovoltaic devices**.

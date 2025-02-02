@@ -314,6 +314,8 @@ Application: Finite element simulations, quantum lattice models.
    
 3. [Torsional Potential](Torsion.md)
 
+4. Dispersion Correction
+
 ### D.Spectroscopic Properties
 
 1. [Vibrational Analysis](vibrational_analysis.md): Using quantum methods to predict and analyze IR and Raman spectra.

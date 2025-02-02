@@ -328,11 +328,11 @@ Application: Finite element simulations, quantum lattice models.
    
 7. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
    
-8. [Excited States via RPA, CIS, and SF-TDA](Excited States1.md)
+8. [Excited States via RPA, CIS, and SF-TDA]_(Excited States1.md)
     
 9. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
     
-10. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD] (Excited_state_method3.md)
+10. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
 
 ### E. Photophysics and Photochemistry
 

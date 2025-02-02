@@ -310,7 +310,7 @@ Application: Finite element simulations, quantum lattice models.
 
 1. [Non-Covalent Interactions](Non-Covalent_Interactions.md) π-π stacking, van der Waals forces, and hydrogen bonding in organic semiconductor.
    
-2. Charge Transfer Complexes: Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
+2. [Charge Transfer Complexes](Charge_Transfer_Complexes.md): Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
    
 3. [Torsional Potential](Torsion.md)
 

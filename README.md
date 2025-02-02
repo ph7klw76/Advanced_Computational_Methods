@@ -328,7 +328,7 @@ Application: Finite element simulations, quantum lattice models.
    
 7. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
    
-8. [Excited States via RPA, CIS, and SF-TDA]_(Excited States1.md)
+8. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
     
 9. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
     

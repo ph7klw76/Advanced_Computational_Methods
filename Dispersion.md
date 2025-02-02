@@ -37,9 +37,8 @@ Over the past two decades, substantial work has been devoted to **improving DFTâ
 
 The empirical dispersion correction $E_{\text{disp}}$ typically has the form:
 
-$$
-E_{\text{disp}} = - \sum_{i<j} s_6 \, f_{\text{dmp}}(R_{ij}) \, \frac{C_{6,ij}}{R_{ij}^6},
-$$
+![image](https://github.com/user-attachments/assets/e9ac7a43-2dfa-4094-875b-48e0c46bfe32)
+
 
 where:
 
@@ -118,10 +117,10 @@ Variants include:
 
 # 4. Applications and Case Studies
 
-## 4.1 Organic Semiconductors & $\pi$-$\pi$ Stacking
+## 4.1 Organic Semiconductors $\pi$ - $\pi$ Stacking
 
 ### **Molecular Crystal Packing**
-- **In organic electronics** (e.g., pentacene crystals, rubrene), **$\pi$-$\pi$ stacking** between aromatic rings **dictates crystal structure** and **transport properties**.
+- **In organic electronics** (e.g., pentacene crystals, rubrene), **$\pi$ - $\pi$ stacking** between aromatic rings **dictates crystal structure** and **transport properties**.
 - **Dispersion-corrected functionals** like **PBE-D3** or **MBD** capture **subtle differences in stacking geometry and energy**.
 
 ---

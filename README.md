@@ -314,7 +314,7 @@ Application: Finite element simulations, quantum lattice models.
    
 3. [Torsional Potential](Torsion.md)
 
-4. Dispersion Correction
+4. [Dispersion Correction](Dispersion.md)
 
 ### D.Spectroscopic Properties
 
@@ -327,6 +327,12 @@ Application: Finite element simulations, quantum lattice models.
 5. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
    
 7. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+   
+9. [Excited States via RPA, CIS, and SF-TDA](Excited States1.md)
+    
+11. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
+    
+13. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD] (Excited_state_method3.md)
 
 ### E. Photophysics and Photochemistry
 

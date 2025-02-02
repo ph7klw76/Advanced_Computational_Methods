@@ -292,7 +292,7 @@ Application: Finite element simulations, quantum lattice models.
 
 3. [Implicit solvation models](Implicit_Solvation.md)
 
-4. Explicit solvation models
+4. [Explicit solvation models](explict_solvent.md)
    
 5. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
 

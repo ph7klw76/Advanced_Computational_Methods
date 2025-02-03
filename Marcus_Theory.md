@@ -705,3 +705,40 @@ if __name__ == "__main__":
 ```
 
 
+# plot the probability density data
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Load the data
+file_path = "3electron-mobilities.csv"
+df = pd.read_csv(file_path)
+
+# Extract mobility data
+mobility_data = df.iloc[:, 0]  # Assuming the first column contains the mobility values
+
+# Define bin edges using logarithmic scale
+bins = np.logspace(np.log10(mobility_data.min()), np.log10(mobility_data.max()), 30)
+
+# Plot the histogram with log-scaled bins
+plt.figure(figsize=(10, 6))
+plt.hist(mobility_data, bins=bins, density=True, edgecolor='black', alpha=0.7)
+
+# Improve numerical labels on x and y axes
+plt.xticks(fontsize=14, fontweight='bold')
+plt.yticks(fontsize=14, fontweight='bold')
+# Formatting the graph
+plt.xscale("log")
+plt.xlabel("Mobility (cm²/Vs)", fontsize=14, fontweight='bold')
+plt.ylabel("Probability Density", fontsize=14, fontweight='bold')
+plt.title("", fontsize=16, fontweight='bold')
+plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+plt.gca().spines["top"].set_linewidth(2)
+plt.gca().spines["right"].set_linewidth(2)
+plt.gca().spines["bottom"].set_linewidth(2)
+plt.gca().spines["left"].set_linewidth(2)
+
+# Show the plot
+plt.show()
+```

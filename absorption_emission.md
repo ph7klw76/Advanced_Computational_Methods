@@ -767,3 +767,145 @@ plt.show()
 [replot](https://github.com/HenriqueCSJ/ORCASpectrumPlot)
 
 
+## OVERSHOOT in Tail side of emission Spectra
+
+In many vibronic simulations (for example, when calculating Franck–Condon factors for emission spectra) one finds that very low‐frequency modes often come with very large displacements. These modes are typically associated with large‐amplitude motions (such as torsions or soft deformations) that are not well described by a harmonic approximation. In ORCA, one practical remedy is to set the `TCUTFREQ` flag so that modes with frequencies below a certain value (in cm⁻¹) are removed from the calculation. In addition, one can examine the magnitude of the (dimensionless) displacements associated with these modes. Here’s how one can rationalize a choice for both thresholds.
+
+## 1. Displacements and the Harmonic Approximation
+
+For each normal mode, one may define a **dimensionless displacement parameter**, $d$, that is related to the actual coordinate displacement $\Delta Q$ and the zero‐point amplitude of that mode. A common definition is:
+
+$$
+d = \frac{\Delta Q}{\sqrt{\frac{\hbar}{2\mu\omega}}}
+$$
+
+where:
+
+- $\mu$ is the **reduced mass** associated with the mode,
+- $\omega$ is the **vibrational angular frequency**, and
+- $\sqrt{\frac{\hbar}{2\mu\omega}}$ is the **zero‐point amplitude**.
+
+The **Huang–Rhys factor** $S$ (which gives an idea of how strongly a particular mode couples to an electronic transition) is then:
+
+$$
+S = \frac{d^2}{2}.
+$$
+
+In many systems, a **Huang–Rhys factor** on the order of **1** (i.e., $d \approx 2$ or roughly $1.4$) already signals significant coupling. When $d$ becomes substantially larger than about **1.5** (in dimensionless units), the displacement is so large that the harmonic oscillator approximation may no longer be reliable. In practice, one might say that:
+
+- **Displacements with** $d \gtrsim 1.5$ **are “too large”**, meaning the corresponding mode is likely to be highly anharmonic.
+- This corresponds to **$S \gtrsim 1.1$**.
+- Modes with such large dimensionless displacements contribute significantly to the vibrational progression and—in the harmonic treatment—can overly broaden the simulated spectral tails.
+
+
+# 1. Low-Frequency Modes and Their Role
+
+## A. Large Amplitude Motions and Anharmonicity
+
+### **Large Zero-Point Amplitudes:**
+For a given vibrational mode, the zero‐point amplitude is given by:
+
+$$
+Q_{\text{zpt}} = \sqrt{\frac{\hbar}{2\mu\omega}},
+$$
+
+where:
+
+- $\mu$ is the **reduced mass** and  
+- $\omega$ is the **angular frequency**.
+
+When $\omega$ is very low (e.g., below **100 cm⁻¹**), $Q_{\text{zpt}}$ becomes large. This means that even modest displacements **$\Delta Q$** lead to very large **dimensionless displacements**:
+
+$$
+d = \frac{\Delta Q}{Q_{\text{zpt}}} = \Delta Q \sqrt{\frac{2\mu\omega}{\hbar}}.
+$$
+
+A small **physical displacement** translates into a **large $d$** when $\omega$ is small.
+
+### **Impact on Franck–Condon Factors:**
+The **Franck–Condon (FC) factors**, which dictate the **intensity distribution** in the emission spectrum, are given by:
+
+$$
+FC_{if} = \left| \langle \chi_f (g) | \chi_i (e) \rangle \right|^2.
+$$
+
+When the **dimensionless displacement** $d$ is large (commonly $d \gtrsim 1.5$), the corresponding **Huang–Rhys factor**:
+
+$$
+S = \frac{d^2}{2}
+$$
+
+becomes significant. A **high $S$** means that the **transition intensity** is spread over many vibrational quanta, thereby **broadening** the overall spectrum.
+
+---
+
+## B. Inadequacy of the Harmonic Approximation
+
+### **Anharmonic Behavior:**
+Low-frequency modes typically correspond to **soft, large-amplitude motions** (e.g., torsions, librations) that are **not well described by the harmonic oscillator model**. The **harmonic approximation** assumes a **parabolic potential energy surface**, but for these modes, the **true potential** is more **anharmonic**. Consequently, using the harmonic oscillator model leads to **overestimated FC factors** in the **tail region** of the spectrum.
+
+### **Over-Broadening:**
+Since these **low-frequency modes** are contributing **unphysically large displacements**, their **inclusion causes the simulated vibrational progression to be overly spread out**. The **tails of the emission spectrum**, which are **sensitive** to transitions involving **high vibrational quantum numbers**, are thus **overpopulated**, leading to an **overshoot relative to experimental observations**.
+
+### **Critical Note:**
+One must be cautious because some modes naturally have large displacements even when they are physically relevant. However, if these modes also have **very low frequencies**, then the combination suggests they are **“floppy”** and likely beyond the harmonic regime.
+
+---
+
+## 2. Choice of Frequency Threshold (`TCUTFREQ`)
+
+Low-frequency modes are often problematic because:
+
+- **Low-frequency (soft) modes** (e.g., those with frequencies below **100 cm⁻¹**) have very shallow potential energy surfaces.
+- They tend to be **more sensitive to environmental effects** (e.g., solvent fluctuations) and usually display anharmonic behavior.
+- Their vibrational quanta are **very small** (on the order of **0.012 eV** at **100 cm⁻¹**), so even modest displacements result in large relative changes.
+
+Because of these reasons, many practitioners choose to **remove modes** below a certain cutoff frequency. Based on both the **literature** and **practical experience**, a `TCUTFREQ` value of **approximately 100 cm⁻¹** is a common choice. This value is justified because:
+
+- Modes below **100 cm⁻¹** often represent **large-amplitude, low-energy motions** (such as torsions or collective deformations) that are not well described by a harmonic oscillator model.
+- Removing these modes **prevents the simulation from artificially overpopulating the spectral tail** (i.e., extending intensity to energies far from the **0–0 transition**).
+
+### **Critical Note:**
+One must **balance** the removal of modes with the risk of excluding physically meaningful contributions. Setting `TCUTFREQ` too **high** may discard modes that, while soft, still play a role in the **vibronic structure**. Conversely, **too low** a threshold may leave in modes whose anharmonicity distorts the simulated spectrum.
+
+---
+
+## 3. Recommended Thresholds and Their Justification
+
+### **a) Displacement Threshold:**
+- **Threshold:** $d \gtrsim 1.5$ (in dimensionless normal coordinate units).
+- **Justification:**
+  - A dimensionless displacement of about **1.5** implies a **Huang–Rhys factor**:
+
+    $$
+    S \approx \frac{(1.5)^2}{2} \approx 1.125.
+    $$
+
+  - Values of $S \gtrsim 1$ already indicate significant geometry change between the ground and excited states.
+  - When $d$ **exceeds** 1.5, the **harmonic approximation becomes questionable**, and the vibrational progression (and hence spectral tails) may be **artificially broadened**.
+
+### **b) Frequency Threshold (`TCUTFREQ`):**
+- **Threshold:** `TCUTFREQ` set to **approximately 100 cm⁻¹**.
+- **Justification:**
+  - Modes with frequencies **below 100 cm⁻¹** are typically associated with **large-amplitude, anharmonic motions**.
+  - Their **low energy quanta** mean that even a **modest displacement** produces a **significant change** in the Franck–Condon envelope, often leading to an **overestimation of the spectral tail intensity**.
+  - **Empirical practice** in many computational studies supports the removal of modes in this region to improve the agreement between **theory and experiment**.
+
+---
+
+## 4. Final Remarks
+
+While these threshold values **($d \gtrsim 1.5$ and `TCUTFREQ` ≈ 100 cm⁻¹)** are a **good starting point**, they should be regarded as **guidelines rather than strict rules**. The optimal choice may depend on:
+
+- The **specific molecule** under study,
+- The **nature of the electronic transition**,
+- The **quality of the underlying potential energy surfaces**, and
+- How **sensitive** the final spectral features are to **low-frequency contributions**.
+
+**Critically**, one must always **validate these choices** by comparing **simulated spectra** with **experimental results**. If the **tail region** is **overshot** due to contributions from modes with **very large displacements** and **very low frequencies**, then **removing them** (via the `TCUTFREQ` flag) is justified. However, one should also **consider alternative treatments** (such as **anharmonic corrections**) if these modes are suspected to play a **genuine role in the dynamics**.
+
+### **In summary:**
+For many systems, it is advisable to **remove** modes with **frequencies below 100 cm⁻¹** (using `TCUTFREQ = 100 cm⁻¹`) **when their computed dimensionless displacements exceed approximately 1.5**. This practice **minimizes** the risk of **overestimating the spectral tails** due to **anharmonic low-frequency motions** while maintaining a balance between **physical realism** and **computational tractability**.
+
+
+

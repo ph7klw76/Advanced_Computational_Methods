@@ -304,6 +304,117 @@ Title Card Required
 Perform counterpoise calculations for the dimer and monomers to get the CP-corrected interaction energy.  
 use this form to get the [interaction energy](int-energy-2.xlsx)
 
+# Interaction Energy: Understanding ΔE, ΔH, and ΔG
+
+In the calculation of **interaction energy**, the terms **ΔE, ΔH, and ΔG** represent different **thermodynamic quantities** that describe the **stability and feasibility** of molecular interactions. Below is a detailed explanation of their differences.
+
+---
+
+## . **ΔE (Change in Electronic Energy)**
+
+### **Definition:**
+- **ΔE** represents the **pure electronic energy change** when two molecules or atoms interact, without considering thermal effects, entropy, or solvent effects.
+
+### **Key Features:**
+- Obtained from **quantum mechanical calculations** (e.g., **Density Functional Theory (DFT)** or **Hartree-Fock methods**).
+- Represents the **raw interaction energy** between molecules.
+- Typically calculated as:
+
+$$
+\Delta E = E_{\text{complex}} - (E_{\text{monomer 1}} + E_{\text{monomer 2}})
+$$
+
+where:
+- $E_{\text{complex}}$ = **Energy of the bound system**.
+- $E_{\text{monomer}}$ = **Energy of individual non-interacting molecules**.
+
+- **Does not include** zero-point energy (ZPE) corrections, enthalpic contributions, or entropy effects.
+
+### **Interpretation:**
+- **If** $ΔE < 0$ → **Favorable interaction (exothermic)**.
+- **If** $ΔE > 0$ → **Unfavorable interaction (endothermic)**.
+
+---
+
+## . **ΔH (Change in Enthalpy)**
+
+### **Definition:**
+- **ΔH** represents the **total heat content (enthalpy change)** of the system, which includes both **electronic energy (ΔE)** and contributions from **nuclear motion** (vibrational, rotational, and translational effects).
+
+### **Key Features:**
+- Includes **zero-point energy (ZPE) corrections** and **thermal energy corrections**.
+- Accounts for **bond formation and breaking**.
+- Often computed as:
+
+$$
+\Delta H = \Delta E + \Delta E_{\text{ZPE}} + \Delta H_{\text{thermal}}
+$$
+
+where:
+- $ΔE_{\text{ZPE}}$ = **Zero-point vibrational energy correction**.
+- $ΔH_{\text{thermal}}$ = **Thermal enthalpic correction** at a given temperature (often 298 K).
+
+### **Interpretation:**
+- **If** $ΔH < 0$ → **Interaction releases heat (exothermic)**.
+- **If** $ΔH > 0$ → **Interaction requires heat input (endothermic)**.
+
+---
+
+## . **ΔG (Change in Gibbs Free Energy)**
+
+### **Definition:**
+- **ΔG** represents the **total free energy change**, which determines whether a process is **spontaneous** under constant pressure and temperature.
+
+### **Key Features:**
+- Includes both **enthalpic (ΔH)** and **entropic (ΔS)** effects.
+- Computed as:
+
+$$
+\Delta G = \Delta H - T \Delta S
+$$
+
+where:
+- $T$ = **Temperature (in Kelvin)**.
+- $ΔS$ = **Entropy change (disorder introduced by the interaction)**.
+- Accounts for **molecular freedom and solvation effects**.
+- Typically used in **binding affinity calculations** (e.g., **protein-ligand interactions, host-guest complexes, supramolecular chemistry**).
+
+### **Interpretation:**
+- **If** $ΔG < 0$ → **Spontaneous interaction (binding is thermodynamically favorable)**.
+- **If** $ΔG > 0$ → **Non-spontaneous interaction (binding is unfavorable unless external energy is supplied)**.
+
+---
+
+## . **Summary of Differences**
+
+| **Parameter**         | **Definition**                            | **Includes**                                      | **Significance** |
+|----------------------|----------------------------------------|------------------------------------------------|----------------|
+| **ΔE (Electronic Energy)** | Raw interaction energy from quantum calculations | Pure electronic interactions (no ZPE, enthalpy, or entropy) | Measures fundamental interaction strength |
+| **ΔH (Enthalpy Change)** | Heat content of the interaction | $ΔE +$ ZPE + Thermal Corrections | Accounts for nuclear motion and heat exchange |
+| **ΔG (Gibbs Free Energy)** | Usable energy for spontaneity | $ΔH - TΔS$ (Entropy effect included) | Determines if interaction is spontaneous |
+
+---
+
+## . **Example: Application in Molecular Binding**
+
+### **Protein-Ligand Binding (Enzyme Inhibitors, Drug Design)**
+- **ΔE**: Measures the **raw electrostatic and van der Waals** forces between the **protein and ligand**.
+- **ΔH**: Includes **solvent effects** and **thermal corrections**, showing if the **binding is energetically favorable**.
+- **ΔG**: Determines whether **binding occurs spontaneously** at physiological temperatures.
+
+### **Molecular Complex Formation (Supramolecular Chemistry)**
+- **If** $ΔE < 0$ → **The molecules are attracted** (favorable interaction).
+- **If** $ΔH < 0$ → **The complex formation releases heat (exothermic)**.
+- **If** $ΔG < 0$ → **The complex is thermodynamically stable and will form spontaneously**.
+
+---
+
+##  **Final Takeaway**
+- **ΔE** is the **raw energy interaction**.
+- **ΔH** considers **vibrational and thermal corrections**.
+- **ΔG** is the **most relevant for real-world applications**, as it predicts **whether the interaction will actually happen under given conditions**.
+
+
 ### NCI Analysis  
 Generate wavefunction or cube files (electron density, gradient, etc.) with a keyword like `Density=Current` in Gaussian.  
 Post-process using Multiwfn or NCIPlot to obtain the RDG isosurfaces.  

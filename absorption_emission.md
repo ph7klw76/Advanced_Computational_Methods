@@ -907,5 +907,31 @@ While these threshold values **($d \gtrsim 1.5$ and `TCUTFREQ` ≈ 100 cm⁻¹)*
 ### **In summary:**
 For many systems, it is advisable to **remove** modes with **frequencies below 100 cm⁻¹** (using `TCUTFREQ = 100 cm⁻¹`) **when their computed dimensionless displacements exceed approximately 1.5**. This practice **minimizes** the risk of **overestimating the spectral tails** due to **anharmonic low-frequency motions** while maintaining a balance between **physical realism** and **computational tractability**.
 
+## The Orca command to calculate the emission spectrum
+```text
+! DEF2-SVP ESD(FLUOR)
+%TDDFT
+	NROOTS 1
+	IROOT 1
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+	ExtParamXC "_omega" 0.07295
+END
+%ESD
+  GSHESSIAN  "S0.hess"
+  ESHESSIAN  "S1.hess"
+  LINES      VOIGT
+  LINEW      25
+  INLINEW    50
+  PrintLevel 4
+  UNIT       NM
+  TCUTFREQ   100
+  IFREQFLAG  REMOVE
+END
+%maxcore 4000
+%pal nprocs 16 end
+* XYZFILE 0 1 EHBIPO0.07294535118797844.xyz
 
 

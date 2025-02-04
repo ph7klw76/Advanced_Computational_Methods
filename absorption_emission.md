@@ -877,9 +877,9 @@ One must **balance** the removal of modes with the risk of excluding physically 
 - **Justification:**
   - A dimensionless displacement of about **1.5** implies a **Huang–Rhys factor**:
 
-    $$
-    S \approx \frac{(1.5)^2}{2} \approx 1.125.
-    $$
+  $$
+  S \approx \frac{(1.5)^2}{2} \approx 1.125.
+  $$
 
   - Values of $S \gtrsim 1$ already indicate significant geometry change between the ground and excited states.
   - When $d$ **exceeds** 1.5, the **harmonic approximation becomes questionable**, and the vibrational progression (and hence spectral tails) may be **artificially broadened**.

@@ -305,44 +305,99 @@ Application: Finite element simulations, quantum lattice models.
 1. [Reorganization Energy](Reorganization_Energy.md): Key parameter in charge hopping and mobility in organic semiconductors.
    
 2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
+   
+3.  Dynamic and static disorder
+   
+5.  Miller-Abrahams Hopping Model
+   
+7.  Variable Range Hopping (VRH) in Disordered Systems
+   
+9.  Polaron Hopping Mechanisms
+    
+11.  Crossover from Hopping to Band Transport
+    
+13.  Multiple Trapping and Release (MTR) Model
+    
+15.  Percolation Theory in Organic Films
 
-### C. Molecular Interactions,Aggregation and Torsional Potential
+### C. Molecular Interactions, Aggregation and Torsional Potential
 
 1. [Non-Covalent Interactions](Non-Covalent_Interactions.md) π-π stacking, van der Waals forces, and hydrogen bonding in organic semiconductor.
-   
-2. [Charge Transfer Complexes](Charge_Transfer_Complexes.md): Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
-   
-3. [Torsional Potential](Torsion.md)
 
-4. [Dispersion Correction](Dispersion.md)
+2. H- and J-Aggregates
+   
+3. [Charge Transfer Complexes](Charge_Transfer_Complexes.md): Understanding donor-acceptor interactions in organic photovoltaic (OPV) and light-emitting devices.
+   
+4. [Torsional Potential](Torsion.md): Torsion Angle Definition and Conformational Energy,Dihedral Angles in Small Molecules and Polymers
+Energy Barriers for Rotation and Conformational Isomerism
+
+5. [Dispersion Correction](Dispersion.md)
+   
+6. Aggregation-Induced Emission (AIE) Mechanisms
 
 ### D.Spectroscopic Properties
 
-1. [Vibrational Analysis](vibrational_analysis.md): Using quantum methods to predict and analyze IR and Raman spectra.
+1. Selection Rules for Electronic Transitions
    
-2. [UV-Vis and Fluorescence Spectroscopy](absorption_emission.md): Modeling absorption and emission processes.
+2. [Vibrational Analysis](vibrational_analysis.md): Using quantum methods to predict and analyze IR and Raman spectra.
+   
+3. [UV-Vis and Fluorescence Spectroscopy](absorption_emission.md): Modeling absorption and emission processes.
    
 4. [Franck-Condon (FC) intensities (IntensityFC) and Herzberg-Teller (HT) intensities ](FC_HT.md)
    
-5. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
+6. Spectral Line Shapes and Broadening Mechanisms
    
-7. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+7. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
+
+8. Anti-Stokes Fluorescence
    
-8. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
+9. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+
+10. Non-Radiative Relaxation and Quenching
     
-9. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
+12. Spectral Line Shapes and Broadening Mechanisms
+   
+13. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
     
-10. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
+14. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
+    
+15. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
 
 ### E. Photophysics and Photochemistry
 
-1. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
-   
-2. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
+1.Frenkel vs. Wannier Excitons
 
-3. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+2. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
    
-5. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
+3. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
+   
+4. Triplet-Triplet Annihilation (TTA)
+   
+6. Singlet Exciton Fission
+
+7. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+   
+8. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
+
+9. Charge Separation in Donor-Acceptor Systems
+    
+10. Charge Recombination Mechanisms
+
+11. Third-Harmonic Generation (THG)
+    
+12. Exciton-Polariton Condensates
+
+13. Metal-Enhanced Fluorescence
+
+14. Strong Light-Matter Coupling
+    
+16. Triplet-Triplet Annihilation (TTA) Upconversion
+
+17. Spin-Polarized Luminescence
+    
+19. Thermally Activated Delayed Fluorescence
+
+20. Excited-State Proton Transfer
 
 ### F: OLED Device Dynamics
 

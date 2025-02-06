@@ -36,6 +36,7 @@ Where:
 ### 2.1 Theoretical Framework
 
 The Franck-Condon principle assumes that the nuclei do not move during the electronic transition because the excitation happens on a much shorter timescale than nuclear motion (Born-Oppenheimer approximation). The intensity is determined solely by the overlap of vibrational wavefunctions in the initial and final states.
+![image](https://github.com/user-attachments/assets/3077d975-2ac2-48b1-a8ea-925cfca6d63e)
 
 #### Mathematical Expression:
 

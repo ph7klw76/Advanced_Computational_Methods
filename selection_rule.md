@@ -624,3 +624,22 @@ The concept of **"selection rules from dipole transition matrix elements"** serv
 
 While the **labels differ**, the **fundamental physics remains the same**.
 
+# ** Practical Examples of Selection Rules**
+
+## ** Atomic Transitions**
+
+| Transition  | Δℓ  | Δmₗ  | Allowed? |
+|------------|------|------|----------|
+| 2s → 2p   | +1   | 0, ±1 | ✅ Allowed |
+| 2p → 3d   | +1   | 0, ±1 | ✅ Allowed |
+| 3d → 3s   | -2   | Any   | ❌ Forbidden |
+
+## **Molecular Electronic Transitions**
+
+| Transition  | Spin-Allowed? | Laporte Rule? | Overall Allowed? |
+|------------|--------------|--------------|----------------|
+| S₀ → S₁   | ✅ Yes       | ✅ Yes       | ✅ Allowed      |
+| S₁ → T₁   | ❌ No        | ✅ Yes       | ⚠ Weakly Allowed (via SOC) |
+| T₁ → S₀   | ❌ No        | ✅ Yes       | ⚠ Weakly Allowed (phosphorescence) |
+
+

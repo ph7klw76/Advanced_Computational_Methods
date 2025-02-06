@@ -337,7 +337,7 @@ Energy Barriers for Rotation and Conformational Isomerism
 
 ### D.Spectroscopic Properties
 
-1. Selection Rules for Electronic Transitions
+1. [Selection Rules for Electronic Transitions](selection_rule.md)
    
 2. [Vibrational Analysis](vibrational_analysis.md): Using quantum methods to predict and analyze IR and Raman spectra.
    
@@ -345,23 +345,21 @@ Energy Barriers for Rotation and Conformational Isomerism
    
 4. [Franck-Condon (FC) intensities (IntensityFC) and Herzberg-Teller (HT) intensities ](FC_HT.md)
    
-6. Spectral Line Shapes and Broadening Mechanisms
+5. Spectral Line Shapes and Broadening Mechanisms
    
-7. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
+6. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
 
-8. Anti-Stokes Fluorescence
+7. Anti-Stokes Fluorescence
    
-9. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+8. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
 
-10. Non-Radiative Relaxation and Quenching
-    
-12. Spectral Line Shapes and Broadening Mechanisms
+9. Non-Radiative Relaxation and Quenching
    
-13. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
+10. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
     
-14. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
+11. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
     
-15. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
+12. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
 
 ### E. Photophysics and Photochemistry
 

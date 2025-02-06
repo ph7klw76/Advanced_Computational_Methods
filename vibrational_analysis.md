@@ -11,6 +11,9 @@ In molecular systems composed of $N$ atoms, each atom has three spatial degrees 
 
 ### 1.1 Potential Energy Surface (PES)
 
+![image](https://github.com/user-attachments/assets/1c1d74f4-e058-41a5-b7b0-6248f161e9bc)
+
+
 The **Potential Energy Surface (PES)**, $E(R)$, describes the electronic energy of the molecule as a function of its nuclear coordinates $R = \{x_1, y_1, z_1, \dots, x_N, y_N, z_N\}$. Physically, it represents how the electronic structure (and thus total energy) changes as atoms move.
 
 - **Equilibrium Geometry** $R^{(0)}$: The point on the PES where the gradient of $E(R)$ vanishes, i.e.,
@@ -52,6 +55,9 @@ In the harmonic (quadratic) approximation, the coupled vibrational problem simpl
 ## 2. Hessian Matrix and Normal Modes
 
 ### 2.1 Definition of the Hessian Matrix (Force Constant Matrix)
+
+![image](https://github.com/user-attachments/assets/e2fe9c70-58fe-4db3-a59a-2f93be233b38)
+
 
 The key quantity for analyzing small-amplitude vibrations is the **Hessian matrix** $F$, whose elements are given by:
 
@@ -211,6 +217,7 @@ Therefore:
 ## 4.2 Raman Intensities
 
 ### 4.2.1 Physical Origin of Raman Scattering
+![image](https://github.com/user-attachments/assets/4c220e20-d720-4f29-879a-f6d9dc72c533)
 
 Raman scattering arises when an incoming photon induces an oscillating dipole in the molecule via its polarizability tensor $\alpha$. The scattered photon emerges at frequencies $\omega_0 \pm \omega_k$ (Stokes and anti-Stokes lines), where $\omega_0$ is the incident photon frequency and $\omega_k$ corresponds to the vibrational frequency of mode $k$. The Raman activity of a mode depends on how $\alpha$ (the molecular polarizability) changes along that vibration.
 

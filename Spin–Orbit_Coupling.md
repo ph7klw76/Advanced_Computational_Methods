@@ -1,8 +1,14 @@
 ## 1. Foundations of Spin–Orbit Coupling  
 ### 1.1. Spin and Orbital Angular Momentum  
+
+![image](https://github.com/user-attachments/assets/92c31d9f-bb29-4966-8a18-6f69d599c1a7)
+
 In nonrelativistic quantum mechanics, the Hamiltonian of an electron in an atom or molecule typically includes kinetic energy and potential energy due to the Coulomb interaction with the nucleus (or nuclei in a molecule), but neglects any mixing between the electron’s spin ($S$) and its orbital motion ($L$). Consequently, the total wavefunction $\Psi$ separates into a spatial part $\psi(r)$ and a spin part $\chi(s)$, and spin multiplicities often appear as “selection rules” that forbid transitions between states of different spin in the electric dipole approximation.
 
 In relativistic treatments, or simply more accurate quantum chemical treatments, the motion of electrons in the electric field of a heavy nucleus or heavy atom substituent leads to an effective magnetic field in the electron’s rest frame. The electron’s spin interacts with this magnetic field, creating a coupling between $L$ and $S$. This is the spin–orbit interaction, or spin–orbit coupling (SOC).
+
+![image](https://github.com/user-attachments/assets/ecc67ea3-2340-41c0-b911-e7ad0ed45a62)
+
 
 ## 2. Spin–Orbit Hamiltonian and Its Derivation  
 ### 2.1. One‐Electron Approximation  

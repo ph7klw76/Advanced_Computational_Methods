@@ -234,43 +234,6 @@ The resulting time dependence of the singlet (delayed fluorescence) can be fit t
 - **Delayed Fluorescence:** The time profile of delayed fluorescence can be a diagnostic tool for triplet lifetimes, TTA rates, and other photophysical parameters.
 - **Organic Electronics:** TTA can be either a loss mechanism (if it depletes triplets that would otherwise be harvested in phosphorescent OLEDs) or a beneficial mechanism (if aiming for TTA-driven upconversion).
 
-# 9. Summary of Key Equations
-
-### **TTA Bimolecular Reaction**
-
-$$
-T_1 + T_1 \xrightarrow{k_{\text{TTA}}} \text{(singlet, triplet, or quintet)}
-$$
-
-Often with an effective spin-statistical yield $\phi_{\text{TTA}}$ for forming $S_1$.
-
-### **Triplet Rate Equation**
-
-$$
-\frac{d[T]}{dt} = G_T - k_T [T] - 2 k_{\text{TTA}} [T]^2.
-$$
-
-### **Singlet Rate Equation**
-
-$$
-\frac{d[S]}{dt} = G_S - k_S [S] + \phi_{\text{TTA}} (k_{\text{TTA}} [T]^2).
-$$
-
-### **Steady-State Concentrations (for continuous excitation)**
-
-$$
-[T]_{\text{ss}} \quad \text{by solving} \quad G_T = k_T [T]_{\text{ss}} + 2 k_{\text{TTA}} [T]_{\text{ss}}^2.
-$$
-
-$$
-[S]_{\text{ss}} = \frac{\phi_{\text{TTA}} k_{\text{TTA}} [T]_{\text{ss}}^2 + G_S}{k_S}.
-$$
-
-### **Delayed Fluorescence Intensity**
-
-$$
-I_{\text{delayed}} \propto k_S^{\text{rad}} [S] \approx k_S^{\text{rad}} \frac{\phi_{\text{TTA}} k_{\text{TTA}} [T]^2}{k_S}.
-$$
 
 # Distinguishing Delayed Fluorescence (DF) from Triplet–Triplet Annihilation (TTA) vs. Thermally Activated Delayed Fluorescence (TADF)
 

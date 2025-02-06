@@ -10,6 +10,9 @@ This blog explores the theoretical framework, relevant equations, and computatio
 
 ### 1.1 Intersystem Crossing (ISC)
 
+![image](https://github.com/user-attachments/assets/e51a5bed-a014-4e17-ad5e-c8a7143995db)
+
+
 ISC refers to the radiationless transition between electronic states of different spin multiplicity, e.g., from a singlet excited state ($S_1$) to a triplet excited state ($T_1$). It is mediated by spin-orbit coupling (SOC), which mixes the wavefunctions of singlet and triplet states, enabling such transitions despite their otherwise spin-forbidden nature.
 
 **Key Applications**:

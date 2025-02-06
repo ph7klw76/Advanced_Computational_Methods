@@ -369,7 +369,7 @@ Energy Barriers for Rotation and Conformational Isomerism
    
 3. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
    
-4. Triplet-Triplet Annihilation (TTA)
+4. [Triplet-Triplet Annihilation (TTA)](TTA.md) 
    
 6. Singlet Exciton Fission
 
@@ -389,13 +389,11 @@ Energy Barriers for Rotation and Conformational Isomerism
 
 14. Strong Light-Matter Coupling
     
-16. Triplet-Triplet Annihilation (TTA) Upconversion
-
-17. Spin-Polarized Luminescence
+15. Spin-Polarized Luminescence
     
-19. Thermally Activated Delayed Fluorescence
+16. Thermally Activated Delayed Fluorescence
 
-20. Excited-State Proton Transfer
+17. Excited-State Proton Transfer
 
 ### F: OLED Device Dynamics
 

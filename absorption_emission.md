@@ -935,3 +935,30 @@ END
 * XYZFILE 0 1 EHBIPO0.07294535118797844.xyz
 
 
+if doing any Numerical fgrequency calculation in particularly the excited state , if there is an error, remove those files associetd with it by running
+
+```text
+# List of filenames to match
+patterns=(
+    "S1_D00384"
+ bla..bla..bla
+)
+
+# Loop through patterns and delete matching files
+for pattern in "${patterns[@]}"; do
+    find . -type f -name "*$pattern*" -exec rm -v {} +
+done
+
+echo "Deletion process completed."
+```
+
+and restart the calculation by adding this option
+
+```text
+%FREQ
+	restart true
+END
+```
+
+
+

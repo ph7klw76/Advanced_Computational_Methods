@@ -961,4 +961,36 @@ END
 ```
 
 
+## plot the curve
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the data
+file_path = "EHBIPO.txt"
+data = pd.read_csv(file_path, sep="\t", header=None, names=["Frequency (cm$^{-1}$)", "Huang-Rhys factor", "Reorganization Energy (cm$^{-1}$)"])
+
+# Plot the data
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+# Bar plot for Huang-Rhys factor (left Y-axis)
+ax1.bar(data["Frequency (cm$^{-1}$)"], data["Huang-Rhys factor"], width=10, alpha=0.6, label="Huang-Rhys factor", color='b')
+ax1.set_xlabel("Frequency (cm$^{-1}$)", fontsize=18, fontweight='bold')
+ax1.set_ylabel("Huang-Rhys factor", fontsize=18, fontweight='bold', color='b')
+ax1.tick_params(axis='y', labelcolor='b', labelsize=21)
+ax1.tick_params(axis='x', labelsize=21)
+ax1.set_xlim([0, 2000])
+# Create second Y-axis for Reorganization Energy
+ax2 = ax1.twinx()
+ax2.bar(data["Frequency (cm$^{-1}$)"], data["Reorganization Energy (cm$^{-1}$)"], width=10, alpha=0.6, label="Reorganization Energy", color='r')
+ax2.set_ylabel("Reorganization Energy (cm$^{-1}$)", fontsize=18, fontweight='bold', color='r')
+ax2.tick_params(axis='y', labelcolor='r', labelsize=21)
+
+# Title and show plot
+plt.title("")
+fig.tight_layout()
+plt.show()
+```
+
+
 

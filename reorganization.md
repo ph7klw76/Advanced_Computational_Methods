@@ -19,7 +19,7 @@ end
 ```
 
 
-claculate singlet energy based on opt triplet geometry
+claculate singlet energy based on opt triplet geometry as t.ts file
 ```python
 ! DEF2-SVP OPT CPCM(toluene)  # Opt 2nd triplet excited Geo
 %TDDFT  NROOTS  2

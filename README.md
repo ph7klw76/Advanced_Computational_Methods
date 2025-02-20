@@ -335,6 +335,8 @@ Energy Barriers for Rotation and Conformational Isomerism
    
 6. Aggregation-Induced Emission (AIE) Mechanisms
 
+7. [Estimating the Stabilization Energy of a Charge‐Transfer (CT) State in a Solvent](stabilization_energy.md)
+
 ### D.Spectroscopic Properties
 
 1. [Selection Rules for Electronic Transitions](selection_rule.md)

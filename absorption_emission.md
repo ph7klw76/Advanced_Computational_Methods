@@ -955,9 +955,26 @@ echo "Deletion process completed."
 and restart the calculation by adding this option
 
 ```text
+! DEF2-SVP OPT CPCM(Toluene) TightOpt TightSCF FREQ
 %FREQ
 	restart true
 END
+%TDDFT
+	NROOTS 2
+	IROOT 1
+END
+%scf
+   MaxIter 500
+   Convergence TIGHT
+end
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+	ExtParamXC "_omega" 0.07295
+END
+%maxcore 2000
+%pal nprocs 24 end
+* XYZFILE 0 1 minS1.xyz
 ```
 
 

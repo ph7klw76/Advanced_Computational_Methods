@@ -766,7 +766,183 @@ plt.show()
 ### ORCA ESD Module
 [replot](https://github.com/HenriqueCSJ/ORCASpectrumPlot)
 
+### Use Vertical Absorption to Match Experimental Absorprtion
 
+```python
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from scipy.signal import gaussian
+import os
+
+# Global variables to hold the data
+theoretical_df = None  # DataFrame for absorption.txt data
+experimental_df = None  # DataFrame for experimental.txt data
+
+def load_theoretical_data():
+    global theoretical_df
+    file_path = filedialog.askopenfilename(title="Select Theoretical Data (absorption.txt)")
+    if file_path and os.path.exists(file_path):
+        try:
+            # Read the theoretical data (assuming two columns: Energy (eV) and OscillatorStrength)
+            df = pd.read_csv(file_path, delim_whitespace=True, header=None, names=["Energy", "OscillatorStrength"])
+            # Convert to numeric and drop any NaNs
+            df["Energy"] = pd.to_numeric(df["Energy"], errors="coerce")
+            df["OscillatorStrength"] = pd.to_numeric(df["OscillatorStrength"], errors="coerce")
+            df.dropna(inplace=True)
+            # Convert energy (eV) to wavelength (nm) using λ (nm)=1239.84/E (eV)
+            df["Wavelength"] = 1239.84 / df["Energy"]
+            # Sort by wavelength
+            df.sort_values("Wavelength", inplace=True)
+            theoretical_df = df.reset_index(drop=True)
+            messagebox.showinfo("Theoretical Data", "Theoretical data loaded successfully.")
+            update_plot()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load theoretical data:\n{e}")
+    else:
+        messagebox.showinfo("Load Theoretical Data", "No file selected.")
+
+def load_experimental_data():
+    global experimental_df
+    file_path = filedialog.askopenfilename(title="Select Experimental Data (experimental.txt)")
+    if file_path and os.path.exists(file_path):
+        try:
+            # Read experimental data (assuming two columns: Wavelength (nm) and Absorption)
+            df = pd.read_csv(file_path, delim_whitespace=True, header=None, names=["Wavelength", "Absorption"])
+            df["Wavelength"] = pd.to_numeric(df["Wavelength"], errors="coerce")
+            df["Absorption"] = pd.to_numeric(df["Absorption"], errors="coerce")
+            df.dropna(inplace=True)
+            # Sort by wavelength (ascending)
+            df.sort_values("Wavelength", inplace=True)
+            experimental_df = df.reset_index(drop=True)
+            messagebox.showinfo("Experimental Data", "Experimental data loaded successfully.")
+            update_plot()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load experimental data:\n{e}")
+    else:
+        messagebox.showinfo("Load Experimental Data", "No file selected.")
+
+def generate_theoretical_spectrum(fwhm, grid=None):
+    """
+    Build a continuous theoretical absorption spectrum by broadening each discrete transition 
+    (each given by a wavelength and oscillator strength) with a Gaussian of the given FWHM.
+    """
+    if theoretical_df is None or theoretical_df.empty:
+        return None, None
+
+    # Use a grid that spans the range of wavelengths in the theoretical data
+    wl_min = theoretical_df["Wavelength"].min() - 20
+    wl_max = theoretical_df["Wavelength"].max() + 20
+    if grid is None:
+        grid = np.linspace(wl_min, wl_max, 2000)
+
+    # Convert FWHM to standard deviation (sigma)
+    sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+    spectrum = np.zeros_like(grid)
+    # For each transition, add a Gaussian centered at its wavelength
+    for _, row in theoretical_df.iterrows():
+        wl = row["Wavelength"]
+        strength = row["OscillatorStrength"]
+        spectrum += strength * np.exp(-0.5 * ((grid - wl) / sigma)**2)
+    return grid, spectrum
+
+def update_plot(event=None):
+    # Get parameters from UI
+    try:
+        current_fwhm = float(fwhm_scale.get())
+    except:
+        current_fwhm = 1.0
+    try:
+        shift_val = float(shift_scale.get())
+    except:
+        shift_val = 0.0
+
+    # Clear the plot
+    ax.clear()
+
+    # Plot theoretical spectrum if available
+    grid, theo_spec = generate_theoretical_spectrum(current_fwhm)
+    if grid is not None and theo_spec is not None:
+        ax.plot(grid, theo_spec, label="Theoretical (broadened)", color="orange", lw=2)
+
+    # Plot experimental data if available (apply x-axis shift)
+    if experimental_df is not None and not experimental_df.empty:
+        shifted_exp = experimental_df.copy()
+        shifted_exp["Wavelength"] = shifted_exp["Wavelength"] + shift_val
+        ax.plot(shifted_exp["Wavelength"], shifted_exp["Absorption"],
+                label="Experimental (shifted)", color="blue", marker="o", ls="")
+
+    ax.set_xlabel("Wavelength (nm)")
+    ax.set_ylabel("Absorption / Oscillator Strength")
+    ax.set_title("Comparison of Theoretical and Experimental Spectra")
+    ax.legend()
+    ax.grid(True)
+    canvas.draw()
+
+def save_spectrum():
+    # Save the current theoretical spectrum on the generated grid
+    grid, theo_spec = generate_theoretical_spectrum(float(fwhm_scale.get()))
+    if grid is None or theo_spec is None:
+        messagebox.showerror("Error", "No theoretical data available to save.")
+        return
+    save_df = pd.DataFrame({"Wavelength": grid, "TheoreticalSpectrum": theo_spec})
+    file_path = filedialog.asksaveasfilename(defaultextension=".csv",
+                                             filetypes=[("CSV files", "*.csv")],
+                                             title="Save Theoretical Spectrum")
+    if file_path:
+        try:
+            save_df.to_csv(file_path, index=False)
+            messagebox.showinfo("Save Spectrum", "Spectrum saved successfully.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save spectrum:\n{e}")
+
+# Create main application window
+root = tk.Tk()
+root.title("Spectrum Matcher")
+
+# Create a frame for the plot
+plot_frame = tk.Frame(root)
+plot_frame.pack(fill=tk.BOTH, expand=True)
+
+# Create a Matplotlib figure and canvas
+fig, ax = plt.subplots(figsize=(10, 5))
+canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+# Create a toolbar frame for controls
+control_frame = tk.Frame(root)
+control_frame.pack(fill=tk.X)
+
+# Buttons for loading data
+load_theo_button = tk.Button(control_frame, text="Load Theoretical Data", command=load_theoretical_data)
+load_theo_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+load_exp_button = tk.Button(control_frame, text="Load Experimental Data", command=load_experimental_data)
+load_exp_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+save_button = tk.Button(control_frame, text="Save Theoretical Spectrum", command=save_spectrum)
+save_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+# Scale for Gaussian FWHM (in nm)
+fwhm_scale = tk.Scale(control_frame, from_=0.1, to=150, resolution=0.1, orient=tk.HORIZONTAL, label="Gaussian FWHM (nm)",
+                      command=update_plot)
+fwhm_scale.set(5.0)
+fwhm_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+
+# Scale for experimental x-axis shift (in nm)
+shift_scale = tk.Scale(control_frame, from_=-100, to=100, resolution=1, orient=tk.HORIZONTAL, label="Experimental Shift (nm)",
+                       command=update_plot)
+shift_scale.set(0)
+shift_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+
+# Initial call to draw empty plot
+update_plot()
+
+root.mainloop()
+```
 ## OVERSHOOT in Tail side of emission Spectra
 
 In many vibronic simulations (for example, when calculating Franck–Condon factors for emission spectra) one finds that very low‐frequency modes often come with very large displacements. These modes are typically associated with large‐amplitude motions (such as torsions or soft deformations) that are not well described by a harmonic approximation. In ORCA, one practical remedy is to set the `TCUTFREQ` flag so that modes with frequencies below a certain value (in cm⁻¹) are removed from the calculation. In addition, one can examine the magnitude of the (dimensionless) displacements associated with these modes. Here’s how one can rationalize a choice for both thresholds.

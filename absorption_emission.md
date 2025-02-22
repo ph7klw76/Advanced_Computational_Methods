@@ -962,6 +962,7 @@ END
 %TDDFT
 	NROOTS 2
 	IROOT 1
+        LRCPCM True
 END
 %scf
    MaxIter 500

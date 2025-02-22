@@ -769,13 +769,12 @@ plt.show()
 ### Use Vertical Absorption to Match Experimental Absorprtion
 
 ```python
-import tkinter as tk
+import tkinter as tk 
 from tkinter import filedialog, messagebox
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from scipy.signal import gaussian
 import os
 
 # Global variables to hold the data
@@ -856,7 +855,7 @@ def update_plot(event=None):
     except:
         current_fwhm = 1.0
     try:
-        shift_val = float(shift_scale.get())
+        shift_val = float(shift_scale.get())  # shift in eV
     except:
         shift_val = 0.0
 
@@ -868,11 +867,16 @@ def update_plot(event=None):
     if grid is not None and theo_spec is not None:
         ax.plot(grid, theo_spec, label="Theoretical (broadened)", color="orange", lw=2)
 
-    # Plot experimental data if available (apply x-axis shift)
+    # Plot experimental data if available (apply shift in eV)
     if experimental_df is not None and not experimental_df.empty:
         shifted_exp = experimental_df.copy()
-        shifted_exp["Wavelength"] = shifted_exp["Wavelength"] + shift_val
-        ax.plot(shifted_exp["Wavelength"], shifted_exp["Absorption"],
+        # Convert experimental wavelength (nm) to energy (eV)
+        shifted_exp["Energy"] = 1239.84 / shifted_exp["Wavelength"]
+        # Apply the energy shift
+        shifted_exp["ShiftedEnergy"] = shifted_exp["Energy"] + shift_val
+        # Convert the shifted energy back to wavelength (nm)
+        shifted_exp["ShiftedWavelength"] = 1239.84 / shifted_exp["ShiftedEnergy"]
+        ax.plot(shifted_exp["ShiftedWavelength"], shifted_exp["Absorption"],
                 label="Experimental (shifted)", color="blue", marker="o", ls="")
 
     ax.set_xlabel("Wavelength (nm)")
@@ -932,8 +936,8 @@ fwhm_scale = tk.Scale(control_frame, from_=0.1, to=150, resolution=0.1, orient=t
 fwhm_scale.set(5.0)
 fwhm_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
 
-# Scale for experimental x-axis shift (in nm)
-shift_scale = tk.Scale(control_frame, from_=-100, to=100, resolution=1, orient=tk.HORIZONTAL, label="Experimental Shift (nm)",
+# Scale for experimental x-axis shift (now in eV)
+shift_scale = tk.Scale(control_frame, from_=-1, to=1, resolution=0.01, orient=tk.HORIZONTAL, label="Experimental Shift (eV)",
                        command=update_plot)
 shift_scale.set(0)
 shift_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)

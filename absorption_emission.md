@@ -865,7 +865,7 @@ def update_plot(event=None):
     # Plot theoretical spectrum if available
     grid, theo_spec = generate_theoretical_spectrum(current_fwhm)
     if grid is not None and theo_spec is not None:
-        ax.plot(grid, theo_spec, label="Theoretical (broadened)", color="orange", lw=2)
+        ax.plot(grid, theo_spec, label="Theoretical", color="orange", lw=2)
 
     # Plot experimental data if available (apply shift in eV)
     if experimental_df is not None and not experimental_df.empty:
@@ -877,14 +877,20 @@ def update_plot(event=None):
         # Convert the shifted energy back to wavelength (nm)
         shifted_exp["ShiftedWavelength"] = 1239.84 / shifted_exp["ShiftedEnergy"]
         ax.plot(shifted_exp["ShiftedWavelength"], shifted_exp["Absorption"],
-                label="Experimental (shifted)", color="blue", marker="o", ls="")
+                label="Experimental", color="blue", marker="None", ls="-")
 
-    ax.set_xlabel("Wavelength (nm)")
-    ax.set_ylabel("Absorption / Oscillator Strength")
-    ax.set_title("Comparison of Theoretical and Experimental Spectra")
-    ax.legend()
+    # Set axis labels and titles with increased font size
+    ax.set_xlabel("Wavelength (nm)", fontsize=14)
+    ax.set_ylabel("Absorption / Oscillator Strength", fontsize=14)
+    ax.set_title("Comparison of Theoretical and Experimental Spectra", fontsize=16)
+
+    # Increase tick label size
+    ax.tick_params(axis='both', which='major', labelsize=12)
+
+    ax.legend(fontsize=12)
     ax.grid(True)
     canvas.draw()
+
 
 def save_spectrum():
     # Save the current theoretical spectrum on the generated grid
@@ -933,7 +939,7 @@ save_button.pack(side=tk.LEFT, padx=5, pady=5)
 # Scale for Gaussian FWHM (in nm)
 fwhm_scale = tk.Scale(control_frame, from_=0.1, to=150, resolution=0.1, orient=tk.HORIZONTAL, label="Gaussian FWHM (nm)",
                       command=update_plot)
-fwhm_scale.set(5.0)
+fwhm_scale.set(0.1)
 fwhm_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
 
 # Scale for experimental x-axis shift (now in eV)

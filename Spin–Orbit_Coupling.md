@@ -288,65 +288,42 @@ print(f"Energies extracted and saved to: {output_file_path}")
 
 extract and draw energy levels
 ```python
-def extract_and_process_data(file_path, output_file_singlet_triplet):
-    with open(file_path, 'r') as f:
-        lines = f.readlines()
+import re
 
-    extracted_data = []
-    singlet_data = []
-    triplet_data = []
+def extract_energies(filename):
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+    
+    singlet_energies = []
+    triplet_energies = []
+    
+    is_singlet = False
+    is_triplet = False
+    
+    for line in lines:
+        line = line.strip()
+        if 'TD-DFT/TDA Singlet State Energies' in line:
+            is_singlet = True
+            is_triplet = False
+        elif 'TD-DFT/TDA Triplet State Energies' in line:
+            is_singlet = False
+            is_triplet = True
+        elif 'STATE:' in line:
+            match = re.search(r'STATE:\s*([\d\.]+)\s*eV', line)
+            if match:
+                energy = float(match.group(1))
+                if is_singlet:
+                    singlet_energies.append(energy)
+                elif is_triplet:
+                    triplet_energies.append(energy)
+    
+    return singlet_energies, triplet_energies
 
-    # Find the line containing the target phrase and process subsequent lines
-    for i, line in enumerate(lines):
-        if "Root   Total Energy (a.u.)   Ex. Energy (eV)   Osc. (a.u.)   < S^2 >   Max CI Coeff.      Excitation" in line:
-            start_idx = i + 1  # Start processing after the target line
-            
-            # Extract until an empty line is encountered
-            for j in range(start_idx, len(lines)):
-                if not lines[j].strip():  # Stop on an empty line
-                    break
-                extracted_data.append(lines[j].strip())
-
-            # Process the extracted lines
-            for line in extracted_data:
-                parts = line.split()  # Split the line into parts
-                if len(parts) > 6:
-                    try:
-                        # Extract the necessary indices
-                        value2 = float(parts[2])
-                        value3 = float(parts[3])
-                        value4 = float(parts[4])
-
-                        # Classify data based on value4 and append to respective lists
-                        if 0.0 <= value4 <= 0.2:
-                            singlet_data.append((value2, value3))
-                        elif 1.8 <= value4 <= 2.0:
-                            triplet_data.append((value2, value3))
-                    except ValueError:
-                        continue
-
-            break  # Exit loop after processing the section
-
-    # Save singlet data to file
-    with open(output_file_singlet_triplet, 'w') as singlet_file:
-        singlet_file.write("Energy (eV) Osc\n")
-        for data in singlet_data:
-            singlet_file.write(f"{data[0]}\t{data[1]}\n")
-
-    # Save triplet data to file
-    with open(output_file_singlet_triplet, 'a') as triplet_file:
-        triplet_file.write("\n\n")
-        triplet_file.write("Energy (eV) Osc\n")
-        for data in triplet_data:
-            triplet_file.write(f"{data[0]}\t{data[1]}\n")
-    return singlet_data,triplet_data
-# File paths
-file_path = 'v5.out'
-output_file_singlet_triplet = 'singlet_triplet_data.txt'
+filename = 'singlet_triplet_energies.txt'
 
 
 # Run the function
-singlet_data,triplet_data= extract_and_process_data(file_path, output_file_singlet_triplet)
+singlet_data, triplet_data = extract_energies(filename)
 
 
 
@@ -400,8 +377,8 @@ def draw_energy_levels(singlet_levels, triplet_levels, offset=0.05):
 
 # Sample singlet and triplet energy levels in eV
 limit=4.0
-singlet_levels = [item[0] for item in singlet_data if item[0]<limit]
-triplet_levels = [item[0] for item in triplet_data if item[0]<limit]
+singlet_levels = [item for item in singlet_data if item < limit]
+triplet_levels = [item for item in triplet_data if item < limit]
 
 draw_energy_levels(singlet_levels, triplet_levels)
 ```

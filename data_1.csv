@@ -1,0 +1,6 @@
+ID,Name,Age,Salary
+1,Alice,25,50000
+2,Bob,thirty,60000
+3,Charlie,40,70000
+4,David,35,NaN
+5,Eve,NaN,80000

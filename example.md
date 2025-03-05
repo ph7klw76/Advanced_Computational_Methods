@@ -52,43 +52,6 @@ root.mainloop()  # Start the GUI application
 
 
 
-```python
-# Import the pandas library and alias it as 'pd'
-import pandas as pd
-
-# Read a CSV file into a Pandas DataFrame
-# Assume 'data.csv' is a file with columns: 'ID', 'Name', 'Age', 'Salary'
-df = pd.read_csv("data.csv")
-
-# Display the first few rows of the DataFrame
-print("Original DataFrame:")
-print(df.head())
-
-# Convert the 'Age' and 'Salary' columns to numeric values (if not already numeric)
-# Errors='coerce' will convert non-numeric values to NaN (Not a Number)
-df["Age"] = pd.to_numeric(df["Age"], errors='coerce')
-df["Salary"] = pd.to_numeric(df["Salary"], errors='coerce')
-
-# Display DataFrame after conversion
-print("\nDataFrame after converting 'Age' and 'Salary' to numeric:")
-print(df.head())
-
-# Drop rows with missing values (NaN)
-df_cleaned = df.dropna()
-
-# Display DataFrame after dropping missing values
-print("\nDataFrame after dropping rows with missing values:")
-print(df_cleaned.head())
-
-# Reset index after dropping rows (to ensure continuous indexing)
-df_cleaned = df_cleaned.reset_index(drop=True)
-
-# Display DataFrame after resetting the index
-print("\nDataFrame after resetting index:")
-print(df_cleaned.head())
-```
-
-
 # Pandas
 Pandas is an open-source Python library used for data manipulation, analysis, and preprocessing. It provides powerful data structures such as DataFrame and Series that simplify working with structured data, making it essential for data science, machine learning, and analytics. More details at the [tutorials](https://www.w3schools.com/python/pandas/default.asp)
 
@@ -209,10 +172,14 @@ theoretical_df = None  # DataFrame for absorption.txt data
 experimental_df = None  # DataFrame for experimental.txt data
 ```
 FigureCanvasTkAgg: A Matplotlib utility that embeds a Matplotlib figure into a Tkinter widget.
+
 os: Used for file path manipulations.
+
 The code sets up two global variables (theoretical_df and experimental_df) that will hold the loaded data. They begin as None so the program knows if data has been loaded or not.
-The data for theoretical_df can be found [here].(https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/absorption-theory.txt)
-The data for experimental_df can be found [here].(https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/experiment.txt)
+
+The data for theoretical_df can be found [here](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/absorption-theory.txt)
+
+The data for experimental_df can be found [here](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/experiment.txt)
 
 ## 2.Loading Theoretical Data
 

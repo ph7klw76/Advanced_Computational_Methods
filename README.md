@@ -84,6 +84,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 where magic happens
 
 1. [Example1](example.md)
+2. [Pacman](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/Pacman.py)
 
 ## Agent-Based Modeling (ABM)
 

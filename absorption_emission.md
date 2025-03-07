@@ -953,6 +953,141 @@ update_plot()
 
 root.mainloop()
 ```
+
+
+## Shift the emission
+
+```python
+import tkinter as tk
+from tkinter import filedialog
+import numpy as np
+import matplotlib
+# Use the Agg backend for matplotlib so it works cleanly with tkinter on many systems
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+def load_data(file_path):
+    """
+    Loads two-column spectral data (x, y) from a text file.
+    Returns:
+        xs (numpy array): x-values
+        ys (numpy array): y-values
+    """
+    data = np.loadtxt(file_path, comments=None)
+    # Expecting 2 columns: x, y
+    xs = data[:, 0]
+    ys = data[:, 1]
+    return xs, ys
+
+def find_peak_x(xs, ys):
+    """
+    Find the x-value corresponding to the highest peak in y.
+    Returns:
+        peak_x (float): x-value of the highest peak.
+    """
+    idx_max = np.argmax(ys)
+    return xs[idx_max]
+
+class SpectraAligner(tk.Tk):
+    def __init__(self, theory_file="theory.txt", exp_file="experiment.txt"):
+        super().__init__()
+        self.title("Spectra Alignment")
+
+        # Load the data
+        self.theory_x, self.theory_y = load_data(theory_file)
+        self.exp_x, self.exp_y       = load_data(exp_file)
+
+        # Find peaks (just uses the highest point in each)
+        exp_peak_x    = find_peak_x(self.exp_x, self.exp_y)
+        theory_peak_x = find_peak_x(self.theory_x, self.theory_y)
+
+        # Initial shift suggestion
+        self.initial_shift = exp_peak_x - theory_peak_x
+
+        # Set up tkinter variable to track the shift
+        self.shift_var = tk.DoubleVar(value=self.initial_shift)
+
+        # Create a figure for plotting
+        self.fig, self.ax = plt.subplots(figsize=(6, 4), dpi=100)
+        self.ax.set_xlabel("Wavelength (nm)")
+        self.ax.set_ylabel("Intensity (arbitrary units)")
+
+        # Create a canvas to embed the matplotlib figure
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas_widget = self.canvas.get_tk_widget()
+        self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Frame to hold the shift slider and buttons
+        control_frame = tk.Frame(self)
+        control_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Shift slider
+        tk.Label(control_frame, text="Horizontal Shift:").pack(side=tk.LEFT, padx=5)
+        self.shift_scale = tk.Scale(
+            control_frame, 
+            variable=self.shift_var, 
+            from_=-100.0, 
+            to=+100.0, 
+            resolution=0.1, 
+            orient=tk.HORIZONTAL, 
+            command=self.update_plot
+        )
+        self.shift_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # Button to save
+        self.save_button = tk.Button(control_frame, text="Save Shifted Data", command=self.save_shifted_data)
+        self.save_button.pack(side=tk.RIGHT, padx=5)
+
+        # Draw the initial plot
+        self.update_plot()
+
+    def update_plot(self, *args):
+        """
+        Re-draws the plot whenever the shift changes.
+        """
+        shift_val = self.shift_var.get()
+
+        # Clear the axis and re-plot
+        self.ax.cla()
+
+        # Plot experiment (no shift)
+        self.ax.plot(self.exp_x, self.exp_y, label="Experiment", linewidth=1)
+
+        # Plot theory with shift
+        shifted_theory_x = self.theory_x + shift_val
+        self.ax.plot(shifted_theory_x, self.theory_y, label="Theory (shifted)", linewidth=1)
+
+        self.ax.set_xlabel("Wavelength (nm)")
+        self.ax.set_ylabel("Intensity (arb. units)")
+        self.ax.set_title(f"Shift = {shift_val:.2f} nm")
+        self.ax.legend()
+        self.ax.relim()       # Recompute limits
+        self.ax.autoscale()   # Autoscale
+        self.canvas.draw()
+
+    def save_shifted_data(self):
+        """
+        Saves the shifted theory data to a new file.
+        """
+        shift_val = self.shift_var.get()
+        shifted_theory_x = self.theory_x + shift_val
+
+        # Ask where to save
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".txt", 
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+        )
+        if filename:
+            # Combine x and y, save as two columns
+            out_data = np.column_stack((shifted_theory_x, self.theory_y))
+            np.savetxt(filename, out_data, fmt="%.5f", header="Shifted Theory Data\nWavelength\tIntensity", comments='')
+            print(f"Shifted data saved to: {filename}")
+
+if __name__ == "__main__":
+    app = SpectraAligner("theory.txt", "experiment.txt")
+    app.mainloop()
+```
 ## OVERSHOOT in Tail side of emission Spectra
 
 In many vibronic simulations (for example, when calculating Franck–Condon factors for emission spectra) one finds that very low‐frequency modes often come with very large displacements. These modes are typically associated with large‐amplitude motions (such as torsions or soft deformations) that are not well described by a harmonic approximation. In ORCA, one practical remedy is to set the `TCUTFREQ` flag so that modes with frequencies below a certain value (in cm⁻¹) are removed from the calculation. In addition, one can examine the magnitude of the (dimensionless) displacements associated with these modes. Here’s how one can rationalize a choice for both thresholds.

@@ -1273,7 +1273,9 @@ done
 echo "Deletion process completed."
 ```
 
-and restart the calculation by adding this option
+and restart the calculation by adding this option 
+
+### ** Before using TightOpt and TightSCF, it is recommended to truncate any long alkyl groups that are known to have no influence on the emission profile. Begin with normal convergence before progressing to TightOpt and TightSCF, followed by VeryTightOpt and VeryTightSCF, to ensure robust convergence to the minimum excited-state geometry. **
 
 ```text
 ! DEF2-SVP OPT CPCM(Toluene) TightOpt TightSCF FREQ

@@ -93,6 +93,8 @@ Some quantum chemistry codes (e.g., ADF) implement STO-based expansions but typi
 
 **Cons:** Plane-wave expansions are less localized, so for molecular systems (with large vacuum regions), one must include many plane-wave components to describe localized orbital features. That can become computationally large. Augmentations (e.g., Projector Augmented-Wave method, Pseudopotentials) are often used to reduce the needed number of plane waves near the nucleus.
 
+To learn more about this click [here](plane_wabe.md)
+
 ## 4.3 Numerical Atomic Orbitals
 
 **Pros:** Some programs (e.g., SIESTA, FHI-aims) use numerical orbitals that are directly solved on a radial grid for isolated atoms or partial potentials. These can capture atomic properties well and lead to localized, systematically improvable basis sets. This approach can be quite efficient for large systems (especially in DFT).  

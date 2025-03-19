@@ -415,60 +415,60 @@ plt.show()
 
 - We define a **1D lattice** of length $L$. The reciprocal space is thus discretized by:
 
-  $$
-  G = n \times \frac{2\pi}{L}.
-  $$
+$$
+G = n \times \frac{2\pi}{L}.
+$$
 
 - We truncate these reciprocal lattice vectors to **$\pm N_{\max}$**, giving a finite matrix dimension of:
 
-  $$
-  (2N_{\max} +1) \times (2N_{\max} +1).
-  $$
+$$
+(2N_{\max} +1) \times (2N_{\max} +1).
+$$
 
 ## Bloch’s Theorem
 
 - For each wavevector $k$, the wavefunction is:
 
-  $$
-  \psi_k(x) = \sum_G C_k(G) e^{i(k+G)x}.
-  $$
+$$
+\psi_k(x) = \sum_G C_k(G) e^{i(k+G)x}.
+$$
 
 - We build the Hamiltonian in the basis:
 
-  $$
-  \{ e^{i(k+G)x} \}.
-  $$
+$$
+\{ e^{i(k+G)x} \}.
+$$
 
 ## Kinetic Term
 
 - The **diagonal kinetic-energy part** is:
 
-  $$
-  \frac{\hbar^2}{2m} (k+G)^2.
-  $$
+$$
+\frac{\hbar^2}{2m} (k+G)^2.
+$$
 
 ## Potential Term
 
 - Our potential is:
 
-  $$
-  V(x) = v_0 \cos(g_0 x).
-  $$
+$$
+V(x) = v_0 \cos(g_0 x).
+$$
 
 - In reciprocal space, this has **nonzero Fourier components** at $\pm g_0$.
 - This **couples plane waves** differing by $\pm g_0$. Hence the matrix elements:
 
-  $$
-  H_{G,G'} \propto \delta_{G-G', \pm g_0}.
-  $$
+$$
+H_{G,G'} \propto \delta_{G-G', \pm g_0}.
+$$
 
 ## Diagonalization
 
 - For each $k$, we form the matrix **$H(k)$** and solve the eigenvalue problem:
 
-  $$
-  H(k) C = E C.
-  $$
+$$
+H(k) C = E C.
+$$
 
 - The resulting eigenvalues **$E$** are the band energies.
 - Repeating over many $k$-points yields a **discrete representation of the band structure**.

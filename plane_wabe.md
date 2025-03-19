@@ -41,9 +41,9 @@ where:
 - $k$ is the wavevector in the first Brillouin zone (FBZ).
 - $u_{nk}(r)$ has the same periodicity as the lattice:
 
-  $$
-  u_{nk}(r+R) = u_{nk}(r).
-  $$
+$$
+u_{nk}(r+R) = u_{nk}(r).
+$$
 
 This separation into a phase factor $\exp(i k \cdot r)$ and a periodic function $u_{nk}(r)$ simplifies the solution of the Kohn–Sham equations under periodic boundary conditions.
 

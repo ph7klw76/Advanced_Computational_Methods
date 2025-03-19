@@ -293,19 +293,22 @@ Application: Finite element simulations, quantum lattice models.
 [Quantum Chemistry](https://www.youtube.com/watch?v=cd2Ua9dKEl8&list=PLcxq_TlK-AyjEdMxhhrte2b8PKe0AHpsr)
 
 ### A. Electronic Structure AND Excited-State Properties
-1. [Hartree-Fock_Theory](Hartree-Fock_Theory.md)  Foundation for understanding wavefunctions and molecular orbitals.
 
-2. [Density Functional Theory and Time-dependent-DFT](DFT.md) Density Functional Theory (DFT): Crucial for predicting electronic properties of large organic molecules, such as HOMO-LUMO gaps and charge densities. Time-Dependent Density Functional Theory (TD-DFT): For studying optical absorption, emission spectra, and exciton behavior.
+1. [Linear Combination of Atomic Orbitals](gaussian.md) How we use basis set for complex atomic orbitals, just like fourier series
 
-3. [Implicit solvation models](Implicit_Solvation.md)
+2. [Hartree-Fock_Theory](Hartree-Fock_Theory.md)  Foundation for understanding wavefunctions and molecular orbitals.
 
-4. [Explicit solvation models](explict_solvent.md)
+3. [Density Functional Theory and Time-dependent-DFT](DFT.md) Density Functional Theory (DFT): Crucial for predicting electronic properties of large organic molecules, such as HOMO-LUMO gaps and charge densities. Time-Dependent Density Functional Theory (TD-DFT): For studying optical absorption, emission spectra, and exciton behavior.
+
+4. [Implicit solvation models](Implicit_Solvation.md)
+
+5. [Explicit solvation models](explict_solvent.md)
    
-5. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
+6. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
 
-6. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
+7. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
 
-7. Multireference Methods: For systems with significant electron correlation, such as biradicals.
+8. Multireference Methods: For systems with significant electron correlation, such as biradicals.
 
 ### B Charge Transport Mechanisms
 

@@ -123,7 +123,7 @@ END
 %TDDFT
 	NROOTS 100
 	IROOT 3
-            DOTRANS True
+        DOTRANS True
 END
 %method
         method dft

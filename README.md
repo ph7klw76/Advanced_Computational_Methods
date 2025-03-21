@@ -408,6 +408,8 @@ Energy Barriers for Rotation and Conformational Isomerism
 16. Thermally Activated Delayed Fluorescence
 
 17. Excited-State Proton Transfer
+    
+18. [Transient Absorption](TA.md)
 
 ### F: OLED Device Dynamics
 

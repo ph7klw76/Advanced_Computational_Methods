@@ -1,7 +1,7 @@
 
 ### **Transient Absorption (TA) Spectroscopy and Third-Order Polarization**
 
-Transient Absorption (TA) spectroscopy arises from the third-order polarization in the context of nonlinear optical response theory. To understand this, let's break down the concepts involved.
+Transient Absorption (TA) spectroscopy arises from the third-order polarization in the context of nonlinear optical response theory. TA spectroscopy, also known as pump-probe spectroscopy, is a powerful ultrafast spectroscopic technique that measures the evolution of excited states in real-time. From a quantum mechanical perspective, TA involves the interaction of a molecular system with a sequence of time-delayed laser pulses, where the system's nonlinear optical response to the probe pulse encodes information about the ultrafast dynamics.To understand this, let's break down the concepts involved.
 
 ---
 

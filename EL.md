@@ -688,14 +688,10 @@ def build_initial_condition_smoothed(N, params):
 
 # --- Main PDE System Definition (unchanged) ---
 def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
-    # --- Unpack Parameters ---
-    # Use .get() for safety, although they should be there now
     N = params.get('N'); dL = params.get('dL'); eps = params.get('eps'); q = params.get('q')
     T_dev = params.get('T_dev'); Vth = params.get('Vth')
-    # Handle potential missing keys more gracefully during debugging if needed
     if any(v is None for v in [N, dL, eps, q, T_dev, Vth]):
         raise ValueError("Essential parameters missing from params dict in ODE function")
-
     mu0_n, sigma_hop_n, C_gdm_n = params['gdm_n']
     mu0_p, sigma_hop_p, C_gdm_p = params['gdm_p']
     use_gdm = params.get('use_gdm', True)
@@ -712,22 +708,14 @@ def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
     n_cathode_bc_val = params['n_cathode_bc']
     p_anode_bc_val = params['p_anode_bc']
     eps_phi = params['eps_phi']
-
-    # --- Reshape State Vector ---
     phi = y[0*N : 1*N]; n = y[1*N : 2*N]; p = y[2*N : 3*N]
     S = y[3*N : 4*N]; T = y[4*N : 5*N]
     n = np.maximum(n, 1e4); p = np.maximum(p, 1e4)
     S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
-
     dphi_dt=np.zeros(N); dn_dt=np.zeros(N); dp_dt=np.zeros(N); dS_dt=np.zeros(N); dT_dt=np.zeros(N)
-
-    # --- Apply Boundary Conditions to State ---
-    phi[0] = ramped_drive_voltage_continuation(t, params, V_start, V_end)
-    phi[-1] = 0.0
+    phi[0] = ramped_drive_voltage_continuation(t, params, V_start, V_end); phi[-1] = 0.0
     n[-1] = n_cathode_bc_val; p[0] = p_anode_bc_val
     S[0] = S[-1] = 0.0; T[0] = T[-1] = 0.0
-
-    # --- Calculate Spatially Varying Parameters ---
     E = np.zeros(N); E[1:-1] = -(phi[2:] - phi[:-2]) / (2 * dL)
     E[0] = -(phi[1] - phi[0]) / dL; E[-1] = -(phi[-1] - phi[-2]) / dL
     E_abs = np.abs(E)
@@ -738,8 +726,6 @@ def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
         mu_n_local = np.maximum(np.full(N, mu0_n), 1e-18)
         mu_p_local = np.maximum(np.full(N, mu0_p), 1e-18)
     Dn_local = mu_n_local * Vth; Dp_local = mu_p_local * Vth
-
-    # --- Finite Difference Calculations ---
     dV_int = phi[:-1] - phi[1:]
     x_int = np.clip(dV_int / Vth, -500, 500)
     B_plus = bernoulli(x_int); B_minus = bernoulli(-x_int)
@@ -747,11 +733,7 @@ def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
     Dp_int = 0.5 * (Dp_local[:-1] + Dp_local[1:])
     Jn_int = (q * Dn_int / dL) * ( B_minus * n[1:] - B_plus * n[:-1] )
     Jp_int = (q * Dp_int / dL) * ( B_plus * p[:-1] - B_minus * p[1:] )
-
-    # --- Calculate Divergences ---
     div_Jn = (Jn_int[1:] - Jn_int[:-1]) / dL; div_Jp = (Jp_int[1:] - Jp_int[:-1]) / dL
-
-    # --- Calculate Rates ---
     n_int = n[1:-1]; p_int = p[1:-1]; S_int = S[1:-1]; T_int = T[1:-1]
     gamma_L_local = calculate_langevin_gamma(mu_n_local[1:-1], mu_p_local[1:-1], eps)
     R_bimol = gamma_reduction * gamma_L_local * (n_int * p_int); R_bimol = np.maximum(R_bimol, 0.0)
@@ -768,57 +750,35 @@ def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
     Loss_T_quench_n = kq_tn * n_int * T_int; Loss_T_quench_p = kq_tp * p_int * T_int
     Loss_T_tta = k_tta * T_int**2; Gain_T_isc = Loss_S_isc
     Gamma_loss_T_net = Loss_T_decay + Loss_T_risc + Loss_T_quench_n + Loss_T_quench_p + Loss_T_tta - Gain_T_isc
-
-    # --- Assemble Derivatives ---
     dn_dt[1:-1] = (1.0/q) * div_Jn - R_total_carrier_loss
     dp_dt[1:-1] = -(1.0/q) * div_Jp - R_total_carrier_loss
     dS_dt[1:-1] = G_S - Gamma_loss_S_net + Diffusion_S
     dT_dt[1:-1] = G_T - Gamma_loss_T_net + Diffusion_T
-
-    # --- Poisson's Equation ---
     d2phi_dx2 = (phi[2:] - 2*phi[1:-1] + phi[:-2]) / (dL**2)
     charge_term = q * (p[1:-1] - n[1:-1])
     dphi_dt[1:-1] = (eps * d2phi_dx2 - charge_term) / eps_phi
-
-    # --- Fix Derivatives at Boundaries ---
     dphi_dt[0] = dphi_dt[-1] = 0.0; dn_dt[0] = dn_dt[-1] = 0.0
     dp_dt[0] = dp_dt[-1] = 0.0; dS_dt[0] = dS_dt[-1] = 0.0
     dT_dt[0] = dT_dt[-1] = 0.0
-
     dydt = np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt, dT_dt])
     return dydt
 
-# --- Simulation Runner (CORRECTED derived parameter calculation) ---
-
+# --- Simulation Runner (unchanged from previous correction) ---
 def run_1d_oled_sim_step(params, V_start, V_end, y0_input=None, solver_method='BDF', save_filename=None):
-    """
-    Runs a single voltage step in the continuation method.
-    Accepts an initial state y0_input. CORRECTED DERIVED PARAMS.
-    """
-    # !! **** CORRECTION: Calculate derived params here **** !!
-    # Make a copy to avoid modifying the dictionary passed to subsequent steps if run in sequence non-parallel
-    params = params.copy()
+    params = params.copy() # Avoid modifying original dict
+    # Calculate derived params IN THIS SCOPE
     params['dL'] = params['d'] / (params['N'] - 1)
     params['eps'] = params['eps_r'] * EPS0
     params['q'] = Q
     params['Vth'] = KB * params['T_dev'] / Q
-    # Now dL, eps, q, Vth will be in the params dict passed to the ODE function
-    # !! **************************************************** !!
 
     N = params['N']
-    # --- Initial Condition ---
     if y0_input is None:
-        # print("Building initial condition from scratch...") # Reduce verbosity
         y0 = build_initial_condition_smoothed(N, params)
-        if V_start != 0.0:
-             y0[0] = V_start
+        if V_start != 0.0: y0[0] = V_start
     else:
-        # print(f"Using provided initial state y0_input.") # Reduce verbosity
-        y0 = y0_input.copy()
-        y0[0] = V_start
-        y0[N-1] = 0.0
+        y0 = y0_input.copy(); y0[0] = V_start; y0[N-1] = 0.0
 
-    # --- Time Stepping for this step ---
     t_ramp = params['t_ramp_step']
     stabilization_time = params.get('t_stabilize_step', 5 * t_ramp)
     t_span_step = (0, t_ramp + stabilization_time)
@@ -826,53 +786,30 @@ def run_1d_oled_sim_step(params, V_start, V_end, y0_input=None, solver_method='B
     t_eval_step = np.linspace(t_span_step[0], t_span_step[1], num_t_points_step)
     max_step_val = params.get('max_step_init', np.inf)
 
-    # print(f"Starting ODE step: {V_start:.2f}V -> {V_end:.2f}V (Ramp: {t_ramp:.1e}s, Stab: {stabilization_time:.1e}s)...") # Reduce verbosity
-
     sol = None
-    # Wrap with tqdm - note the desc string format needs fixing if V_start/V_end are not defined here
     with tqdm(total=1, desc=f"Step {V_start:.2f}V->{V_end:.2f}V") as pbar:
         try:
             sol = solve_ivp(
-                fun=oled_1d_dde_equations_advanced_cont,
-                t_span=t_span_step,
-                y0=y0,
-                method=solver_method,
-                t_eval=t_eval_step,
-                args=(params, V_start, V_end), # Pass V_start, V_end
-                rtol=params['rtol'],
-                atol=params['atol'],
-                max_step=max_step_val
+                fun=oled_1d_dde_equations_advanced_cont, t_span=t_span_step, y0=y0,
+                method=solver_method, t_eval=t_eval_step, args=(params, V_start, V_end),
+                rtol=params['rtol'], atol=params['atol'], max_step=max_step_val
             )
             pbar.update(1)
         except Exception as e:
-            pbar.update(1)
-            print(f"\nError during solve_ivp step {V_start:.2f}V->{V_end:.2f}V: {e}")
-            # Decide if you want to raise or allow continuation loop to handle failure
-            raise # Re-raise to stop the continuation loop on first error
+            pbar.update(1); print(f"\nError during solve_ivp step {V_start:.2f}V->{V_end:.2f}V: {e}"); raise
 
-    # print(f"ODE step finished: {sol.message if sol else 'Error'}") # Reduce verbosity
     if sol and not sol.success:
-        # Warning is okay, but raise error if no steps were taken
         warnings.warn(f"ODE step {V_start:.2f}V->{V_end:.2f}V finished with warning: {sol.message}")
-        if sol.t.size < 2 :
-             raise RuntimeError(f"Solver failed to take any steps for {V_start:.2f}V->{V_end:.2f}V.")
-    if not sol: # Should not happen if exception is raised, but for safety
-         raise RuntimeError(f"Solver failed completely for {V_start:.2f}V->{V_end:.2f}V (no solution object).")
-
+        if sol.t.size < 2 : raise RuntimeError(f"Solver failed to take any steps for {V_start:.2f}V->{V_end:.2f}V.")
+    if not sol: raise RuntimeError(f"Solver failed completely for {V_start:.2f}V->{V_end:.2f}V (no solution object).")
 
     final_state = sol.y[:, -1]
-
     if save_filename:
-        try:
-            np.savez_compressed(save_filename, y_final=final_state, V_end=V_end, params=params)
-            # print(f"Saved final state for {V_end:.2f}V to {save_filename}") # Reduce verbosity
-        except Exception as e:
-            warnings.warn(f"Could not save intermediate state {save_filename}: {e}")
-
-    # print(f"Step {V_start:.2f}V->{V_end:.2f}V completed.") # Reduce verbosity
+        try: np.savez_compressed(save_filename, y_final=final_state, V_end=V_end, params=params)
+        except Exception as e: warnings.warn(f"Could not save intermediate state {save_filename}: {e}")
     return final_state
 
-# --- Main Execution (Voltage Continuation Loop - unchanged logic) ---
+# --- Main Execution (CORRECTED derived param calculation before plot) ---
 def main_voltage_continuation():
     print("--- Starting OLED Simulation with Voltage Continuation ---")
     base_params = {
@@ -890,30 +827,35 @@ def main_voltage_continuation():
         'num_t_points_step': 101, 'save_intermediate': True,
         'solver_method': 'BDF',
     }
-    voltage_steps = np.linspace(0.0, 5.0, 11) # 0.0, 0.5, ..., 5.0
+
+    # !! **** CORRECTION: Calculate derived params for base_params **** !!
+    base_params['dL'] = base_params['d'] / (base_params['N'] - 1)
+    base_params['eps'] = base_params['eps_r'] * EPS0
+    base_params['q'] = Q
+    base_params['Vth'] = KB * base_params['T_dev'] / Q
+    # !! ************************************************************ !!
+
+    voltage_steps = np.linspace(0.0, 5.0, 11)
     print(f"Voltage steps: {voltage_steps}")
     current_y = None
     final_states = {}
-    save_dir = "oled_continuation_states" # Directory to save states
-    os.makedirs(save_dir, exist_ok=True) # Create directory if it doesn't exist
+    save_dir = "oled_continuation_states"; os.makedirs(save_dir, exist_ok=True)
 
     try:
         for i in range(len(voltage_steps) - 1):
-            V_start = voltage_steps[i]
-            V_end = voltage_steps[i+1]
+            V_start = voltage_steps[i]; V_end = voltage_steps[i+1]
             save_fname = os.path.join(save_dir, f"oled_state_V{V_end:.2f}.npz") if base_params['save_intermediate'] else None
             load_success = False
             if save_fname and os.path.exists(save_fname):
                 try:
                     data = np.load(save_fname, allow_pickle=True)
                     if np.isclose(data['V_end'], V_end):
-                        current_y = data['y_final']
-                        print(f"Loaded previous state for {V_end:.2f}V from {save_fname}")
-                        load_success = True
+                        current_y = data['y_final']; print(f"Loaded previous state for {V_end:.2f}V from {save_fname}"); load_success = True
                     else: print(f"Saved state V mismatch ({data['V_end']:.2f} != {V_end:.2f}). Recalculating.")
                 except Exception as load_err: print(f"Error loading {save_fname}: {load_err}. Recalculating.")
 
             if not load_success:
+                 # Pass the *original* base_params, run_1d_oled_sim_step will add derived ones internally
                  current_y = run_1d_oled_sim_step(base_params, V_start, V_end,
                                                   y0_input=current_y,
                                                   solver_method=base_params['solver_method'],
@@ -924,6 +866,7 @@ def main_voltage_continuation():
         target_voltage = voltage_steps[-1]
         if target_voltage in final_states:
             print("Plotting final state from continuation...")
+            # Pass the updated base_params (with dL etc.) to the plotting function
             plot_final_state(final_states[target_voltage], target_voltage, base_params)
         else: print("Final state not available for plotting.")
 
@@ -933,10 +876,12 @@ def main_voltage_continuation():
         import traceback; print("\n--- Traceback ---"); traceback.print_exc(); print("-----------------\n")
 
 
-# --- Plotting Helper (unchanged) ---
+# --- Plotting Helper (Now receives params with dL etc.) ---
 def plot_final_state(y_final, voltage, params):
+    # Now params['dL'], params['d'], params['kr'], params['N'] should exist
     N = params['N']; dL = params['dL']; kr = params['kr']; d = params['d']
     x_nm = np.linspace(0, d * 1e9, N)
+
     phi = y_final[0*N : 1*N]; n = y_final[1*N : 2*N]; p = y_final[2*N : 3*N]
     S = y_final[3*N : 4*N]; T = y_final[4*N : 5*N]
     n = np.maximum(n, 1e4); p = np.maximum(p, 1e4)
@@ -944,7 +889,7 @@ def plot_final_state(y_final, voltage, params):
 
     plt.style.use('seaborn-v0_8-darkgrid')
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    fig.suptitle(f"Final State @ {voltage:.2f}V (GDM={params['use_gdm']})", fontsize=14)
+    fig.suptitle(f"Final State @ {voltage:.2f}V (GDM={params.get('use_gdm', 'N/A')})", fontsize=14) # Use .get for safety
 
     ax = axes[0]; ax.plot(x_nm, phi, label=f'phi(x)')
     ax.set(xlabel='Position x (nm)', ylabel='Potential (V)', title='Potential'); ax.legend(); ax.grid(True)

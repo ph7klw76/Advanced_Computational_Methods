@@ -621,380 +621,344 @@ code not fully functional
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+from scipy.special import expit, erfc
+import warnings
+from tqdm.auto import tqdm # Import tqdm for progress bar
+import multiprocessing # For parallel processing example
+import time # For parameter sweep example timing
+import os # For saving intermediate results
 
-###############################################################################
-# 1) HELPER FUNCTIONS FOR INITIAL CONDITIONS AND BOUNDARY CONDITIONS
-###############################################################################
+# --- Constants ---
+Q = 1.602e-19; KB = 1.38e-23; EPS0 = 8.854e-12; HBAR = 1.054571817e-34
 
-def build_initial_condition(N):
-    """
-    Define initial guesses for [phi, n, p, S].
-    We'll start with zero potential, low carrier densities, and no excitons.
-    """
-    phi0 = np.zeros(N)
-    n0   = np.full(N, 1e12)   # small background electron density
-    p0   = np.full(N, 1e12)   # small background hole density
-    S0   = np.zeros(N)
-    return np.concatenate([phi0, n0, p0, S0])
+# --- Helper Functions (Bernoulli, GDM, Langevin - unchanged) ---
+def bernoulli(x):
+    x = np.asanyarray(x); b = np.zeros_like(x)
+    small_mask = np.abs(x) < 1e-10; large_pos_mask = x > 700
+    large_neg_mask = x < -700; valid_mask = ~(small_mask | large_pos_mask | large_neg_mask)
+    b[small_mask] = 1.0 - 0.5 * x[small_mask] + x[small_mask]**2 / 12.0
+    b[large_pos_mask] = x[large_pos_mask] * np.exp(-x[large_pos_mask])
+    b[large_neg_mask] = -x[large_neg_mask]
+    b[valid_mask] = x[valid_mask] / np.expm1(x[valid_mask])
+    b[np.isnan(x)] = np.nan
+    return b
 
-def ramped_drive_voltage(t, params):
-    """
-    Returns the device boundary voltage at x=0 (anode) as a function of time.
-    - We ramp up from 0 to V_drive over time t_ramp
-    - Then hold that value until t_off
-    - After t_off, we drop to 0
-    """
-    V_drive   = params['V_drive']     # final drive voltage
-    t_ramp    = params['t_ramp']      # ramp time
-    t_off     = params['t_off']       # turn-off time
+def gaussian_disorder_mobility(E_abs, T, mu0, sigma_hop, C_gdm):
+    kBT_eV = KB * T / Q;
+    if kBT_eV < 1e-6: return np.zeros_like(E_abs) + 1e-18
+    factor_T = (2.0 * sigma_hop / (3.0 * kBT_eV))**2
+    E_safe = np.maximum(E_abs, 1e-10)
+    mobility = mu0 * np.exp(-factor_T) * np.exp(C_gdm * np.sqrt(E_safe))
+    return np.clip(mobility, 1e-18, 1e-1)
 
-    if t < t_ramp:
-        # ramp from 0 to V_drive linearly
-        return V_drive * (t / t_ramp)
-    elif t < t_off:
-        # hold at V_drive
-        return V_drive
+def calculate_langevin_gamma(mu_n_local, mu_p_local, eps):
+    mu_n_safe = np.maximum(mu_n_local, 0.0); mu_p_safe = np.maximum(mu_p_local, 0.0)
+    gamma_L = Q * (mu_n_safe + mu_p_safe) / eps
+    return np.maximum(gamma_L, 0.0)
+
+# --- Ramped Voltage (modified for continuation - unchanged) ---
+def ramped_drive_voltage_continuation(t, params, V_start, V_end):
+    t_ramp = params['t_ramp_step']; t_off = params.get('t_off', np.inf)
+    if t < 0: return V_start
+    elif t < t_ramp: return V_start + (V_end - V_start) * (t / t_ramp)
+    elif t < t_off: return V_end
+    else: return 0.0
+
+# --- Initial Condition (Smoothed - unchanged) ---
+def build_initial_condition_smoothed(N, params):
+    phi0 = np.zeros(N); n0_bg = params.get('n0_background', 1e6)
+    p0_bg = params.get('p0_background', 1e6); n_cathode_target = params['n_cathode_bc']
+    p_anode_target = params['p_anode_bc']; n0 = np.full(N, n0_bg); p0 = np.full(N, p0_bg)
+    num_smooth_points = min(5, N // 4)
+    if num_smooth_points > 1:
+        p_smooth_indices = np.arange(num_smooth_points)
+        log_p_target = np.log10(max(p_anode_target, 1e-10))
+        log_p_bg = np.log10(max(p0_bg, 1e-10))
+        p0[p_smooth_indices] = 10**(np.linspace(log_p_target, log_p_bg, num_smooth_points)[::-1])
+        p0[0] = p_anode_target
+        n_smooth_indices = np.arange(N - num_smooth_points, N)
+        log_n_bg = np.log10(max(n0_bg, 1e-10))
+        log_n_target = np.log10(max(n_cathode_target, 1e-10))
+        n0[n_smooth_indices] = 10**(np.linspace(log_n_bg, log_n_target, num_smooth_points))
+        n0[-1] = n_cathode_target
     else:
-        # after t_off, set to 0
-        return 0.0
+         n0[-1] = n_cathode_target; p0[0] = p_anode_target
+    S0 = np.zeros(N); T0 = np.zeros(N)
+    return np.concatenate([phi0, n0, p0, S0, T0])
 
-def apply_bc_phi(phi, t, params):
-    """
-    Dirichlet boundary conditions for phi at x=0 and x=d.
-    - x=0 : phi(0) = ramped_drive_voltage(t)
-    - x=N-1 : phi(N-1) = 0 (cathode reference)
-    """
-    V_anode = ramped_drive_voltage(t, params)
-    phi[0] = V_anode
+# --- Main PDE System Definition (unchanged) ---
+def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
+    # --- Unpack Parameters ---
+    # Use .get() for safety, although they should be there now
+    N = params.get('N'); dL = params.get('dL'); eps = params.get('eps'); q = params.get('q')
+    T_dev = params.get('T_dev'); Vth = params.get('Vth')
+    # Handle potential missing keys more gracefully during debugging if needed
+    if any(v is None for v in [N, dL, eps, q, T_dev, Vth]):
+        raise ValueError("Essential parameters missing from params dict in ODE function")
+
+    mu0_n, sigma_hop_n, C_gdm_n = params['gdm_n']
+    mu0_p, sigma_hop_p, C_gdm_p = params['gdm_p']
+    use_gdm = params.get('use_gdm', True)
+    gamma_reduction = params['gamma_reduction']
+    C_n_aug, C_p_aug = params.get('auger_coeffs', (0.0, 0.0))
+    spin_fraction_singlet = params['spin_fraction_singlet']
+    kr = params['kr']; knr = params['knr']; k_isc = params['k_isc']
+    k_risc = params.get('k_risc', 0.0)
+    k_tph = params.get('k_tph', 0.0); k_tnr = params['k_tnr']
+    Ds = params['Ds']; Dt = params['Dt']
+    kq_sn = params['kq_sn']; kq_sp = params['kq_sp']
+    kq_tn = params['kq_tn']; kq_tp = params['kq_tp']
+    k_ss = params['k_ss']; k_tta = params['k_tta']
+    n_cathode_bc_val = params['n_cathode_bc']
+    p_anode_bc_val = params['p_anode_bc']
+    eps_phi = params['eps_phi']
+
+    # --- Reshape State Vector ---
+    phi = y[0*N : 1*N]; n = y[1*N : 2*N]; p = y[2*N : 3*N]
+    S = y[3*N : 4*N]; T = y[4*N : 5*N]
+    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4)
+    S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
+
+    dphi_dt=np.zeros(N); dn_dt=np.zeros(N); dp_dt=np.zeros(N); dS_dt=np.zeros(N); dT_dt=np.zeros(N)
+
+    # --- Apply Boundary Conditions to State ---
+    phi[0] = ramped_drive_voltage_continuation(t, params, V_start, V_end)
     phi[-1] = 0.0
+    n[-1] = n_cathode_bc_val; p[0] = p_anode_bc_val
+    S[0] = S[-1] = 0.0; T[0] = T[-1] = 0.0
 
-def apply_bc_carriers(n, p, t, params):
+    # --- Calculate Spatially Varying Parameters ---
+    E = np.zeros(N); E[1:-1] = -(phi[2:] - phi[:-2]) / (2 * dL)
+    E[0] = -(phi[1] - phi[0]) / dL; E[-1] = -(phi[-1] - phi[-2]) / dL
+    E_abs = np.abs(E)
+    if use_gdm:
+        mu_n_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_n, sigma_hop_n, C_gdm_n)
+        mu_p_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_p, sigma_hop_p, C_gdm_p)
+    else:
+        mu_n_local = np.maximum(np.full(N, mu0_n), 1e-18)
+        mu_p_local = np.maximum(np.full(N, mu0_p), 1e-18)
+    Dn_local = mu_n_local * Vth; Dp_local = mu_p_local * Vth
+
+    # --- Finite Difference Calculations ---
+    dV_int = phi[:-1] - phi[1:]
+    x_int = np.clip(dV_int / Vth, -500, 500)
+    B_plus = bernoulli(x_int); B_minus = bernoulli(-x_int)
+    Dn_int = 0.5 * (Dn_local[:-1] + Dn_local[1:])
+    Dp_int = 0.5 * (Dp_local[:-1] + Dp_local[1:])
+    Jn_int = (q * Dn_int / dL) * ( B_minus * n[1:] - B_plus * n[:-1] )
+    Jp_int = (q * Dp_int / dL) * ( B_plus * p[:-1] - B_minus * p[1:] )
+
+    # --- Calculate Divergences ---
+    div_Jn = (Jn_int[1:] - Jn_int[:-1]) / dL; div_Jp = (Jp_int[1:] - Jp_int[:-1]) / dL
+
+    # --- Calculate Rates ---
+    n_int = n[1:-1]; p_int = p[1:-1]; S_int = S[1:-1]; T_int = T[1:-1]
+    gamma_L_local = calculate_langevin_gamma(mu_n_local[1:-1], mu_p_local[1:-1], eps)
+    R_bimol = gamma_reduction * gamma_L_local * (n_int * p_int); R_bimol = np.maximum(R_bimol, 0.0)
+    R_auger = C_n_aug * n_int**2 * p_int + C_p_aug * n_int * p_int**2; R_auger = np.maximum(R_auger, 0.0)
+    R_total_carrier_loss = R_bimol + R_auger
+    G_S = spin_fraction_singlet * R_bimol; G_T = (1.0 - spin_fraction_singlet) * R_bimol
+    d2S_dx2 = (S[2:] - 2*S_int + S[:-2]) / (dL**2); Diffusion_S = Ds * d2S_dx2
+    d2T_dx2 = (T[2:] - 2*T_int + T[:-2]) / (dL**2); Diffusion_T = Dt * d2T_dx2
+    Loss_S_decay = (kr + knr) * S_int; Loss_S_isc = k_isc * S_int
+    Loss_S_quench_n = kq_sn * n_int * S_int; Loss_S_quench_p = kq_sp * p_int * S_int
+    Loss_S_ssa = k_ss * S_int**2; Gain_S_risc = k_risc * T_int
+    Gamma_loss_S_net = Loss_S_decay + Loss_S_isc + Loss_S_quench_n + Loss_S_quench_p + Loss_S_ssa - Gain_S_risc
+    Loss_T_decay = (k_tph + k_tnr) * T_int; Loss_T_risc = k_risc * T_int
+    Loss_T_quench_n = kq_tn * n_int * T_int; Loss_T_quench_p = kq_tp * p_int * T_int
+    Loss_T_tta = k_tta * T_int**2; Gain_T_isc = Loss_S_isc
+    Gamma_loss_T_net = Loss_T_decay + Loss_T_risc + Loss_T_quench_n + Loss_T_quench_p + Loss_T_tta - Gain_T_isc
+
+    # --- Assemble Derivatives ---
+    dn_dt[1:-1] = (1.0/q) * div_Jn - R_total_carrier_loss
+    dp_dt[1:-1] = -(1.0/q) * div_Jp - R_total_carrier_loss
+    dS_dt[1:-1] = G_S - Gamma_loss_S_net + Diffusion_S
+    dT_dt[1:-1] = G_T - Gamma_loss_T_net + Diffusion_T
+
+    # --- Poisson's Equation ---
+    d2phi_dx2 = (phi[2:] - 2*phi[1:-1] + phi[:-2]) / (dL**2)
+    charge_term = q * (p[1:-1] - n[1:-1])
+    dphi_dt[1:-1] = (eps * d2phi_dx2 - charge_term) / eps_phi
+
+    # --- Fix Derivatives at Boundaries ---
+    dphi_dt[0] = dphi_dt[-1] = 0.0; dn_dt[0] = dn_dt[-1] = 0.0
+    dp_dt[0] = dp_dt[-1] = 0.0; dS_dt[0] = dS_dt[-1] = 0.0
+    dT_dt[0] = dT_dt[-1] = 0.0
+
+    dydt = np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt, dT_dt])
+    return dydt
+
+# --- Simulation Runner (CORRECTED derived parameter calculation) ---
+
+def run_1d_oled_sim_step(params, V_start, V_end, y0_input=None, solver_method='BDF', save_filename=None):
     """
-    Simple 'ohmic-like' boundary conditions:
-    - At x=0 (anode): pinned hole density => p(0) = p_anode_bc
-    - At x=N-1 (cathode): pinned electron density => n(N-1) = n_cathode_bc
+    Runs a single voltage step in the continuation method.
+    Accepts an initial state y0_input. CORRECTED DERIVED PARAMS.
     """
-    p_anode_bc    = params['p_anode_bc']
-    n_cathode_bc  = params['n_cathode_bc']
+    # !! **** CORRECTION: Calculate derived params here **** !!
+    # Make a copy to avoid modifying the dictionary passed to subsequent steps if run in sequence non-parallel
+    params = params.copy()
+    params['dL'] = params['d'] / (params['N'] - 1)
+    params['eps'] = params['eps_r'] * EPS0
+    params['q'] = Q
+    params['Vth'] = KB * params['T_dev'] / Q
+    # Now dL, eps, q, Vth will be in the params dict passed to the ODE function
+    # !! **************************************************** !!
 
-    p[0]    = p_anode_bc
-    n[-1]   = n_cathode_bc
-
-def apply_bc_excitons(S, t, params):
-    """
-    Excitons vanish at both electrodes: S(0)=0, S(N-1)=0.
-    """
-    S[0]    = 0.0
-    S[-1]   = 0.0
-
-###############################################################################
-# 2) MAIN PDE (METHOD-OF-LINES) FUNCTION
-###############################################################################
-
-def ddp_equations(t, y, params):
-    """
-    Time-derivatives for [phi, n, p, S] in a 1D device using finite differences.
-
-    y is a 1D array: [phi(0..N-1), n(0..N-1), p(0..N-1), S(0..N-1)].
-    We'll reshape them internally, then compute derivatives.
-
-    Poisson eqn is solved in a 'relaxed' manner:
-      eps_phi * dphi/dt = - (d^2 phi/dx^2) - q/eps (p - n)
-
-    Electron & Hole continuity eqn w/ drift-diffusion.
-    Singlet exciton continuity eqn w/ optional diffusion, generation, decay.
-    """
-    # Unpack essential parameters
-    N      = params['N']
-    dL     = params['dL']
-    eps    = params['eps']
-    q      = params['q']
-
-    mu_n   = params['mu_n']
-    mu_p   = params['mu_p']
-    D_n    = params['D_n']
-    D_p    = params['D_p']
-
-    gamma  = params['gamma']
-    eta_exc= params['eta_exc']
-    kr     = params['kr']
-    knr    = params['knr']
-    Ds     = params['Ds']
-    eps_phi= params['eps_phi']
-
-    # Reshape state variables
-    phi = y[0:N]
-    n   = y[N:2*N]
-    p   = y[2*N:3*N]
-    S   = y[3*N:4*N]
-
-    # Prepare arrays for derivatives
-    dphi_dt = np.zeros(N)
-    dn_dt   = np.zeros(N)
-    dp_dt   = np.zeros(N)
-    dS_dt   = np.zeros(N)
-
-    #-----------------------------------------------------------------------
-    # (1) Poisson eq. with artificial time relaxation:
-    #     eps_phi * dphi/dt = - d2phi/dx^2 - (q/eps) (p - n)
-    for i in range(1, N-1):
-        d2phi_dx2 = (phi[i+1] - 2*phi[i] + phi[i-1]) / (dL**2)
-        charge_term = (q/eps)*(p[i] - n[i])
-        dphi_dt[i] = -(d2phi_dx2 + charge_term) / eps_phi
-
-    #-----------------------------------------------------------------------
-    # (2) Compute fluxes for electrons & holes
-    def flux_n(i):
-        """
-        Electron flux at boundary 'i' between cell i-1 and i.
-        Jn = q [ mu_n * n_face * E_face - D_n * grad_n ]
-        E_face = -(phi[i] - phi[i-1])/dL
-        n_face = 0.5*(n[i] + n[i-1])
-        grad_n = (n[i] - n[i-1])/dL
-        """
-        E_face = -(phi[i] - phi[i-1])/dL
-        n_face = 0.5*(n[i] + n[i-1])
-        grad_n = (n[i] - n[i-1]) / dL
-        return q*(mu_n*n_face*E_face - D_n*grad_n)
-
-    def flux_p(i):
-        """
-        Hole flux at boundary 'i' between cell i-1 and i.
-        Jp = q [ - mu_p * p_face * E_face - D_p * grad_p ]
-        E_face = -(phi[i] - phi[i-1])/dL
-        p_face = 0.5*(p[i] + p[i-1])
-        grad_p = (p[i] - p[i-1])/dL
-        """
-        E_face = -(phi[i] - phi[i-1])/dL
-        p_face = 0.5*(p[i] + p[i-1])
-        grad_p = (p[i] - p[i-1]) / dL
-        return q*(-mu_p*p_face*E_face - D_p*grad_p)
-
-    for i in range(1, N-1):
-        # electron flux at left & right boundaries
-        Jn_left  = flux_n(i)
-        Jn_right = flux_n(i+1)
-        dn_dx    = (Jn_right - Jn_left)/(dL*q)
-
-        # hole flux
-        Jp_left  = flux_p(i)
-        Jp_right = flux_p(i+1)
-        dp_dx    = (Jp_right - Jp_left)/(dL*q)
-
-        # Bimolecular recombination
-        recomb   = gamma*n[i]*p[i]
-
-        dn_dt[i] = -dn_dx - recomb
-        dp_dt[i] = -dp_dx - recomb
-
-    #-----------------------------------------------------------------------
-    # (3) Exciton PDE
-    # dS/dt = Ds d2S/dx^2 + eta_exc*gamma*n*p - (kr+knr)*S
-    for i in range(1, N-1):
-        d2S_dx2 = (S[i+1] - 2*S[i] + S[i-1]) / (dL**2)
-        gen     = eta_exc * gamma * n[i] * p[i]
-        loss    = (kr + knr)*S[i]
-        dS_dt[i] = Ds*d2S_dx2 + gen - loss
-
-    #-----------------------------------------------------------------------
-    # (4) Apply boundary conditions
-    # Potential:
-    apply_bc_phi(phi, t, params)
-    dphi_dt[0]   = 0.0
-    dphi_dt[-1]  = 0.0
-
-    # Carriers:
-    apply_bc_carriers(n, p, t, params)
-    dn_dt[0]     = 0.0
-    dn_dt[-1]    = 0.0
-    dp_dt[0]     = 0.0
-    dp_dt[-1]    = 0.0
-
-    # Excitons:
-    apply_bc_excitons(S, t, params)
-    dS_dt[0]     = 0.0
-    dS_dt[-1]    = 0.0
-
-    # Pack up derivatives
-    return np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt])
-
-###############################################################################
-# 3) MAIN SIMULATION FUNCTION
-###############################################################################
-
-def run_1d_oled_sim():
-    #-----------------------
-    # Define smaller device / mesh
-    N = 51             # number of mesh points (fewer => less stiff, easier to solve)
-    d = 50e-9          # 50 nm thickness (reduced from 100 nm)
-    dL = d/(N-1)       # spatial step
-
-    # Permittivity
-    eps0 = 8.854e-12
-    eps_r = 3.0
-    eps = eps0*eps_r
-
-    # Basic constants
-    q   = 1.602e-19
-    T   = 300.0        # temperature K
-    kB  = 1.38e-23
-    Vth = kB*T / q      # ~ 0.0259 eV at room temperature
-
-    # Mobility
-    mu_n = 1e-8   # m^2/Vs
-    mu_p = 1e-8   # m^2/Vs
-    # Diffusion (Einstein relation)
-    D_n  = mu_n*Vth
-    D_p  = mu_p*Vth
-
-    # Recombination & exciton parameters
-    gamma   = 1e-17     # reduce from 1e-16 to 1e-17
-    eta_exc = 0.25
-    kr      = 1e7
-    knr     = 1e6
-    Ds      = 1e-5      # exciton diffusion coefficient (slightly larger for test)
-
-    # "Artificial" time-relaxation factor for Poisson eq
-    eps_phi = 1e-8      # significantly increased from 1e-12
-
-    # Drive voltage & time settings
-    V_drive = 5.0
-    t_ramp  = 1e-7   # ramp from 0 -> 5V over 0.1 microseconds
-    t_off   = 3e-7   # after 0.3 microseconds, go to 0
-
-    # Time range for the simulation
-    t_end   = 2e-6   # total 2 microseconds
-    # We'll pick 2001 points for plotting
-    t_eval  = np.linspace(0, t_end, 2001)
-
-    # Boundary pinned densities (lower => less extreme doping at contacts)
-    n_cathode_bc = 1e14
-    p_anode_bc   = 1e14
-
-    # Pack parameters
-    params = {
-        'N': N,
-        'dL': dL,
-        'eps': eps,
-        'q': q,
-        'mu_n': mu_n,
-        'mu_p': mu_p,
-        'D_n': D_n,
-        'D_p': D_p,
-        'gamma': gamma,
-        'eta_exc': eta_exc,
-        'kr': kr,
-        'knr': knr,
-        'Ds': Ds,
-        'eps_phi': eps_phi,
-
-        'V_drive': V_drive,
-        't_ramp':  t_ramp,
-        't_off':   t_off,
-
-        'n_cathode_bc': n_cathode_bc,
-        'p_anode_bc':   p_anode_bc
-    }
-
-    # Build initial condition
-    y0 = build_initial_condition(N)
-
-    # Solve with solve_ivp, using BDF for stiff systems
-    sol = solve_ivp(
-        fun=lambda tt, yy: ddp_equations(tt, yy, params),
-        t_span=(0, t_end),
-        y0=y0,
-        t_eval=t_eval,
-        method='BDF',  
-        rtol=1e-3,
-        atol=1e-6,
-        max_step=1e-8  # allow the solver to refine steps as needed
-    )
-
-    # Check success
-    if not sol.success:
-        print("Warning: ODE solver did not converge or ended early!")
-        print(sol.message)
-
-    # Ensure we have at least 2 points to plot
-    if sol.t.size < 2:
-        raise RuntimeError("Solver returned < 2 time points; cannot plot a decay.")
-
-    # Extract solutions
-    phi_sol = sol.y[0:N, :]
-    n_sol   = sol.y[N:2*N, :]
-    p_sol   = sol.y[2*N:3*N, :]
-    S_sol   = sol.y[3*N:4*N, :]
-
-    return sol.t, phi_sol, n_sol, p_sol, S_sol, params
-
-###############################################################################
-# 4) MAIN FUNCTION FOR RUNNING AND PLOTTING
-###############################################################################
-
-def main():
-    # Run simulation
-    t, phi_sol, n_sol, p_sol, S_sol, params = run_1d_oled_sim()
     N = params['N']
-    x = np.linspace(0, params['dL']*(N-1), N)
+    # --- Initial Condition ---
+    if y0_input is None:
+        # print("Building initial condition from scratch...") # Reduce verbosity
+        y0 = build_initial_condition_smoothed(N, params)
+        if V_start != 0.0:
+             y0[0] = V_start
+    else:
+        # print(f"Using provided initial state y0_input.") # Reduce verbosity
+        y0 = y0_input.copy()
+        y0[0] = V_start
+        y0[N-1] = 0.0
 
-    # Compute total emission:
-    # L(t) ~ \int kr * S(x,t) dx (in 1D, sum over mesh cells)
-    kr = params['kr']
-    dL = params['dL']
-    lum_vs_t = []
-    for it in range(len(t)):
-        S_t = S_sol[:, it]
-        # local rate = kr * S(x), integrate across domain
-        total_rate = np.sum(kr * S_t)*dL
-        lum_vs_t.append(total_rate)
-    lum_vs_t = np.array(lum_vs_t)
+    # --- Time Stepping for this step ---
+    t_ramp = params['t_ramp_step']
+    stabilization_time = params.get('t_stabilize_step', 5 * t_ramp)
+    t_span_step = (0, t_ramp + stabilization_time)
+    num_t_points_step = params.get('num_t_points_step', 101)
+    t_eval_step = np.linspace(t_span_step[0], t_span_step[1], num_t_points_step)
+    max_step_val = params.get('max_step_init', np.inf)
 
-    # Plot results
-    plt.figure(figsize=(10, 8))
+    # print(f"Starting ODE step: {V_start:.2f}V -> {V_end:.2f}V (Ramp: {t_ramp:.1e}s, Stab: {stabilization_time:.1e}s)...") # Reduce verbosity
 
-    # (1) Potential at final time
-    plt.subplot(2, 2, 1)
-    plt.plot(x*1e9, phi_sol[:, -1], label='phi(x) final')
-    plt.xlabel('x (nm)')
-    plt.ylabel('Potential (V)')
-    plt.title('Potential Distribution (final time)')
-    plt.legend()
+    sol = None
+    # Wrap with tqdm - note the desc string format needs fixing if V_start/V_end are not defined here
+    with tqdm(total=1, desc=f"Step {V_start:.2f}V->{V_end:.2f}V") as pbar:
+        try:
+            sol = solve_ivp(
+                fun=oled_1d_dde_equations_advanced_cont,
+                t_span=t_span_step,
+                y0=y0,
+                method=solver_method,
+                t_eval=t_eval_step,
+                args=(params, V_start, V_end), # Pass V_start, V_end
+                rtol=params['rtol'],
+                atol=params['atol'],
+                max_step=max_step_val
+            )
+            pbar.update(1)
+        except Exception as e:
+            pbar.update(1)
+            print(f"\nError during solve_ivp step {V_start:.2f}V->{V_end:.2f}V: {e}")
+            # Decide if you want to raise or allow continuation loop to handle failure
+            raise # Re-raise to stop the continuation loop on first error
 
-    # (2) Carrier distribution at final time
-    plt.subplot(2, 2, 2)
-    plt.plot(x*1e9, n_sol[:, -1], label='n(x)')
-    plt.plot(x*1e9, p_sol[:, -1], label='p(x)')
-    plt.yscale('log')
-    plt.xlabel('x (nm)')
-    plt.ylabel('Carrier Density (m^-3)')
-    plt.title('Carriers at final time')
-    plt.legend()
+    # print(f"ODE step finished: {sol.message if sol else 'Error'}") # Reduce verbosity
+    if sol and not sol.success:
+        # Warning is okay, but raise error if no steps were taken
+        warnings.warn(f"ODE step {V_start:.2f}V->{V_end:.2f}V finished with warning: {sol.message}")
+        if sol.t.size < 2 :
+             raise RuntimeError(f"Solver failed to take any steps for {V_start:.2f}V->{V_end:.2f}V.")
+    if not sol: # Should not happen if exception is raised, but for safety
+         raise RuntimeError(f"Solver failed completely for {V_start:.2f}V->{V_end:.2f}V (no solution object).")
 
-    # (3) Exciton distribution at final time
-    plt.subplot(2, 2, 3)
-    plt.plot(x*1e9, S_sol[:, -1], label='S(x)')
-    plt.yscale('log')
-    plt.xlabel('x (nm)')
-    plt.ylabel('Exciton Density (m^-3)')
-    plt.title('Excitons at final time')
-    plt.legend()
 
-    # (4) Light emission vs time
-    plt.subplot(2, 2, 4)
-    plt.plot(t*1e6, lum_vs_t, label='Emission vs time')
-    plt.xlabel('Time (µs)')
-    plt.ylabel('Emission (arb. units)')
-    plt.title('Electroluminescence Decay')
-    plt.legend()
+    final_state = sol.y[:, -1]
 
-    plt.tight_layout()
-    plt.show()
+    if save_filename:
+        try:
+            np.savez_compressed(save_filename, y_final=final_state, V_end=V_end, params=params)
+            # print(f"Saved final state for {V_end:.2f}V to {save_filename}") # Reduce verbosity
+        except Exception as e:
+            warnings.warn(f"Could not save intermediate state {save_filename}: {e}")
 
-###############################################################################
-# 5) EXECUTE
-###############################################################################
+    # print(f"Step {V_start:.2f}V->{V_end:.2f}V completed.") # Reduce verbosity
+    return final_state
 
+# --- Main Execution (Voltage Continuation Loop - unchanged logic) ---
+def main_voltage_continuation():
+    print("--- Starting OLED Simulation with Voltage Continuation ---")
+    base_params = {
+        'N': 101, 'd': 100e-9, 'eps_r': 3.0, 'T_dev': 300.0,
+        'gdm_n': (1e-7, 0.08, 3e-4), 'gdm_p': (1e-7, 0.08, 3e-4), 'use_gdm': True,
+        'gamma_reduction': 0.1, 'auger_coeffs': (0.0, 0.0),
+        'spin_fraction_singlet': 0.25, 'kr': 1e7, 'knr': 5e6, 'k_isc': 2e7, 'k_risc': 0.0,
+        'k_tph': 0.0, 'k_tnr': 1e5, 'Ds': 1e-9, 'Dt': 1e-10,
+        'kq_sn': 1e-19, 'kq_sp': 1e-19, 'kq_tn': 1e-19, 'kq_tp': 1e-19,
+        'k_ss': 1e-18, 'k_tta': 5e-18,
+        'n_cathode_bc': 1e23, 'p_anode_bc': 1e23,
+        'n0_background': 1e6, 'p0_background': 1e6,
+        'eps_phi': 1e-14, 'rtol': 1e-4, 'atol': 1e-7,
+        't_ramp_step': 1e-7, 't_stabilize_step': 5e-7,
+        'num_t_points_step': 101, 'save_intermediate': True,
+        'solver_method': 'BDF',
+    }
+    voltage_steps = np.linspace(0.0, 5.0, 11) # 0.0, 0.5, ..., 5.0
+    print(f"Voltage steps: {voltage_steps}")
+    current_y = None
+    final_states = {}
+    save_dir = "oled_continuation_states" # Directory to save states
+    os.makedirs(save_dir, exist_ok=True) # Create directory if it doesn't exist
+
+    try:
+        for i in range(len(voltage_steps) - 1):
+            V_start = voltage_steps[i]
+            V_end = voltage_steps[i+1]
+            save_fname = os.path.join(save_dir, f"oled_state_V{V_end:.2f}.npz") if base_params['save_intermediate'] else None
+            load_success = False
+            if save_fname and os.path.exists(save_fname):
+                try:
+                    data = np.load(save_fname, allow_pickle=True)
+                    if np.isclose(data['V_end'], V_end):
+                        current_y = data['y_final']
+                        print(f"Loaded previous state for {V_end:.2f}V from {save_fname}")
+                        load_success = True
+                    else: print(f"Saved state V mismatch ({data['V_end']:.2f} != {V_end:.2f}). Recalculating.")
+                except Exception as load_err: print(f"Error loading {save_fname}: {load_err}. Recalculating.")
+
+            if not load_success:
+                 current_y = run_1d_oled_sim_step(base_params, V_start, V_end,
+                                                  y0_input=current_y,
+                                                  solver_method=base_params['solver_method'],
+                                                  save_filename=save_fname)
+            final_states[V_end] = current_y
+
+        print("\n--- Voltage Continuation Finished Successfully ---")
+        target_voltage = voltage_steps[-1]
+        if target_voltage in final_states:
+            print("Plotting final state from continuation...")
+            plot_final_state(final_states[target_voltage], target_voltage, base_params)
+        else: print("Final state not available for plotting.")
+
+    except Exception as e:
+        print(f"\n--- An error occurred during Voltage Continuation ---")
+        print(f"Error Type: {type(e).__name__}"); print(f"Error Details: {e}")
+        import traceback; print("\n--- Traceback ---"); traceback.print_exc(); print("-----------------\n")
+
+
+# --- Plotting Helper (unchanged) ---
+def plot_final_state(y_final, voltage, params):
+    N = params['N']; dL = params['dL']; kr = params['kr']; d = params['d']
+    x_nm = np.linspace(0, d * 1e9, N)
+    phi = y_final[0*N : 1*N]; n = y_final[1*N : 2*N]; p = y_final[2*N : 3*N]
+    S = y_final[3*N : 4*N]; T = y_final[4*N : 5*N]
+    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4)
+    S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
+
+    plt.style.use('seaborn-v0_8-darkgrid')
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+    fig.suptitle(f"Final State @ {voltage:.2f}V (GDM={params['use_gdm']})", fontsize=14)
+
+    ax = axes[0]; ax.plot(x_nm, phi, label=f'phi(x)')
+    ax.set(xlabel='Position x (nm)', ylabel='Potential (V)', title='Potential'); ax.legend(); ax.grid(True)
+    ax = axes[1]; ax.plot(x_nm, n, label=f'n(x)')
+    ax.plot(x_nm, p, label=f'p(x)', ls='--')
+    ax.set(xlabel='Position x (nm)', ylabel='Density (m$^{-3}$)', title='Carriers', yscale='log'); ax.legend(); ax.grid(True, which='both')
+    ax = axes[2]; ax.plot(x_nm, S, label=f'S(x)')
+    ax.plot(x_nm, T, label=f'T(x)', color='purple', ls='--')
+    ax.set(xlabel='Position x (nm)', ylabel='Density (m$^{-3}$)', title='Excitons', yscale='log'); ax.legend(); ax.grid(True, which='both')
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95]); plt.show()
+
+
+# --- Main Entry Point ---
 if __name__ == '__main__':
-    main()
+    # Run the voltage continuation simulation
+    main_voltage_continuation()
 ```

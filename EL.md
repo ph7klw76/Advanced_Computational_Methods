@@ -623,10 +623,10 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from scipy.special import expit, erfc
 import warnings
-from tqdm.auto import tqdm # Import tqdm for progress bar
-import multiprocessing # For parallel processing example
-import time # For parameter sweep example timing
-import os # For saving intermediate results
+from tqdm.auto import tqdm
+import multiprocessing
+import time
+import os
 
 # --- Constants ---
 Q = 1.602e-19; KB = 1.38e-23; EPS0 = 8.854e-12; HBAR = 1.054571817e-34
@@ -656,12 +656,17 @@ def calculate_langevin_gamma(mu_n_local, mu_p_local, eps):
     gamma_L = Q * (mu_n_safe + mu_p_safe) / eps
     return np.maximum(gamma_L, 0.0)
 
-# --- Ramped Voltage (modified for continuation - unchanged) ---
+# --- Ramped Voltage (For Continuation Steps - unchanged) ---
 def ramped_drive_voltage_continuation(t, params, V_start, V_end):
-    t_ramp = params['t_ramp_step']; t_off = params.get('t_off', np.inf)
+    t_ramp = params['t_ramp_step'];
     if t < 0: return V_start
     elif t < t_ramp: return V_start + (V_end - V_start) * (t / t_ramp)
-    elif t < t_off: return V_end
+    else: return V_end
+
+# --- Ramped Voltage (For Decay Phase - unchanged) ---
+def ramped_drive_voltage_decay(t, params, V_steady):
+    t_off = params.get('t_off_decay', 0.0)
+    if t < t_off: return V_steady
     else: return 0.0
 
 # --- Initial Condition (Smoothed - unchanged) ---
@@ -672,67 +677,46 @@ def build_initial_condition_smoothed(N, params):
     num_smooth_points = min(5, N // 4)
     if num_smooth_points > 1:
         p_smooth_indices = np.arange(num_smooth_points)
-        log_p_target = np.log10(max(p_anode_target, 1e-10))
-        log_p_bg = np.log10(max(p0_bg, 1e-10))
-        p0[p_smooth_indices] = 10**(np.linspace(log_p_target, log_p_bg, num_smooth_points)[::-1])
-        p0[0] = p_anode_target
+        log_p_target = np.log10(max(p_anode_target, 1e-10)); log_p_bg = np.log10(max(p0_bg, 1e-10))
+        p0[p_smooth_indices] = 10**(np.linspace(log_p_target, log_p_bg, num_smooth_points)[::-1]); p0[0] = p_anode_target
         n_smooth_indices = np.arange(N - num_smooth_points, N)
-        log_n_bg = np.log10(max(n0_bg, 1e-10))
-        log_n_target = np.log10(max(n_cathode_target, 1e-10))
-        n0[n_smooth_indices] = 10**(np.linspace(log_n_bg, log_n_target, num_smooth_points))
-        n0[-1] = n_cathode_target
-    else:
-         n0[-1] = n_cathode_target; p0[0] = p_anode_target
+        log_n_bg = np.log10(max(n0_bg, 1e-10)); log_n_target = np.log10(max(n_cathode_target, 1e-10))
+        n0[n_smooth_indices] = 10**(np.linspace(log_n_bg, log_n_target, num_smooth_points)); n0[-1] = n_cathode_target
+    else: n0[-1] = n_cathode_target; p0[0] = p_anode_target
     S0 = np.zeros(N); T0 = np.zeros(N)
     return np.concatenate([phi0, n0, p0, S0, T0])
 
-# --- Main PDE System Definition (unchanged) ---
+# --- Main PDE System Definition (FOR CONTINUATION STEPS - unchanged) ---
 def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
+    # (Code identical to previous version)
     N = params.get('N'); dL = params.get('dL'); eps = params.get('eps'); q = params.get('q')
     T_dev = params.get('T_dev'); Vth = params.get('Vth')
-    if any(v is None for v in [N, dL, eps, q, T_dev, Vth]):
-        raise ValueError("Essential parameters missing from params dict in ODE function")
-    mu0_n, sigma_hop_n, C_gdm_n = params['gdm_n']
-    mu0_p, sigma_hop_p, C_gdm_p = params['gdm_p']
-    use_gdm = params.get('use_gdm', True)
-    gamma_reduction = params['gamma_reduction']
-    C_n_aug, C_p_aug = params.get('auger_coeffs', (0.0, 0.0))
-    spin_fraction_singlet = params['spin_fraction_singlet']
-    kr = params['kr']; knr = params['knr']; k_isc = params['k_isc']
-    k_risc = params.get('k_risc', 0.0)
-    k_tph = params.get('k_tph', 0.0); k_tnr = params['k_tnr']
-    Ds = params['Ds']; Dt = params['Dt']
-    kq_sn = params['kq_sn']; kq_sp = params['kq_sp']
-    kq_tn = params['kq_tn']; kq_tp = params['kq_tp']
-    k_ss = params['k_ss']; k_tta = params['k_tta']
-    n_cathode_bc_val = params['n_cathode_bc']
-    p_anode_bc_val = params['p_anode_bc']
-    eps_phi = params['eps_phi']
-    phi = y[0*N : 1*N]; n = y[1*N : 2*N]; p = y[2*N : 3*N]
-    S = y[3*N : 4*N]; T = y[4*N : 5*N]
-    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4)
-    S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
+    if any(v is None for v in [N, dL, eps, q, T_dev, Vth]): raise ValueError("Essential params missing")
+    mu0_n, sigma_hop_n, C_gdm_n = params['gdm_n']; mu0_p, sigma_hop_p, C_gdm_p = params['gdm_p']
+    use_gdm = params.get('use_gdm', True); gamma_reduction = params['gamma_reduction']
+    C_n_aug, C_p_aug = params.get('auger_coeffs', (0.0, 0.0)); spin_fraction_singlet = params['spin_fraction_singlet']
+    kr = params['kr']; knr = params['knr']; k_isc = params['k_isc']; k_risc = params.get('k_risc', 0.0)
+    k_tph = params.get('k_tph', 0.0); k_tnr = params['k_tnr']; Ds = params['Ds']; Dt = params['Dt']
+    kq_sn = params['kq_sn']; kq_sp = params['kq_sp']; kq_tn = params['kq_tn']; kq_tp = params['kq_tp']
+    k_ss = params['k_ss']; k_tta = params['k_tta']; n_cathode_bc_val = params['n_cathode_bc']
+    p_anode_bc_val = params['p_anode_bc']; eps_phi = params['eps_phi']
+    phi = y[0*N : 1*N]; n = y[1*N : 2*N]; p = y[2*N : 3*N]; S = y[3*N : 4*N]; T = y[4*N : 5*N]
+    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4); S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
     dphi_dt=np.zeros(N); dn_dt=np.zeros(N); dp_dt=np.zeros(N); dS_dt=np.zeros(N); dT_dt=np.zeros(N)
     phi[0] = ramped_drive_voltage_continuation(t, params, V_start, V_end); phi[-1] = 0.0
-    n[-1] = n_cathode_bc_val; p[0] = p_anode_bc_val
-    S[0] = S[-1] = 0.0; T[0] = T[-1] = 0.0
-    E = np.zeros(N); E[1:-1] = -(phi[2:] - phi[:-2]) / (2 * dL)
-    E[0] = -(phi[1] - phi[0]) / dL; E[-1] = -(phi[-1] - phi[-2]) / dL
+    n[-1] = n_cathode_bc_val; p[0] = p_anode_bc_val; S[0] = S[-1] = 0.0; T[0] = T[-1] = 0.0
+    E = np.zeros(N); E[1:-1] = -(phi[2:] - phi[:-2]) / (2 * dL); E[0] = -(phi[1] - phi[0]) / dL; E[-1] = -(phi[-1] - phi[-2]) / dL
     E_abs = np.abs(E)
     if use_gdm:
         mu_n_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_n, sigma_hop_n, C_gdm_n)
         mu_p_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_p, sigma_hop_p, C_gdm_p)
     else:
-        mu_n_local = np.maximum(np.full(N, mu0_n), 1e-18)
-        mu_p_local = np.maximum(np.full(N, mu0_p), 1e-18)
+        mu_n_local = np.maximum(np.full(N, mu0_n), 1e-18); mu_p_local = np.maximum(np.full(N, mu0_p), 1e-18)
     Dn_local = mu_n_local * Vth; Dp_local = mu_p_local * Vth
-    dV_int = phi[:-1] - phi[1:]
-    x_int = np.clip(dV_int / Vth, -500, 500)
+    dV_int = phi[:-1] - phi[1:]; x_int = np.clip(dV_int / Vth, -500, 500)
     B_plus = bernoulli(x_int); B_minus = bernoulli(-x_int)
-    Dn_int = 0.5 * (Dn_local[:-1] + Dn_local[1:])
-    Dp_int = 0.5 * (Dp_local[:-1] + Dp_local[1:])
-    Jn_int = (q * Dn_int / dL) * ( B_minus * n[1:] - B_plus * n[:-1] )
-    Jp_int = (q * Dp_int / dL) * ( B_plus * p[:-1] - B_minus * p[1:] )
+    Dn_int = 0.5 * (Dn_local[:-1] + Dn_local[1:]); Dp_int = 0.5 * (Dp_local[:-1] + Dp_local[1:])
+    Jn_int = (q * Dn_int / dL) * ( B_minus * n[1:] - B_plus * n[:-1] ); Jp_int = (q * Dp_int / dL) * ( B_plus * p[:-1] - B_minus * p[1:] )
     div_Jn = (Jn_int[1:] - Jn_int[:-1]) / dL; div_Jp = (Jp_int[1:] - Jp_int[:-1]) / dL
     n_int = n[1:-1]; p_int = p[1:-1]; S_int = S[1:-1]; T_int = T[1:-1]
     gamma_L_local = calculate_langevin_gamma(mu_n_local[1:-1], mu_p_local[1:-1], eps)
@@ -742,50 +726,176 @@ def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
     G_S = spin_fraction_singlet * R_bimol; G_T = (1.0 - spin_fraction_singlet) * R_bimol
     d2S_dx2 = (S[2:] - 2*S_int + S[:-2]) / (dL**2); Diffusion_S = Ds * d2S_dx2
     d2T_dx2 = (T[2:] - 2*T_int + T[:-2]) / (dL**2); Diffusion_T = Dt * d2T_dx2
-    Loss_S_decay = (kr + knr) * S_int; Loss_S_isc = k_isc * S_int
-    Loss_S_quench_n = kq_sn * n_int * S_int; Loss_S_quench_p = kq_sp * p_int * S_int
-    Loss_S_ssa = k_ss * S_int**2; Gain_S_risc = k_risc * T_int
+    Loss_S_decay = (kr + knr) * S_int; Loss_S_isc = k_isc * S_int; Loss_S_quench_n = kq_sn * n_int * S_int
+    Loss_S_quench_p = kq_sp * p_int * S_int; Loss_S_ssa = k_ss * S_int**2; Gain_S_risc = k_risc * T_int
     Gamma_loss_S_net = Loss_S_decay + Loss_S_isc + Loss_S_quench_n + Loss_S_quench_p + Loss_S_ssa - Gain_S_risc
-    Loss_T_decay = (k_tph + k_tnr) * T_int; Loss_T_risc = k_risc * T_int
-    Loss_T_quench_n = kq_tn * n_int * T_int; Loss_T_quench_p = kq_tp * p_int * T_int
-    Loss_T_tta = k_tta * T_int**2; Gain_T_isc = Loss_S_isc
+    Loss_T_decay = (k_tph + k_tnr) * T_int; Loss_T_risc = k_risc * T_int; Loss_T_quench_n = kq_tn * n_int * T_int
+    Loss_T_quench_p = kq_tp * p_int * T_int; Loss_T_tta = k_tta * T_int**2; Gain_T_isc = Loss_S_isc
     Gamma_loss_T_net = Loss_T_decay + Loss_T_risc + Loss_T_quench_n + Loss_T_quench_p + Loss_T_tta - Gain_T_isc
-    dn_dt[1:-1] = (1.0/q) * div_Jn - R_total_carrier_loss
-    dp_dt[1:-1] = -(1.0/q) * div_Jp - R_total_carrier_loss
-    dS_dt[1:-1] = G_S - Gamma_loss_S_net + Diffusion_S
-    dT_dt[1:-1] = G_T - Gamma_loss_T_net + Diffusion_T
-    d2phi_dx2 = (phi[2:] - 2*phi[1:-1] + phi[:-2]) / (dL**2)
-    charge_term = q * (p[1:-1] - n[1:-1])
+    dn_dt[1:-1] = (1.0/q) * div_Jn - R_total_carrier_loss; dp_dt[1:-1] = -(1.0/q) * div_Jp - R_total_carrier_loss
+    dS_dt[1:-1] = G_S - Gamma_loss_S_net + Diffusion_S; dT_dt[1:-1] = G_T - Gamma_loss_T_net + Diffusion_T
+    d2phi_dx2 = (phi[2:] - 2*phi[1:-1] + phi[:-2]) / (dL**2); charge_term = q * (p[1:-1] - n[1:-1])
     dphi_dt[1:-1] = (eps * d2phi_dx2 - charge_term) / eps_phi
-    dphi_dt[0] = dphi_dt[-1] = 0.0; dn_dt[0] = dn_dt[-1] = 0.0
-    dp_dt[0] = dp_dt[-1] = 0.0; dS_dt[0] = dS_dt[-1] = 0.0
-    dT_dt[0] = dT_dt[-1] = 0.0
+    dphi_dt[0] = dphi_dt[-1] = 0.0; dn_dt[0] = dn_dt[-1] = 0.0; dp_dt[0] = dp_dt[-1] = 0.0
+    dS_dt[0] = dS_dt[-1] = 0.0; dT_dt[0] = dT_dt[-1] = 0.0
     dydt = np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt, dT_dt])
     return dydt
 
-# --- Simulation Runner (unchanged from previous correction) ---
-def run_1d_oled_sim_step(params, V_start, V_end, y0_input=None, solver_method='BDF', save_filename=None):
-    params = params.copy() # Avoid modifying original dict
-    # Calculate derived params IN THIS SCOPE
-    params['dL'] = params['d'] / (params['N'] - 1)
-    params['eps'] = params['eps_r'] * EPS0
-    params['q'] = Q
-    params['Vth'] = KB * params['T_dev'] / Q
 
-    N = params['N']
-    if y0_input is None:
-        y0 = build_initial_condition_smoothed(N, params)
-        if V_start != 0.0: y0[0] = V_start
+# --- Main PDE System Definition (FOR CONTINUATION STEPS - unchanged) ---
+def oled_1d_dde_equations_advanced_cont(t, y, params, V_start, V_end):
+    # (Code identical to previous version)
+    N = params.get('N'); dL = params.get('dL'); eps = params.get('eps'); q = params.get('q')
+    T_dev = params.get('T_dev'); Vth = params.get('Vth')
+    if any(v is None for v in [N, dL, eps, q, T_dev, Vth]): raise ValueError("Essential params missing")
+    mu0_n, sigma_hop_n, C_gdm_n = params['gdm_n']; mu0_p, sigma_hop_p, C_gdm_p = params['gdm_p']
+    use_gdm = params.get('use_gdm', True); gamma_reduction = params['gamma_reduction']
+    C_n_aug, C_p_aug = params.get('auger_coeffs', (0.0, 0.0)); spin_fraction_singlet = params['spin_fraction_singlet']
+    kr = params['kr']; knr = params['knr']; k_isc = params['k_isc']; k_risc = params.get('k_risc', 0.0)
+    k_tph = params.get('k_tph', 0.0); k_tnr = params['k_tnr']; Ds = params['Ds']; Dt = params['Dt']
+    kq_sn = params['kq_sn']; kq_sp = params['kq_sp']; kq_tn = params['kq_tn']; kq_tp = params['kq_tp']
+    k_ss = params['k_ss']; k_tta = params['k_tta']; n_cathode_bc_val = params['n_cathode_bc']
+    p_anode_bc_val = params['p_anode_bc']; eps_phi = params['eps_phi']
+    phi = y[0*N : 1*N]; n = y[1*N : 2*N]; p = y[2*N : 3*N]; S = y[3*N : 4*N]; T = y[4*N : 5*N]
+    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4); S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
+    dphi_dt=np.zeros(N); dn_dt=np.zeros(N); dp_dt=np.zeros(N); dS_dt=np.zeros(N); dT_dt=np.zeros(N)
+    phi[0] = ramped_drive_voltage_continuation(t, params, V_start, V_end); phi[-1] = 0.0 # Uses continuation ramp
+    n[-1] = n_cathode_bc_val; p[0] = p_anode_bc_val; S[0] = S[-1] = 0.0; T[0] = T[-1] = 0.0
+    E = np.zeros(N); E[1:-1] = -(phi[2:] - phi[:-2]) / (2 * dL); E[0] = -(phi[1] - phi[0]) / dL; E[-1] = -(phi[-1] - phi[-2]) / dL
+    E_abs = np.abs(E)
+    if use_gdm:
+        mu_n_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_n, sigma_hop_n, C_gdm_n)
+        mu_p_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_p, sigma_hop_p, C_gdm_p)
     else:
-        y0 = y0_input.copy(); y0[0] = V_start; y0[N-1] = 0.0
+        mu_n_local = np.maximum(np.full(N, mu0_n), 1e-18); mu_p_local = np.maximum(np.full(N, mu0_p), 1e-18)
+    Dn_local = mu_n_local * Vth; Dp_local = mu_p_local * Vth
+    dV_int = phi[:-1] - phi[1:]; x_int = np.clip(dV_int / Vth, -500, 500)
+    B_plus = bernoulli(x_int); B_minus = bernoulli(-x_int)
+    Dn_int = 0.5 * (Dn_local[:-1] + Dn_local[1:]); Dp_int = 0.5 * (Dp_local[:-1] + Dp_local[1:])
+    Jn_int = (q * Dn_int / dL) * ( B_minus * n[1:] - B_plus * n[:-1] ); Jp_int = (q * Dp_int / dL) * ( B_plus * p[:-1] - B_minus * p[1:] )
+    div_Jn = (Jn_int[1:] - Jn_int[:-1]) / dL; div_Jp = (Jp_int[1:] - Jp_int[:-1]) / dL
+    n_int = n[1:-1]; p_int = p[1:-1]; S_int = S[1:-1]; T_int = T[1:-1]
+    gamma_L_local = calculate_langevin_gamma(mu_n_local[1:-1], mu_p_local[1:-1], eps)
+    R_bimol = gamma_reduction * gamma_L_local * (n_int * p_int); R_bimol = np.maximum(R_bimol, 0.0)
+    R_auger = C_n_aug * n_int**2 * p_int + C_p_aug * n_int * p_int**2; R_auger = np.maximum(R_auger, 0.0)
+    R_total_carrier_loss = R_bimol + R_auger
+    G_S = spin_fraction_singlet * R_bimol; G_T = (1.0 - spin_fraction_singlet) * R_bimol
+    d2S_dx2 = (S[2:] - 2*S_int + S[:-2]) / (dL**2); Diffusion_S = Ds * d2S_dx2
+    d2T_dx2 = (T[2:] - 2*T_int + T[:-2]) / (dL**2); Diffusion_T = Dt * d2T_dx2
+    Loss_S_decay = (kr + knr) * S_int; Loss_S_isc = k_isc * S_int; Loss_S_quench_n = kq_sn * n_int * S_int
+    Loss_S_quench_p = kq_sp * p_int * S_int; Loss_S_ssa = k_ss * S_int**2; Gain_S_risc = k_risc * T_int
+    Gamma_loss_S_net = Loss_S_decay + Loss_S_isc + Loss_S_quench_n + Loss_S_quench_p + Loss_S_ssa - Gain_S_risc
+    Loss_T_decay = (k_tph + k_tnr) * T_int; Loss_T_risc = k_risc * T_int; Loss_T_quench_n = kq_tn * n_int * T_int
+    Loss_T_quench_p = kq_tp * p_int * T_int; Loss_T_tta = k_tta * T_int**2; Gain_T_isc = Loss_S_isc
+    Gamma_loss_T_net = Loss_T_decay + Loss_T_risc + Loss_T_quench_n + Loss_T_quench_p + Loss_T_tta - Gain_T_isc
+    dn_dt[1:-1] = (1.0/q) * div_Jn - R_total_carrier_loss; dp_dt[1:-1] = -(1.0/q) * div_Jp - R_total_carrier_loss
+    dS_dt[1:-1] = G_S - Gamma_loss_S_net + Diffusion_S; dT_dt[1:-1] = G_T - Gamma_loss_T_net + Diffusion_T
+    d2phi_dx2 = (phi[2:] - 2*phi[1:-1] + phi[:-2]) / (dL**2); charge_term = q * (p[1:-1] - n[1:-1])
+    dphi_dt[1:-1] = (eps * d2phi_dx2 - charge_term) / eps_phi
+    dphi_dt[0] = dphi_dt[-1] = 0.0; dn_dt[0] = dn_dt[-1] = 0.0; dp_dt[0] = dp_dt[-1] = 0.0
+    dS_dt[0] = dS_dt[-1] = 0.0; dT_dt[0] = dT_dt[-1] = 0.0
+    dydt = np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt, dT_dt])
+    return dydt
 
+# --- Main PDE System Definition (FOR DECAY PHASE - Modified BCs) ---
+def oled_1d_dde_equations_advanced_decay(t, y, params, V_steady):
+    # --- Unpack Parameters ---
+    # (Same unpacking as before)
+    N = params.get('N'); dL = params.get('dL'); eps = params.get('eps'); q = params.get('q')
+    T_dev = params.get('T_dev'); Vth = params.get('Vth')
+    if any(v is None for v in [N, dL, eps, q, T_dev, Vth]): raise ValueError("Essential params missing")
+    mu0_n, sigma_hop_n, C_gdm_n = params['gdm_n']; mu0_p, sigma_hop_p, C_gdm_p = params['gdm_p']
+    use_gdm = params.get('use_gdm', True); gamma_reduction = params['gamma_reduction']
+    C_n_aug, C_p_aug = params.get('auger_coeffs', (0.0, 0.0)); spin_fraction_singlet = params['spin_fraction_singlet']
+    kr = params['kr']; knr = params['knr']; k_isc = params['k_isc']; k_risc = params.get('k_risc', 0.0)
+    k_tph = params.get('k_tph', 0.0); k_tnr = params['k_tnr']; Ds = params['Ds']; Dt = params['Dt']
+    kq_sn = params['kq_sn']; kq_sp = params['kq_sp']; kq_tn = params['kq_tn']; kq_tp = params['kq_tp']
+    k_ss = params['k_ss']; k_tta = params['k_tta']; n_cathode_bc_val = params['n_cathode_bc']
+    p_anode_bc_val = params['p_anode_bc']; eps_phi = params['eps_phi']
+    n0_background = params.get('n0_background', 1e6) # Get background level
+    p0_background = params.get('p0_background', 1e6)
+
+    # --- Reshape State Vector ---
+    phi = y[0*N : 1*N]; n = y[1*N : 2*N]; p = y[2*N : 3*N]; S = y[3*N : 4*N]; T = y[4*N : 5*N]
+    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4); S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
+
+    dphi_dt=np.zeros(N); dn_dt=np.zeros(N); dp_dt=np.zeros(N); dS_dt=np.zeros(N); dT_dt=np.zeros(N)
+
+    # --- Apply Boundary Conditions to State ---
+    phi[0] = ramped_drive_voltage_decay(t, params, V_steady); phi[-1] = 0.0
+    # !! **** MODIFIED BC for Decay **** !!
+    # Set boundary densities to background levels to mimic extraction/blocking
+    n[-1] = n0_background
+    p[0] = p0_background
+    # !! ****************************** !!
+    S[0] = S[-1] = 0.0; T[0] = T[-1] = 0.0
+
+    # --- Calculate Spatially Varying Parameters ---
+    # (Calculation of E, mu, D remains the same)
+    E = np.zeros(N); E[1:-1] = -(phi[2:] - phi[:-2]) / (2 * dL); E[0] = -(phi[1] - phi[0]) / dL; E[-1] = -(phi[-1] - phi[-2]) / dL
+    E_abs = np.abs(E)
+    if use_gdm:
+        mu_n_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_n, sigma_hop_n, C_gdm_n)
+        mu_p_local = gaussian_disorder_mobility(E_abs, T_dev, mu0_p, sigma_hop_p, C_gdm_p)
+    else:
+        mu_n_local = np.maximum(np.full(N, mu0_n), 1e-18); mu_p_local = np.maximum(np.full(N, mu0_p), 1e-18)
+    Dn_local = mu_n_local * Vth; Dp_local = mu_p_local * Vth
+
+    # --- Finite Difference Calculations ---
+    # (Calculation of Jn, Jp, divergences remains the same)
+    dV_int = phi[:-1] - phi[1:]; x_int = np.clip(dV_int / Vth, -500, 500)
+    B_plus = bernoulli(x_int); B_minus = bernoulli(-x_int)
+    Dn_int = 0.5 * (Dn_local[:-1] + Dn_local[1:]); Dp_int = 0.5 * (Dp_local[:-1] + Dp_local[1:])
+    Jn_int = (q * Dn_int / dL) * ( B_minus * n[1:] - B_plus * n[:-1] ); Jp_int = (q * Dp_int / dL) * ( B_plus * p[:-1] - B_minus * p[1:] )
+    div_Jn = (Jn_int[1:] - Jn_int[:-1]) / dL; div_Jp = (Jp_int[1:] - Jp_int[:-1]) / dL
+
+    # --- Calculate Rates ---
+    # (Calculation of R, G, Gamma remains the same)
+    n_int = n[1:-1]; p_int = p[1:-1]; S_int = S[1:-1]; T_int = T[1:-1]
+    gamma_L_local = calculate_langevin_gamma(mu_n_local[1:-1], mu_p_local[1:-1], eps)
+    R_bimol = gamma_reduction * gamma_L_local * (n_int * p_int); R_bimol = np.maximum(R_bimol, 0.0)
+    R_auger = C_n_aug * n_int**2 * p_int + C_p_aug * n_int * p_int**2; R_auger = np.maximum(R_auger, 0.0)
+    R_total_carrier_loss = R_bimol + R_auger
+    G_S = spin_fraction_singlet * R_bimol; G_T = (1.0 - spin_fraction_singlet) * R_bimol
+    d2S_dx2 = (S[2:] - 2*S_int + S[:-2]) / (dL**2); Diffusion_S = Ds * d2S_dx2
+    d2T_dx2 = (T[2:] - 2*T_int + T[:-2]) / (dL**2); Diffusion_T = Dt * d2T_dx2
+    Loss_S_decay = (kr + knr) * S_int; Loss_S_isc = k_isc * S_int; Loss_S_quench_n = kq_sn * n_int * S_int
+    Loss_S_quench_p = kq_sp * p_int * S_int; Loss_S_ssa = k_ss * S_int**2; Gain_S_risc = k_risc * T_int
+    Gamma_loss_S_net = Loss_S_decay + Loss_S_isc + Loss_S_quench_n + Loss_S_quench_p + Loss_S_ssa - Gain_S_risc
+    Loss_T_decay = (k_tph + k_tnr) * T_int; Loss_T_risc = k_risc * T_int; Loss_T_quench_n = kq_tn * n_int * T_int
+    Loss_T_quench_p = kq_tp * p_int * T_int; Loss_T_tta = k_tta * T_int**2; Gain_T_isc = Loss_S_isc
+    Gamma_loss_T_net = Loss_T_decay + Loss_T_risc + Loss_T_quench_n + Loss_T_quench_p + Loss_T_tta - Gain_T_isc
+
+    # --- Assemble Derivatives ---
+    dn_dt[1:-1] = (1.0/q) * div_Jn - R_total_carrier_loss; dp_dt[1:-1] = -(1.0/q) * div_Jp - R_total_carrier_loss
+    dS_dt[1:-1] = G_S - Gamma_loss_S_net + Diffusion_S; dT_dt[1:-1] = G_T - Gamma_loss_T_net + Diffusion_T
+    d2phi_dx2 = (phi[2:] - 2*phi[1:-1] + phi[:-2]) / (dL**2); charge_term = q * (p[1:-1] - n[1:-1])
+    dphi_dt[1:-1] = (eps * d2phi_dx2 - charge_term) / eps_phi
+
+    # --- Fix Derivatives at Boundaries ---
+    # Still fix derivatives to zero, the BC values themselves were set above
+    dphi_dt[0] = dphi_dt[-1] = 0.0; dn_dt[0] = dn_dt[-1] = 0.0
+    dp_dt[0] = dp_dt[-1] = 0.0; dS_dt[0] = dS_dt[-1] = 0.0
+    dT_dt[0] = dT_dt[-1] = 0.0
+
+    dydt = np.concatenate([dphi_dt, dn_dt, dp_dt, dS_dt, dT_dt])
+    return dydt
+
+# --- Simulation Runner for Voltage Step (unchanged) ---
+def run_1d_oled_sim_step(params, V_start, V_end, y0_input=None, solver_method='BDF', save_filename=None):
+    # (Code identical to previous version)
+    params = params.copy()
+    params['dL'] = params['d'] / (params['N'] - 1); params['eps'] = params['eps_r'] * EPS0
+    params['q'] = Q; params['Vth'] = KB * params['T_dev'] / Q
+    N = params['N']
+    if y0_input is None: y0 = build_initial_condition_smoothed(N, params);
+    else: y0 = y0_input.copy(); y0[0] = V_start; y0[N-1] = 0.0
     t_ramp = params['t_ramp_step']
     stabilization_time = params.get('t_stabilize_step', 5 * t_ramp)
     t_span_step = (0, t_ramp + stabilization_time)
     num_t_points_step = params.get('num_t_points_step', 101)
     t_eval_step = np.linspace(t_span_step[0], t_span_step[1], num_t_points_step)
     max_step_val = params.get('max_step_init', np.inf)
-
     sol = None
     with tqdm(total=1, desc=f"Step {V_start:.2f}V->{V_end:.2f}V") as pbar:
         try:
@@ -795,23 +905,51 @@ def run_1d_oled_sim_step(params, V_start, V_end, y0_input=None, solver_method='B
                 rtol=params['rtol'], atol=params['atol'], max_step=max_step_val
             )
             pbar.update(1)
-        except Exception as e:
-            pbar.update(1); print(f"\nError during solve_ivp step {V_start:.2f}V->{V_end:.2f}V: {e}"); raise
-
-    if sol and not sol.success:
-        warnings.warn(f"ODE step {V_start:.2f}V->{V_end:.2f}V finished with warning: {sol.message}")
-        if sol.t.size < 2 : raise RuntimeError(f"Solver failed to take any steps for {V_start:.2f}V->{V_end:.2f}V.")
-    if not sol: raise RuntimeError(f"Solver failed completely for {V_start:.2f}V->{V_end:.2f}V (no solution object).")
-
+        except Exception as e: pbar.update(1); print(f"\nError: {e}"); raise
+    if sol and not sol.success: warnings.warn(f"Warning: {sol.message}");
+    if not sol or sol.t.size < 2 : raise RuntimeError("Solver failed step.")
     final_state = sol.y[:, -1]
     if save_filename:
         try: np.savez_compressed(save_filename, y_final=final_state, V_end=V_end, params=params)
-        except Exception as e: warnings.warn(f"Could not save intermediate state {save_filename}: {e}")
+        except Exception as e: warnings.warn(f"Save failed: {e}")
     return final_state
 
-# --- Main Execution (CORRECTED derived param calculation before plot) ---
-def main_voltage_continuation():
-    print("--- Starting OLED Simulation with Voltage Continuation ---")
+# --- Simulation Runner for Decay Phase (unchanged) ---
+def run_1d_oled_decay(params, V_steady, y0_decay, solver_method='BDF'):
+    # (Code identical to previous version - it now uses the modified decay ODE function)
+    params = params.copy()
+    params['dL'] = params['d'] / (params['N'] - 1); params['eps'] = params['eps_r'] * EPS0
+    params['q'] = Q; params['Vth'] = KB * params['T_dev'] / Q
+    N = params['N']; y0 = y0_decay.copy()
+    t_off_decay = params.get('t_off_decay', 1e-12)
+    t_end_decay = params.get('t_end_decay', 5e-6)
+    t_span_decay = (0, t_end_decay)
+    num_t_points_decay = params.get('num_t_points_decay', 501)
+    t_eval_decay = np.linspace(t_span_decay[0], t_span_decay[1], num_t_points_decay)
+    max_step_val = params.get('max_step_decay', np.inf)
+    print(f"Starting Decay Simulation (V_steady={V_steady:.2f}V, t_end={t_end_decay:.1e}s)...")
+    sol = None
+    with tqdm(total=1, desc=f"Decay from {V_steady:.2f}V") as pbar:
+        try:
+            sol = solve_ivp(
+                fun=oled_1d_dde_equations_advanced_decay, # Uses the decay function
+                t_span=t_span_decay, y0=y0, method=solver_method, t_eval=t_eval_decay,
+                args=(params, V_steady), # Pass V_steady
+                rtol=params['rtol'], atol=params['atol'], max_step=max_step_val
+            )
+            pbar.update(1)
+        except Exception as e: pbar.update(1); print(f"\nError: {e}"); raise
+    print(f"Decay ODE solver finished: {sol.message if sol else 'Error'}")
+    if sol and not sol.success: warnings.warn(f"Decay warning: {sol.message}")
+    if not sol or sol.t.size < 2: raise RuntimeError("Decay solver failed.")
+    print("Decay simulation run completed.")
+    return sol
+
+
+# --- Main Execution (Voltage Continuation + Decay - unchanged logic) ---
+def main_voltage_continuation_and_decay():
+    # (Code identical to previous version)
+    print("--- Starting OLED Simulation with Voltage Continuation & Decay ---")
     base_params = {
         'N': 101, 'd': 100e-9, 'eps_r': 3.0, 'T_dev': 300.0,
         'gdm_n': (1e-7, 0.08, 3e-4), 'gdm_p': (1e-7, 0.08, 3e-4), 'use_gdm': True,
@@ -826,21 +964,14 @@ def main_voltage_continuation():
         't_ramp_step': 1e-7, 't_stabilize_step': 5e-7,
         'num_t_points_step': 101, 'save_intermediate': True,
         'solver_method': 'BDF',
+        't_off_decay': 1e-12, 't_end_decay': 50e-6, 'num_t_points_decay': 1001,
     }
-
-    # !! **** CORRECTION: Calculate derived params for base_params **** !!
-    base_params['dL'] = base_params['d'] / (base_params['N'] - 1)
-    base_params['eps'] = base_params['eps_r'] * EPS0
-    base_params['q'] = Q
-    base_params['Vth'] = KB * base_params['T_dev'] / Q
-    # !! ************************************************************ !!
-
+    base_params['dL'] = base_params['d'] / (base_params['N'] - 1); base_params['eps'] = base_params['eps_r'] * EPS0
+    base_params['q'] = Q; base_params['Vth'] = KB * base_params['T_dev'] / Q
     voltage_steps = np.linspace(0.0, 5.0, 11)
     print(f"Voltage steps: {voltage_steps}")
-    current_y = None
-    final_states = {}
-    save_dir = "oled_continuation_states"; os.makedirs(save_dir, exist_ok=True)
-
+    current_y = None; final_states = {}; save_dir = "oled_continuation_states"; os.makedirs(save_dir, exist_ok=True)
+    continuation_success = False
     try:
         for i in range(len(voltage_steps) - 1):
             V_start = voltage_steps[i]; V_end = voltage_steps[i+1]
@@ -849,61 +980,66 @@ def main_voltage_continuation():
             if save_fname and os.path.exists(save_fname):
                 try:
                     data = np.load(save_fname, allow_pickle=True)
-                    if np.isclose(data['V_end'], V_end):
-                        current_y = data['y_final']; print(f"Loaded previous state for {V_end:.2f}V from {save_fname}"); load_success = True
-                    else: print(f"Saved state V mismatch ({data['V_end']:.2f} != {V_end:.2f}). Recalculating.")
+                    if np.isclose(data['V_end'], V_end): current_y = data['y_final']; print(f"Loaded state {V_end:.2f}V"); load_success = True
+                    else: print(f"V mismatch. Recalculating.")
                 except Exception as load_err: print(f"Error loading {save_fname}: {load_err}. Recalculating.")
-
             if not load_success:
-                 # Pass the *original* base_params, run_1d_oled_sim_step will add derived ones internally
-                 current_y = run_1d_oled_sim_step(base_params, V_start, V_end,
-                                                  y0_input=current_y,
-                                                  solver_method=base_params['solver_method'],
-                                                  save_filename=save_fname)
+                 current_y = run_1d_oled_sim_step(base_params, V_start, V_end, y0_input=current_y,
+                                                  solver_method=base_params['solver_method'], save_filename=save_fname)
             final_states[V_end] = current_y
-
-        print("\n--- Voltage Continuation Finished Successfully ---")
+        print("\n--- Voltage Continuation Finished Successfully ---"); continuation_success = True
+    except Exception as e: print(f"\n--- Error during Voltage Continuation ---"); print(f"{type(e).__name__}: {e}"); import traceback; traceback.print_exc()
+    if continuation_success:
         target_voltage = voltage_steps[-1]
         if target_voltage in final_states:
-            print("Plotting final state from continuation...")
-            # Pass the updated base_params (with dL etc.) to the plotting function
-            plot_final_state(final_states[target_voltage], target_voltage, base_params)
-        else: print("Final state not available for plotting.")
+            y0_decay = final_states[target_voltage]
+            try:
+                decay_sol = run_1d_oled_decay(base_params, target_voltage, y0_decay, solver_method=base_params['solver_method'])
+                print("Plotting final state and decay results...")
+                plot_final_state_and_decay(y0_decay, target_voltage, decay_sol, base_params)
+            except Exception as e: print(f"\n--- Error during Decay Simulation ---"); print(f"{type(e).__name__}: {e}"); import traceback; traceback.print_exc()
+        else: print(f"Final state for {target_voltage}V not found.")
+    else: print("Voltage continuation failed. Skipping decay simulation.")
 
-    except Exception as e:
-        print(f"\n--- An error occurred during Voltage Continuation ---")
-        print(f"Error Type: {type(e).__name__}"); print(f"Error Details: {e}")
-        import traceback; print("\n--- Traceback ---"); traceback.print_exc(); print("-----------------\n")
 
-
-# --- Plotting Helper (Now receives params with dL etc.) ---
-def plot_final_state(y_final, voltage, params):
-    # Now params['dL'], params['d'], params['kr'], params['N'] should exist
+# --- Plotting Function (unchanged) ---
+def plot_final_state_and_decay(y_steady, voltage, decay_sol, params):
+    # (Code identical to previous version)
     N = params['N']; dL = params['dL']; kr = params['kr']; d = params['d']
     x_nm = np.linspace(0, d * 1e9, N)
-
-    phi = y_final[0*N : 1*N]; n = y_final[1*N : 2*N]; p = y_final[2*N : 3*N]
-    S = y_final[3*N : 4*N]; T = y_final[4*N : 5*N]
-    n = np.maximum(n, 1e4); p = np.maximum(p, 1e4)
-    S = np.maximum(S, 0.0); T = np.maximum(T, 0.0)
-
+    phi_s = y_steady[0*N : 1*N]; n_s = y_steady[1*N : 2*N]; p_s = y_steady[2*N : 3*N]
+    S_s = y_steady[3*N : 4*N]; T_s = y_steady[4*N : 5*N]
+    n_s = np.maximum(n_s, 1e4); p_s = np.maximum(p_s, 1e4); S_s = np.maximum(S_s, 0.0); T_s = np.maximum(T_s, 0.0)
+    t_decay = decay_sol.t; phi_d = decay_sol.y[0*N : 1*N, :]; n_d = decay_sol.y[1*N : 2*N, :]
+    p_d = decay_sol.y[2*N : 3*N, :]; S_d = decay_sol.y[3*N : 4*N, :]; T_d = decay_sol.y[4*N : 5*N, :]
+    n_d = np.maximum(n_d, 1e4); p_d = np.maximum(p_d, 1e4); S_d = np.maximum(S_d, 0.0); T_d = np.maximum(T_d, 0.0)
+    S_d_nonneg = np.maximum(S_d, 0.0); lum_vs_t_decay = np.sum(kr * S_d_nonneg, axis=0) * dL
     plt.style.use('seaborn-v0_8-darkgrid')
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    fig.suptitle(f"Final State @ {voltage:.2f}V (GDM={params.get('use_gdm', 'N/A')})", fontsize=14) # Use .get for safety
-
-    ax = axes[0]; ax.plot(x_nm, phi, label=f'phi(x)')
-    ax.set(xlabel='Position x (nm)', ylabel='Potential (V)', title='Potential'); ax.legend(); ax.grid(True)
-    ax = axes[1]; ax.plot(x_nm, n, label=f'n(x)')
-    ax.plot(x_nm, p, label=f'p(x)', ls='--')
-    ax.set(xlabel='Position x (nm)', ylabel='Density (m$^{-3}$)', title='Carriers', yscale='log'); ax.legend(); ax.grid(True, which='both')
-    ax = axes[2]; ax.plot(x_nm, S, label=f'S(x)')
-    ax.plot(x_nm, T, label=f'T(x)', color='purple', ls='--')
-    ax.set(xlabel='Position x (nm)', ylabel='Density (m$^{-3}$)', title='Excitons', yscale='log'); ax.legend(); ax.grid(True, which='both')
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+    fig.suptitle(f"OLED Steady State @ {voltage:.2f}V & Transient Decay (GDM={params.get('use_gdm', 'N/A')})", fontsize=14)
+    t_final_decay_us = t_decay[-1] * 1e6
+    ax = axes[0, 0]; ax.plot(x_nm, phi_s, label=f'phi(x)')
+    ax.set(xlabel='x (nm)', ylabel='Potential (V)', title=f'Potential @ {voltage:.1f}V'); ax.legend(); ax.grid(True)
+    ax = axes[0, 1]; ax.plot(x_nm, n_s, label=f'n(x)')
+    ax.plot(x_nm, p_s, label=f'p(x)', ls='--')
+    ax.set(xlabel='x (nm)', ylabel='Density (m$^{-3}$)', title=f'Carriers @ {voltage:.1f}V', yscale='log'); ax.legend(); ax.grid(True, which='both')
+    ax = axes[0, 2]; ax.plot(x_nm, S_s, label=f'S(x)')
+    ax.plot(x_nm, T_s, label=f'T(x)', color='purple', ls='--')
+    ax.set(xlabel='x (nm)', ylabel='Density (m$^{-3}$)', title=f'Excitons @ {voltage:.1f}V', yscale='log'); ax.legend(); ax.grid(True, which='both')
+    ax = axes[1, 0]; ax.plot(t_decay * 1e6, lum_vs_t_decay, label='Emission')
+    ax.set(xlabel='Time after turn-off (µs)', ylabel='Emission (arb.)', title='EL Decay (Linear)'); ax.legend(); ax.grid(True)
+    ax = axes[1, 1]; ax.plot(t_decay * 1e6, lum_vs_t_decay, label='Emission')
+    ax.set(xlabel='Time after turn-off (µs)', ylabel='Emission (arb.)', title='EL Decay (Log)', yscale='log'); ax.legend(); ax.grid(True, which='both')
+    min_lum = np.min(lum_vs_t_decay[lum_vs_t_decay > 0]) if np.any(lum_vs_t_decay > 0) else 1e-20
+    ax.set_ylim(bottom=max(min_lum * 0.1, 1e-15 * np.max(lum_vs_t_decay)))
+    ax = axes[1, 2]; ax.plot(t_decay * 1e6, np.sum(S_d * dL, axis=0), label='Total S')
+    ax.plot(t_decay * 1e6, np.sum(T_d * dL, axis=0), label='Total T', color='purple', ls='--')
+    ax.set(xlabel='Time after turn-off (µs)', ylabel='Integrated Density (m$^{-2}$)', title='Population Decay', yscale='log'); ax.legend(); ax.grid(True)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95]); plt.show()
 
 
 # --- Main Entry Point ---
 if __name__ == '__main__':
-    # Run the voltage continuation simulation
-    main_voltage_continuation()
+    # Run the voltage continuation simulation followed by decay
+    main_voltage_continuation_and_decay()
 ```

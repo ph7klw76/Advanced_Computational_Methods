@@ -1862,3 +1862,8 @@ if __name__ == '__main__':
     main_voltage_continuation_and_decay()
 ```
 
+output
+
+![image](https://github.com/user-attachments/assets/ed0c1465-1956-41f2-80a2-63d44f5914f5)
+
+

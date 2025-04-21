@@ -86,6 +86,7 @@ where magic happens
 1. [Example1](example.md)
 2. [Pacman](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/Pacman.py)
 3. [Microwave](micorwave.md)
+4. [Double_slit](doubleslit.py)
 
 ## Agent-Based Modeling (ABM)
 

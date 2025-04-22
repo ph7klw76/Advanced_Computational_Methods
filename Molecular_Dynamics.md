@@ -710,9 +710,9 @@ Production runs typically last for nanoseconds to microseconds, depending on the
 | **Phase**                  | **Ensemble** | **Thermostat**             | **Barostat**                 | **Duration**        | **Purpose**                                                                 |
 |-----------------------------|--------------|----------------------------|------------------------------|---------------------|-----------------------------------------------------------------------------|
 | **Phase 1 (Initial Equilibration)** | $NPT$       | Berendsen                 | Berendsen                   | 1-5 ns           | Quickly equilibrate temperature, pressure, and density to stabilize the initial structure. |
-| **Phase 2 (Rigorous Equilibration)** | $NPT$       | v-rescale or Nosé-Hoover  | Parrinello-Rahman or Nosé-Hoover | 20-50 ns         | Enforce correct $NPT$ sampling to ensure accurate temperature and pressure fluctuations. |
-| **Phase 3 (Stabilization)**         | $NVT$       | v-rescale                 | None                        | 50 ns or longer   | Stabilize internal structure and energy at fixed volume for accurate structural relaxation. |
-| **Phase 4 (Production)**            | $NPT$       | C-rescale                 | Parrinello-Rahman           | 100 Nanoseconds or more        | Perform rigorous production simulations in $NPT$ for thermodynamic and structural analysis. |
+| **Phase 2 (Rigorous Equilibration)** | $NPT$       | v-rescale   | Parrinello-Rahman or Nosé-Hoover | 20-50 ns         | Enforce correct $NPT$ sampling to ensure accurate temperature and pressure fluctuations. |
+| **Phase 3 (Stabilization)**         | $NVT$       | Nose-Hoover                | None                        | 50 ns or longer   | Stabilize internal structure and energy at fixed volume for accurate structural relaxation. |
+| **Phase 4 (Production)**            | $NPT$       | Nose-Hoover                 | Parrinello-Rahman           | 100 Nanoseconds or more        | Perform rigorous production simulations in $NPT$ for thermodynamic and structural analysis. |
 
 ---
 

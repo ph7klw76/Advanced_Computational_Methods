@@ -16,7 +16,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 1.  [Uncertainty_Gradients_Scientific_Parameter_Extraction](Uncertainty_Gradients_Scientific_Parameter_Extraction.md)
     Non-linear regression is often used in scientific contexts where parameter uncertainty plays a critical role. Gradients help in understanding the sensitivity of parameters.
 2.  [Computational_Thinking](Computational_Thinking.md) How to think like a computer.
-3.  [Computational_Thinking beforr Machine Learning](https://www.youtube.com/watch?v=V9Xy18YEK9M)
+3.  [Computational_Thinking before Machine Learning](https://www.youtube.com/watch?v=V9Xy18YEK9M)
 4.  [SciPy's _curve_fit](SciPy's_curve_fit.md) A common tool in SciPy, curve_fit allows fitting a curve to data by optimizing parameters based on least squares.
 5.  [Jacobian_Matrix](Jacobian_Matrix.md) The Jacobian matrix represents the partial derivatives of functions, which is crucial in minimizing errors in non-linear regression.
 6.  [Levenberg-Marquardt](Levenberg-Marquardt.md) his optimization method is particularly useful for non-linear least squares problems, balancing between gradient descent and Gauss-Newton methods.

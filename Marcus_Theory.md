@@ -742,3 +742,5 @@ plt.gca().spines["left"].set_linewidth(2)
 # Show the plot
 plt.show()
 ```
+
+calcuculation of electronic coupling can be found at (here)[https://github.com/ph7klw76/gaussian_note/blob/main/electronic_coupling.md]

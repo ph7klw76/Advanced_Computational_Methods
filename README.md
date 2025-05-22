@@ -4,14 +4,14 @@
   <img src="https://github.com/user-attachments/assets/03fe4773-c529-4de7-8ccf-66e925084214" alt="WhatsApp Image" width="600" height="600" />
 </div>
 
-This project is more than a collection of computational techniques.  It is my attempt to **capture structure**, **clarify thought**, and **transmit pathways** — through the language I speak most fluently: **systems and code**.
+This project is more than a collection of computational techniques.  It is my attempt to **capture structure**, **clarify thought**, and **transmit pathways** through the language I speak most fluently: **systems and code**.
 
 This is where I:
 - Think in public
 - Teach myself through clarity of thought
 - Lay the foundation for future frameworks
 
-I build not to impress — but to **preserve clarity**, in a world moving too fast to think clearly.
+I build not to impress but to **preserve clarity**, in a world moving too fast with lots of noise to be able to think clearly.
 
 You want to learn Python. Follow this path.
 

@@ -13,6 +13,7 @@ This is where I:
 
 I build not to impress — but to **preserve clarity**, in a world moving too fast to think clearly.
 
+You want to learn Python. Follow this path.
 
 ### This assumes that you have a good grasp of Python coding based on the passing standard of [MITx Computational Thinking using Python](https://www.edx.org/xseries/mitx-computational-thinking-using-python) or else take the course and get certified. Alternatively you learn and do exercises from [Introduction to Computer Science and Programming in Python](https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/)
 

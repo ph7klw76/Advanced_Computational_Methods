@@ -50,10 +50,11 @@ This guide provides structured pathways for mastering advanced topics in scienti
 3. [Ensemble Learning](Ensemble_Learning.md) (Supervised learning) Combines multiple models to improve predictive performance; commonly used in supervised learning.
 4. [Artificial Neural Network](Artificial_Neural_Network.md) (Both) ANNs can be used for both supervised and unsupervised tasks, mimicking the structure of the human brain.
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
-6. [Principal Component Analysis](PCA.md) Dimensionality reduction 
-7. Graph Neural Networks (https://github.com/Wanlin-Cai/ML_GCN) (https://github.com/chemprop/chemprop?tab=readme-ov-file)
-8. Transfer Learning 
-9. Meta-Learning and Few-Shot Learning
+6. [Principal Component Analysis](PCA.md) Dimensionality reduction
+7. Physics-Guided Δ-Machine Learning 
+8. Graph Neural Networks (https://github.com/Wanlin-Cai/ML_GCN) (https://github.com/chemprop/chemprop?tab=readme-ov-file)
+9. Transfer Learning 
+10. Meta-Learning and Few-Shot Learning
 
 ### There are numerous libraries which are useful including [Scikit-learn](https://scikit-learn.org/stable/), [Tensorflow](https://www.tensorflow.org/tutorials?authuser=1) and [Pytorch](https://pytorch.org/get-started/locally/)
 

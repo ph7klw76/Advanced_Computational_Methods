@@ -4,7 +4,7 @@
   <img src="https://github.com/user-attachments/assets/03fe4773-c529-4de7-8ccf-66e925084214" alt="WhatsApp Image" width="600" height="600" />
 </div>
 
-This project is more than a collection of computational techniques.  It is my attempt to **capture structure**, **clarify thought**, and **transmit pathways** through the language I speak most fluently: **systems and code**.
+This project is more than a collection of computational techniques.  It is my attempt to **capture structure**, **clarify thought**, and **transmit pathways** 
 
 This is where I:
 - Think in public

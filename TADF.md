@@ -171,6 +171,187 @@ Developing a predictive, multiscale modelling pipeline—from relativistic pertu
 
 ---
 
-## Selected References
+# Derivation of the Three-State Spin–Vibronic Hamiltonian Underpinning TADF
 
-*(To be inserted based on citations and literature used.)*
+## 1 Start from the Exact Molecular Hamiltonian
+
+$$
+\hat{H}_{\text{tot}} =
+\underbrace{-\sum_\alpha \frac{\hbar^2}{2 M_\alpha} \frac{\partial^2}{\partial Q_\alpha^2}}_{\hat{T}_{\text{nuc}}}
++ \underbrace{\hat{H}_{\text{el}}(r; Q)}_{\text{Coulomb}}
++ \underbrace{\hat{H}_{\text{SO}}(r)}_{\text{Breit–Pauli}}
+$$
+
+Where:
+
+- $Q_\alpha$: dimensionless normal-mode coordinates  
+- $\hat{T}_{\text{nuc}}$: nuclear kinetic energy  
+- $\hat{H}_{\text{el}}$: electronic Coulomb Hamiltonian (parametrised by $Q$)  
+- $\hat{H}_{\text{SO}}$: one-electron spin–orbit operator (first order in $c^{-2}$)
+
+---
+
+## 2 Born–Huang Expansion and Projection onto a Diabatic Subspace
+
+Express the exact wavefunction as:
+
+$$
+\Psi(r, Q) = \sum_I \Phi_I(r; Q)\, \chi_I(Q)
+$$
+
+Project onto three diabatic electronic states relevant for TADF:
+
+- $\lvert S_{\text{CT}} \rangle$: lowest singlet, charge-transfer character  
+- $\lvert T_{\text{CT}} \rangle$: lowest triplet, same CT character  
+- $\lvert T_{\text{LE}} \rangle$: nearby triplet, local-excitation character  
+
+The projected nuclear-space Hamiltonian matrix becomes:
+
+$$
+H_{IJ}(Q) =
+\langle I \lvert \hat{H}_{\text{el}} \rvert J \rangle +
+\langle I \lvert \hat{H}_{\text{SO}} \rvert J \rangle -
+\sum_\alpha \frac{\hbar^2}{2 M_\alpha} \left[
+F^\alpha_{IJ}(Q)\, \frac{\partial}{\partial Q_\alpha} +
+\delta_{IJ} \frac{\partial^2}{\partial Q_\alpha^2}
+\right]
+$$
+
+Where the non-adiabatic (derivative) coupling is:
+
+$$
+F^\alpha_{IJ}(Q) = \langle I \lvert \frac{\partial}{\partial Q_\alpha} \rvert J \rangle
+$$
+
+---
+
+## 3 Interpret Each Block of the Matrix
+
+### 3.1 Diagonal Elements – Adiabatic Potentials
+
+$$
+E_I(Q) = \langle I \lvert \hat{H}_{\text{el}} \rvert I \rangle
+$$
+
+These occupy the (1,1), (2,2), and (3,3) entries for $S_{\text{CT}}$, $T_{\text{CT}}$, and $T_{\text{LE}}$, respectively.
+
+---
+
+### 3.2 Off-Diagonal Elements from Spin–Orbit Coupling (SOC)
+
+The one-electron Breit–Pauli SOC operator:
+
+$$
+\hat{H}_{\text{SO}} = \sum_i \frac{1}{2 c^2} \frac{1}{r_i} \frac{\partial V}{\partial r_i} \hat{L}_i \cdot \hat{S}_i
+$$
+
+- Changes spin by ±1 but preserves spatial symmetry  
+- Only non-zero matrix element at first order:
+
+$$
+H_{\text{SO}}(1,2) = \langle S_{\text{CT}} \lvert \hat{H}_{\text{SO}} \rvert T_{\text{CT}} \rangle
+$$
+
+- Appears in (1,2) and (2,1)  
+- SOC between $S_{\text{CT}}$ and $T_{\text{LE}}$ is zero (spin + orbital change forbidden)
+
+---
+
+### 3.3 Off-Diagonal Elements from Vibronic (Non-Adiabatic) Coupling
+
+Expanding to first order in normal modes:
+
+$$
+\hat{H}_{\text{vib}} = \sum_\alpha \lambda_\alpha^{(IJ)} Q_\alpha
+$$
+
+With:
+
+$$
+\lambda_\alpha^{(IJ)} = \sqrt{\frac{\hbar}{2 M_\alpha \omega_\alpha}} \langle I \lvert \frac{\partial \hat{H}_{\text{el}}}{\partial Q_\alpha} \rvert J \rangle
+$$
+
+- Vibronic coupling conserves spin  
+- Leading term couples $T_{\text{CT}}$ and $T_{\text{LE}}$:
+
+$$
+V_{23}(Q) = \langle T_{\text{CT}} \lvert \hat{H}_{\text{vib}} \rvert T_{\text{LE}} \rangle
+$$
+
+- Appears in (2,3) and (3,2)  
+- No coupling between $S_{\text{CT}}$ and $T_{\text{LE}}$ at first order
+
+---
+
+## 4 Assemble the $3 \times 3$ Hamiltonian
+
+Ordering: $(S_{\text{CT}}, T_{\text{CT}}, T_{\text{LE}})$
+
+$$
+\hat{H}(Q) =
+\begin{pmatrix}
+E_{S_{\text{CT}}}(Q) & H_{\text{SO}}(1,2) & 0 \\
+H_{\text{SO}}^*(1,2) & E_{T_{\text{CT}}}(Q) & V_{23}(Q) \\
+0 & V_{23}^*(Q) & E_{T_{\text{LE}}}(Q)
+\end{pmatrix}
+$$
+
+- Zeros enforced by spin and orbital selection rules  
+- The matrix is Hermitian
+
+---
+
+## 5 Second-Order “Super-Exchange” Path
+
+Direct $S_{\text{CT}} \leftrightarrow T_{\text{LE}}$ coupling is forbidden.  
+However, a two-step pathway exists:
+
+$$
+S_{\text{CT}} \xrightarrow{\hat{H}_{\text{SO}}} T_{\text{CT}} \xrightarrow{\hat{H}_{\text{vib}}} T_{\text{LE}}
+$$
+
+Löwdin partitioning yields the effective interaction:
+
+$$
+H_{\text{eff}}(1,3) = \frac{H_{\text{SO}}(1,2)\, V_{23}}{E_{S_{\text{CT}}} - E_{T_{\text{CT}}}} + \text{h.c.}
+$$
+
+This term underlies efficient RISC, allowing:
+
+$$
+k_{\text{RISC}} \sim 10^6 - 10^7 \ \text{s}^{-1}
+$$
+
+---
+
+## 6 Why Every Element Is Exactly Where It Is
+
+| Matrix Position | Operator Responsible | Selection Rule |
+|-----------------|----------------------|----------------|
+| (1,1), (2,2), (3,3) | $\hat{H}_{\text{el}}$ | Diagonal energies |
+| (1,2), (2,1) | $\hat{H}_{\text{SO}}$ | Spin flip ($S = 0 \leftrightarrow 1$), same orbital |
+| (2,3), (3,2) | $\hat{H}_{\text{vib}}$ | Spin-conserved, orbital change |
+| (1,3), (3,1) | *None* | Forbidden: spin + orbital change |
+
+---
+
+###  Quick Sanity Check
+
+- Set $H_{\text{SO}}(1,2) = 0$ ⇒ No first-order ISC/RISC  
+- Set $V_{23} = 0$ ⇒ No path to $T_{\text{LE}}$, delayed fluorescence slows  
+- Keep both non-zero ⇒ Efficient, Arrhenius-activated RISC
+
+---
+
+##  Bottom Line
+
+The structure of the multistate vibronic Hamiltonian is **not an ansatz**.  
+It follows unambiguously from:
+
+1. The spin multiplicity of the states  
+2. El-Sayed’s rules for SOC  
+3. The spinlessness of the nuclear kinetic operator  
+
+Thus, the $3 \times 3$ matrix in the blog post is a **symmetry-dictated reduction** of the full molecular Hamiltonian.
+
+

@@ -390,13 +390,13 @@ Energy Barriers for Rotation and Conformational Isomerism
 
 ### E. Photophysics and Photochemistry
 
-1.Frenkel vs. Wannier Excitons
-
-2. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
+1. [TADF](TADF.md)
    
-3. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
+3. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
    
-4. [Triplet-Triplet Annihilation (TTA)](TTA.md) 
+4. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
+   
+5. [Triplet-Triplet Annihilation (TTA)](TTA.md) 
    
 6. Singlet Exciton Fission
 

@@ -130,7 +130,7 @@ Closed‑form solutions reproduce bi‑exponential decays observed in time‑res
 
 | Phenomenon | Recommended Level | Notes |
 |------------|-------------------|-------|
-| $S_1$, $T_1$, $T_2$ | TD‑DFT (B97X‑D, optimally tuned range‑separated) | Validate with ADC(2) or EOM‑CCSD |
+| $S_1$, $T_1$, $T_2$ | TD‑DFT (wpbeh, optimally tuned range‑separated) | Validate with ADC(2) or EOM‑CCSD |
 | SOC Matrix Elements | Breit–Pauli one‑electron SOC within TD‑DFT or quadratic response | Spin–vibronic coupling via PySOC, Q‑Chem |
 | FC & Huang–Rhys factors | DFT normal‑mode analysis | Needed for Marcus/MLJ rates |
 | Non‑adiabatic dynamics | Surface hopping (SHARC, PYXAID) | Captures temperature‑dependent RISC |

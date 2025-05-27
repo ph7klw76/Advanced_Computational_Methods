@@ -52,7 +52,7 @@ This guide provides structured pathways for mastering advanced topics in scienti
 5. [Physics informed Machine Learning](Physics_informed_Machine_Learning.md) Integrates physical laws into machine learning models to inform and constrain predictions.
 6. [Principal Component Analysis](PCA.md) Dimensionality reduction
 7. [Physics-Guided Δ-Machine Learning](Physics-Guided-Machine-Learning.md)
-8. [Equivariant neural networks](Equivariantneuralnetworks.md)
+8. [Equivariant neural networks](Equivariantneuralnetworks.md) Modeling physical systems whose underlying laws respect symmetries
 9. Graph Neural Networks (https://github.com/Wanlin-Cai/ML_GCN) (https://github.com/chemprop/chemprop?tab=readme-ov-file)
 10. Transfer Learning 
 11. Meta-Learning and Few-Shot Learning

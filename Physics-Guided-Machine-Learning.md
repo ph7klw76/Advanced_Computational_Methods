@@ -1,4 +1,4 @@
-Physics-Guided Δ-Machine Learning (Δ-ML) emerges as an elegant solution to the perennial bias–variance dilemma that plagues both purely physics-based and purely data-driven models. In a traditional physics model—say, Density Functional Theory (DFT) for molecular energy predictions—systematic biases often remain, such as the well-known tendency of many exchange-correlation functionals to underestimate reaction barriers by roughly 10 kcal/mol. Such models exhibit low variance but may be irreducibly offset from experimental truth. Conversely, a standalone machine-learning model trained end-to-end on raw inputs and outputs may achieve very low bias given sufficient data and capacity, yet suffer from high variance and the risk of overfitting. Rather than choosing one extreme or the other, Δ-ML reframes the problem: it lets the physics model capture the dominant physical trends and delegates the learning of the residual error—the “Δ” between physics and reality—to a data-driven correction.
+Physics-Guided Δ-Machine Learning (Δ-ML) emerges as an elegant solution to the perennial bias–variance dilemma that plagues both purely physics based and purely data driven models. In a traditional physics model say, Density Functional Theory (DFT) for molecular energy predictions—systematic biases often remain, such as the well known tendency of many exchange correlation functionals to underestimate reaction barriers by roughly 10 kcal/mol. Such models exhibit low variance but may be irreducibly offset from experimental truth. Conversely, a standalone machine learning model trained end-to-end on raw inputs and outputs may achieve very low bias given sufficient data and capacity, yet suffer from high variance and the risk of overfitting. Rather than choosing one extreme or the other, Δ-ML reframes the problem: it lets the physics model capture the dominant physical trends and delegates the learning of the residual error the “Δ” between physics and reality to a data driven correction.
 
 Formally, if we denote the true mapping from inputs 
 $x$ (for example, molecular geometries or materials compositions) to outputs 
@@ -28,7 +28,7 @@ By anchoring the final output to the physics solver’s baseline, Δ-ML carries 
 $\Delta y$ is typically much smoother and of smaller amplitude than the full mapping 
 $f_{true}$, the ML model can learn it with far fewer training samples, greatly improving data efficiency.
 
-To illustrate the Δ-ML concept in a concrete yet transparent way, consider a toy one-dimensional regression problem. Suppose the true underlying function is
+To illustrate the Δ-ML concept in a concrete yet transparent way, consider a toy one dimensional regression problem. Suppose the true underlying function is
 
 $$
 y_{true}(x) = \sin(2\pi x) + 0.3x^2,
@@ -76,9 +76,11 @@ plt.show()
 ```
 
 
-In executing this code, one observes that the combined “physics plus Δ-ML” prediction tracks the true curve almost perfectly, whereas the physics-only prediction systematically misses the quadratic trend.
+In executing this code, one observes that the combined “physics plus Δ-ML” prediction tracks the true curve almost perfectly, whereas the physics only prediction systematically misses the quadratic trend.
 
-The Δ-ML methodology shines in real-world quantum chemistry applications. High-accuracy electronic structure methods such as CCSD(T) in the complete-basis limit deliver benchmark energies but are computationally prohibitive for large molecules or extensive conformer ensembles. A practical workflow computes a medium-cost DFT energy 
+![image](https://github.com/user-attachments/assets/88f00b3f-79a0-400f-b530-a776da7cf296)
+
+The Δ-ML methodology shines in real-world quantum chemistry applications. High-accuracy electronic structure methods such as CCSD(T) in the complete basis limit deliver benchmark energies but are computationally prohibitive for large molecules or extensive conformer ensembles. A practical workflow computes a medium cost DFT energy 
 $E_{DFT}$ for every molecule, then gathers true reference energies 
 $E_{ref}$ from CCSD(T) for a representative subset. The residuals 
 
@@ -94,10 +96,10 @@ $$
 
 and achieves “chemical accuracy” (approximately 1 kcal/mol error) with orders of magnitude fewer CCSD(T) calculations than would be needed to train a pure ML model from scratch. This hybrid strategy was pioneered by Ramakrishnan and von Lilienfeld (2015), who demonstrated sub-kcal/mol accuracy across tens of thousands of small organic molecules.
 
-Beyond single-fidelity Δ-ML, modern pipelines often embrace multi-fidelity stacking: a rapid classical force-field solver provides a coarse baseline, a DFT calculation refines it, and finally a Δ-ML model corrects the DFT errors towards high-level ab initio targets. Uncertainty quantification can be incorporated by using Gaussian process regression or Bayesian neural networks for the Δ model, thereby yielding error bars on the residual predictions. One can even infuse additional physics constraints—such as ensuring energy conservation in reaction networks—directly into the ML loss function via penalty terms.
+Beyond single-fidelity Δ-ML, modern pipelines often embrace multifidelity stacking: a rapid classical forcefield solver provides a coarse baseline, a DFT calculation refines it, and finally a Δ-ML model corrects the DFT errors towards high level ab initio targets. Uncertainty quantification can be incorporated by using Gaussian process regression or Bayesian neural networks for the Δ model, thereby yielding error bars on the residual predictions. One can even infuse additional physics constraints—such as ensuring energy conservation in reaction networks—directly into the ML loss function via penalty terms.
 
-Despite its power, Δ-ML requires careful implementation. If the baseline physics model is too inaccurate, the residual may exhibit complex, non-smooth behavior that challenges ML generalization. Extrapolation beyond the training domain can also lead to unphysical predictions, so one must ensure that both the physics solver and the residual ML model are applied within their region of validity. Thoughtful feature engineering remains crucial: descriptors must be sensitive to the phenomena the physics model misses. Regularization techniques—cross-validation, early stopping, or Bayesian priors—help prevent overfitting even when modeling relatively simple residuals.
+Despite its power, Δ-ML requires careful implementation. If the baseline physics model is too inaccurate, the residual may exhibit complex, non-smooth behavior that challenges ML generalization. Extrapolation beyond the training domain can also lead to unphysical predictions, so one must ensure that both the physics solver and the residual ML model are applied within their region of validity. Thoughtful feature engineering remains crucial: descriptors must be sensitive to the phenomena the physics model misses. Regularization techniques cross validation, early stopping, or Bayesian priors help prevent overfitting even when modeling relatively simple residuals.
 
-In summary, Physics-Guided Δ-Machine Learning offers a compelling synthesis of first-principles modeling and data-driven flexibility. By allowing trusted physics solvers to shoulder the bulk of prediction while delegating finer corrections to a machine-learning residual, Δ-ML achieves superior accuracy, robustness, and data efficiency. Whether applied to molecular energies, materials properties, fluid-dynamics simulations, or beyond, this hybrid approach balances interpretability and performance, opening new avenues for predictive modeling in scientific and engineering domains.
+In summary, Physics-Guided Δ-Machine Learning offers a compelling synthesis of first principles modeling and data driven flexibility. By allowing trusted physics solvers to shoulder the bulk of prediction while delegating finer corrections to a machine learning residual, Δ-ML achieves superior accuracy, robustness, and data efficiency. Whether applied to molecular energies, materials properties, fluid-dynamics simulations, or beyond, this hybrid approach balances interpretability and performance, opening new avenues for predictive modeling in scientific and engineering domains.
 
 

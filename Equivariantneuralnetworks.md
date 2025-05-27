@@ -226,3 +226,6 @@ class DipoleModel(torch.nn.Module):
 # Example usage omitted for brevity; similar to energy example.
 ```
 more [example](https://www.youtube.com/watch?v=q9EwZsHY1sk)
+
+![image](https://github.com/user-attachments/assets/7dd7f7b4-5394-4ca5-a974-bd5355786cb8)
+

@@ -81,9 +81,11 @@ In executing this code, one observes that the combined “physics plus Δ-ML” 
 The Δ-ML methodology shines in real-world quantum chemistry applications. High-accuracy electronic structure methods such as CCSD(T) in the complete-basis limit deliver benchmark energies but are computationally prohibitive for large molecules or extensive conformer ensembles. A practical workflow computes a medium-cost DFT energy 
 $E_{DFT}$ for every molecule, then gathers true reference energies 
 $E_{ref}$ from CCSD(T) for a representative subset. The residuals 
+
 $$
 \Delta E = E_{ref} - E_{DFT}
 $$
+
 are modeled, for example, with kernel ridge regression using molecular descriptors like Coulomb matrices or smooth overlap of atomic positions (SOAP) vectors. For a new molecule, one evaluates
 
 $$
@@ -98,8 +100,4 @@ Despite its power, Δ-ML requires careful implementation. If the baseline physic
 
 In summary, Physics-Guided Δ-Machine Learning offers a compelling synthesis of first-principles modeling and data-driven flexibility. By allowing trusted physics solvers to shoulder the bulk of prediction while delegating finer corrections to a machine-learning residual, Δ-ML achieves superior accuracy, robustness, and data efficiency. Whether applied to molecular energies, materials properties, fluid-dynamics simulations, or beyond, this hybrid approach balances interpretability and performance, opening new avenues for predictive modeling in scientific and engineering domains.
 
-$$
 
-but our “physics” model only captures the sinusoidal component: 
-$y_{phys}(x) = \sin(2\pi x)$. The ML model’s task is simply to learn the quadratic residual 
-$0.3x^2$. In Python, this can be implemented succinctly:

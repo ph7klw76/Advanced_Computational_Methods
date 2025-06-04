@@ -421,7 +421,7 @@ where $\langle u,v \rangle$ runs over all edges of the graph and $J = 1$ in our 
 
 Because the graph structure (which spin is “next to” which) exactly determines which pairs $(u,v)$ appear in the sum, graph theory is the natural language for the Ising model.
 
-# 2. Exact Enumeration & Partition Function (2×2 Case)
+# Exact Enumeration & Partition Function (2×2 Case)
 
 **All Possible Configurations:**  
 A 2×2 lattice has 4 spins, so there are $2^4 = 16$ possible assignments of $+1$ or $-1$. The code loops over all 16 states:
@@ -459,7 +459,7 @@ where $M(\{s\}) = \sum_i s_i$ is the total magnetization.
 
 The code does exactly this for a handful of temperatures $T = \{0.5,\ 1.0,\ 2.0,\ 5.0\}$.
 
-# 3. Results & Illustration
+#  Results & Illustration
 
 ## a) Lattice Graph
 
@@ -485,7 +485,7 @@ As $T$ increases, thermal fluctuations break alignment, so $\langle |M| \rangle$
 
 By $T = 5.0$, spins are nearly random, and $\langle |M| \rangle \approx 2$, reflecting that half the spins on average point one way and half the other.
 
-# 4. Why This Is a “Real‐World” Graph‐Theory Application
+#  Why This Is a “Real‐World” Graph‐Theory Application
 
 ## Modeling Magnetic Materials
 

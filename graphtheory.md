@@ -504,7 +504,7 @@ More generally, “spins on a lattice” is just one instance: similar graph met
 By explicitly constructing a graph, enumerating configurations, and using that graph’s edges to define energy interactions, we turn the physical problem of “how do spins in a magnet align?” into a discrete, combinatorial problem that can be solved (exactly, for small lattices) or approximated (for large lattices) using standard graph‐theoretic tools.
 
 
-
+To learn more follow this link (https://www.edx.org/learn/python/imt-advanced-algorithmics-and-graph-theory-with-python)
 
 
 

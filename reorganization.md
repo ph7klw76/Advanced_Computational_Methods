@@ -111,7 +111,7 @@ Calculate the  opt singlet
 ```python
 ! DEF2-SVP OPT CPCM(toluene)  # Opt Singlet excited Geo
 %TDDFT  NROOTS  2
-        IROOT  2
+        IROOT  1
         IROOTMULT SINGLET
         LRCPCM True
 END
@@ -128,9 +128,9 @@ end
 
 claculate singlet energy based on opt triplet geometry as t.inp file
 ```python
-! DEF2-SVP OPT CPCM(toluene)  # Opt 2nd triplet excited Geo
-%TDDFT  NROOTS  2
-        IROOT  2
+! DEF2-SVP OPT CPCM(toluene)  # Opt 1nd triplet excited Geo
+%TDDFT  NROOTS  1
+        IROOT  1
         IROOTMULT TRIPLET
         LRCPCM True
 END

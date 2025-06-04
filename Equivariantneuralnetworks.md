@@ -229,3 +229,30 @@ more [example](https://www.youtube.com/watch?v=q9EwZsHY1sk)
 
 ![image](https://github.com/user-attachments/assets/7dd7f7b4-5394-4ca5-a974-bd5355786cb8)
 
+
+## The three symmetries in practice
+
+| **Symmetry**        | **How e3nn enforces it**                                                                                                                                                                                                                                                                                                                                                                                                                                     | **Intuitive picture**                                                                                                                     |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| **Translations**    | All geometric information is expressed with relative vectors  $$r_{ij} = x_j - x_i$$. Adding the same shift to every atom cancels out.                                                                                                                                                                                                                                                                                                                       | Imagine writing directions between cities; the distances don’t care where the global “origin” is.                                        |
+| **Rotations**       | Node/edge features are stored as irreducible representations (irreps) of O(3): scalars $l=0$, vectors $l=1$, quadrupoles $l=2$, … Each irrep knows exactly how to spin when the molecule spins. All linear layers are TensorProducts that couple irreps with Clebsch–Gordan rules, so the output rotates correctly. [docs.e3nn.org](https://docs.e3nn.org)                                                            | Think of the features as little arrows, plates, or snowflakes attached to each atom. If you turn the molecule, every arrow turns with it because the network has only “hinges” that allow the correct motion. |
+| **Inversion (parity)** | Every irrep also carries a parity label (+ even, – odd). TensorProducts track parity ($+×+=+$, $+×–=–$, $–×–=+$), so features that should flip sign (e.g. pseudovectors like magnetic moments) do, and true scalars don’t.                                                                                                                                                                                                                                 | Like a left-handed vs right-handed glove: the network knows which quantities change sign in a mirror and which don’t.                    |
+
+
+![image](https://github.com/user-attachments/assets/3be0be12-091f-40c7-97ee-cbf06507c248)
+![image](https://github.com/user-attachments/assets/1eb6592b-ecb3-48b5-b41d-7b7422982ca2)
+![image](https://github.com/user-attachments/assets/22192d4b-6f47-4b29-80dc-dab2a7120638)
+![image](https://github.com/user-attachments/assets/0ed641e8-9d5a-4c57-bde4-061da84fd85f)
+![image](https://github.com/user-attachments/assets/d15677aa-0d19-4bca-b6f2-726fb7eae028)
+![image](https://github.com/user-attachments/assets/461ae5af-86ad-4544-b868-8d9ceccf39b3)
+![image](https://github.com/user-attachments/assets/8b96349a-2794-46bd-ba8b-275585f065c8)
+![image](https://github.com/user-attachments/assets/1f109678-66d2-4a67-949d-173322edf241)
+![image](https://github.com/user-attachments/assets/16ea3c5c-2fee-4885-bd16-8cdbec85edcd)
+
+
+
+
+
+
+
+

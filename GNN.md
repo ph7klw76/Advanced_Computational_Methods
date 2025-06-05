@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Graph Neural Networks (GNNs) are a class of machine learning models designed to work directly with data that can be represented as graphs. In many areas of physics—as well as chemistry, materials science, and networked systems—data come naturally in the form of nodes (entities) connected by edges (relationships). A GNN provides a way to “learn” from these connections, taking into account not only the individual properties of nodes but also how they influence one another through their edges. In this blog, we will explain how GNNs work at an intuitive level, outline their main ingredients, and survey a few important applications. We will keep mathematical formulas to a minimum—just enough to be precise—but focus on physical intuition, practical applications, and clear rationale for each step.
+Graph Neural Networks (GNNs) are a class of machine learning models designed to work directly with data that can be represented as graphs. In many areas of physics as well as chemistry, materials science, and networked systems data come naturally in the form of nodes (entities) connected by edges (relationships). A GNN provides a way to “learn” from these connections, taking into account not only the individual properties of nodes but also how they influence one another through their edges. In this blog, we will explain how GNNs work at an intuitive level, outline their main ingredients, and survey a few important applications. We will keep mathematical formulas to a minimum just enough to be precise but focus on physical intuition, practical applications, and clear rationale for each step.
 
 ## 1. Why Graphs Matter
 

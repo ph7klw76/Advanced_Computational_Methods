@@ -482,6 +482,383 @@ Applications are broad: from predicting molecular energies to spotting defects i
 
 By integrating graph structure with learnable functions, GNNs provide first‐year physics students (and researchers at all levels) with a powerful tool: one that bridges data‐driven learning and the intrinsic connectivity of many physical systems. Whether your end goal is to accelerate molecular simulations, discover novel materials, or uncover emergent phenomena in interacting systems, understanding how GNNs work is a valuable piece of the modern computational physics toolkit.
 
+# Example 1: Physics – Classifying Ising configurations using a simple GCN
+
+This example creates synthetic spin configurations on a 2D lattice (8×8), labels each configuration as “ordered” or “disordered” by its net magnetization, and then trains a small GCN to predict that label. Key ideas:
+
+- Represent each lattice site as a node with feature = spin (±1).
+- Connect each node to its four nearest neighbors (periodic boundaries).
+- Build a two-layer GCN + global mean pooling → classifier.
+
+**Explanation, step by step:**
+
+We build each 8×8 lattice as a graph of 64 nodes (each node has feature = spin ±1).
+
+We connect each node to its four nearest neighbors (with periodic boundary conditions), so the GCN will “learn” how local spin arrangements correlate with overall magnetization.
+
+A two-layer GCN followed by global mean pooling yields a single 16-dimensional vector per graph; a final linear layer outputs logits for the 2-class label (ordered vs. disordered).
+
+We train for 20 epochs and achieve a reasonably high test accuracy on this synthetic task.
+
+```python
+import torch
+import torch.nn.functional as F
+from torch_geometric.data import Data, DataLoader
+from torch_geometric.nn import GCNConv, global_mean_pool
+
+# 1. Generate synthetic Ising‐lattice dataset
+def generate_ising_graph(L):
+    """
+    Generate a random Ising configuration on an L x L lattice.
+    Label is 1 if total magnetization >= 0, else 0.
+    """
+    # Random spins ±1
+    spins = torch.randint(0, 2, (L, L), dtype=torch.float32) * 2 - 1  # values in {-1, +1}
+    label = 1 if spins.sum() >= 0 else 0  # 0/1 for classification
+
+    # Build edges (4‐neighbor lattice, periodic boundaries)
+    edge_index = []
+    for i in range(L):
+        for j in range(L):
+            idx = i * L + j
+            for di, dj in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+                ni, nj = (i + di) % L, (j + dj) % L
+                nidx = ni * L + nj
+                edge_index.append([idx, nidx])
+    edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+
+    # Node features: spin value (shape: L*L × 1)
+    x = spins.view(-1, 1)
+
+    data = Data(x=x, edge_index=edge_index, y=torch.tensor([label], dtype=torch.long))
+    return data
+
+# Create dataset: 200 random lattices (8×8)
+dataset = [generate_ising_graph(L=8) for _ in range(200)]
+
+# Train/test split
+train_dataset = dataset[:150]
+test_dataset  = dataset[150:]
+train_loader  = DataLoader(train_dataset, batch_size=16, shuffle=True)
+test_loader   = DataLoader(test_dataset,  batch_size=16, shuffle=False)
+
+# 2. Define a simple 2-layer GCN for classification
+class IsingGCN(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, num_classes):
+        super().__init__()
+        self.conv1 = GCNConv(in_channels, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.classifier = torch.nn.Linear(hidden_channels, num_classes)
+
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.relu(self.conv2(x, edge_index))
+        # Global‐mean pooling to get one vector per graph
+        x = global_mean_pool(x, batch)
+        return self.classifier(x)
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model  = IsingGCN(in_channels=1, hidden_channels=16, num_classes=2).to(device)
+opt    = torch.optim.Adam(model.parameters(), lr=0.01)
+
+# 3. Training loop
+model.train()
+for epoch in range(20):
+    total_loss = 0
+    for batch in train_loader:
+        batch = batch.to(device)
+        opt.zero_grad()
+        out  = model(batch)
+        loss = F.cross_entropy(out, batch.y)
+        loss.backward()
+        opt.step()
+        total_loss += loss.item()
+    print(f"Epoch {epoch+1:02d} – Loss: {total_loss / len(train_loader):.4f}")
+
+# 4. Evaluation
+model.eval()
+correct = 0
+total   = 0
+with torch.no_grad():
+    for batch in test_loader:
+        batch = batch.to(device)
+        out   = model(batch)
+        pred  = out.argmax(dim=1)
+        correct += (pred == batch.y).sum().item()
+        total   += batch.y.size(0)
+
+print(f"Test Accuracy: {100 * correct / total:.2f}%")
+```
 
 
+## Example 2. Molecules – Flagging Toxic Drug Candidates Before Synthesis
 
+Below is a minimal demonstration of how to build (and “train”) a GNN that classifies a small toy set of molecules (given as SMILES) into “toxic” or “non-toxic.” In a production setting, one would load a large public dataset (e.g., Tox21) and use an equivariant or directed MPNN, but here we show the barebones pipeline.
+
+**Key ideas:**
+
+- Convert each SMILES → RDKit molecule → 3D embed (for geometry).
+- Define each atom’s feature as a one-hot of element type {C, O, N, H}.
+- Define edges for every bond (and pass bond-type as `edge_attr`).
+
+**Notes on the molecular example:**
+
+- We use RDKit to parse SMILES and embed a 3D conformer, though in this toy code we do not explicitly use the 3D coordinates—the one-hot of atom type and bond type is enough to illustrate how to feed a small graph into a GCN.
+- In a real toxicity setting, you would load a large dataset like Tox21/ToxCast, use a more sophisticated equivariant or directed‐MPNN (e.g., DimeNet, SchNet), and train on tens of thousands of labeled molecules.
+- Here, we simply illustrate how “SMILES → PyG graph data → GCN classifier” fits together.
+
+**Use a two-layer GCN + global mean pooling → classifier.**
+
+```python
+# Example 2: Molecules – Flagging toxic candidates with a simple GNN
+
+from rdkit import Chem
+from rdkit.Chem import AllChem
+import torch
+import torch.nn.functional as F
+from torch_geometric.data import Data, DataLoader
+from torch_geometric.nn import GCNConv, global_mean_pool
+
+# A. Example SMILES + dummy toxicity labels
+smiles_list = [
+    "CCO",      # ethanol  → label 0 (non-toxic)
+    "CC(=O)O",  # acetic acid → label 0
+    "CCN",      # ethylamine → label 1 (toxic)
+    "c1ccccc1"  # benzene   → label 1 (toxic)
+]
+labels = [0, 0, 1, 1]
+
+def mol_to_graph(smiles, label):
+    """
+    Convert SMILES → RDKit mol → PyG Data object with:
+      • x (node features): one-hot of element ∈ {C, O, N, H}
+      • edge_index: bidirectional edges for each bond
+      • edge_attr: one-hot of bond type ∈ {SINGLE, DOUBLE, TRIPLE}
+      • y: label (0/1)
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, randomSeed=42)
+
+    atom_types = ["C", "O", "N", "H"]
+    x = []
+    for atom in mol.GetAtoms():
+        one_hot = [0]*len(atom_types)
+        idx = atom_types.index(atom.GetSymbol())
+        one_hot[idx] = 1
+        x.append(one_hot)
+    x = torch.tensor(x, dtype=torch.float)
+
+    edge_index = []
+    edge_attr  = []
+    bond_types = [Chem.rdchem.BondType.SINGLE, Chem.rdchem.BondType.DOUBLE, Chem.rdchem.BondType.TRIPLE]
+
+    for bond in mol.GetBonds():
+        i = bond.GetBeginAtomIdx()
+        j = bond.GetEndAtomIdx()
+        # Bidirectional
+        edge_index.append([i, j])
+        edge_index.append([j, i])
+        # One-hot bond type for both directions
+        one_hot = [0]*len(bond_types)
+        bt = bond.GetBondType()
+        one_hot[bond_types.index(bt)] = 1
+        edge_attr.append(one_hot)
+        edge_attr.append(one_hot)
+
+    edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+    edge_attr  = torch.tensor(edge_attr, dtype=torch.float)
+    y = torch.tensor([label], dtype=torch.long)
+
+    return Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
+
+# Build a tiny “dataset” of 4 molecules
+molecule_graphs = [mol_to_graph(sm, lab) for sm, lab in zip(smiles_list, labels)]
+train_loader = DataLoader(molecule_graphs, batch_size=2, shuffle=True)
+
+# B. Define a simple GCN for binary classification
+class ToxicityGCN(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels):
+        super().__init__()
+        self.conv1 = GCNConv(in_channels, hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.lin   = torch.nn.Linear(hidden_channels, 2)
+
+    def forward(self, data):
+        x, edge_index, _, batch = data.x, data.edge_index, data.edge_attr, data.batch
+        x = F.relu(self.conv1(x, edge_index))
+        x = F.relu(self.conv2(x, edge_index))
+        x = global_mean_pool(x, batch)
+        return self.lin(x)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model  = ToxicityGCN(in_channels=4, hidden_channels=32).to(device)
+opt    = torch.optim.Adam(model.parameters(), lr=0.01)
+
+# C. Train on the tiny dataset
+model.train()
+for epoch in range(15):
+    total_loss = 0.0
+    for batch in train_loader:
+        batch = batch.to(device)
+        opt.zero_grad()
+        out  = model(batch)
+        loss = F.cross_entropy(out, batch.y)
+        loss.backward()
+        opt.step()
+        total_loss += loss.item()
+    print(f"Epoch {epoch+1:02d} – Loss: {total_loss / len(train_loader):.4f}")
+
+# D. Test on a new molecule
+new_smiles = "CC(=O)N"  # acetamide (dummy label)
+new_graph  = mol_to_graph(new_smiles, label=0)
+model.eval()
+with torch.no_grad():
+    new_graph = new_graph.to(device)
+    pred      = model(new_graph.unsqueeze(0))       # batch of size 1
+    prob_toxic = F.softmax(pred, dim=1)[0, 1].item()
+    print(f"Predicted toxicity probability for {new_smiles}: {prob_toxic:.3f}")
+```
+# Everyday Life – Predicting Short-Term Traffic Speeds with a Spatio-Temporal GNN
+
+This final example simulates a ring of 10 detectors, generates synthetic speed time-series data, and uses a simple combination of a GCN (for spatial mixing) and a GRU (for the temporal dimension). We train the model to predict the speed 5 minutes ahead based on the previous 10 minutes of data.
+
+```python
+# Example 3: Everyday life – Spatio-Temporal GNN for traffic prediction
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+from torch_geometric.data import Data, DataLoader
+from torch_geometric.nn import GCNConv
+from torch_geometric.nn import global_mean_pool
+from torch.nn import GRU
+
+# A. Generate synthetic traffic data
+num_sensors  = 10
+time_steps   = 100  # 100 minutes of data
+window       = 10   # use past 10 minutes to predict t+5
+pred_horizon = 5    # predict speed 5 minutes into the future
+
+# Build ring graph adjacency (bidirectional)
+edge_index = []
+for i in range(num_sensors):
+    j = (i + 1) % num_sensors
+    edge_index.append([i, j])
+    edge_index.append([j, i])
+edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
+
+# Synthetic speed data: sine + noise
+np.random.seed(42)
+speeds = np.array([
+    50 + 10 * np.sin(2 * np.pi * (t + i * 3) / 24) + np.random.randn() * 2
+    for i in range(num_sensors) for t in range(time_steps)
+]).reshape(num_sensors, time_steps)
+
+# Build PyG dataset: each sample uses [t - window ... t - 1] to predict t + pred_horizon
+samples = []
+for t in range(window, time_steps - pred_horizon):
+    # Node features: speeds over the past `window` minutes
+    x = []
+    for i in range(num_sensors):
+        feat = speeds[i, t - window : t]  # length = window
+        x.append(feat)
+    x = torch.tensor(x, dtype=torch.float)  # shape: (num_sensors, window)
+
+    # Label: speeds at t + pred_horizon
+    y = speeds[:, t + pred_horizon]  # shape: (num_sensors,)
+    y = torch.tensor(y, dtype=torch.float)
+
+    samples.append(Data(x=x, edge_index=edge_index, y=y))
+
+train_dataset = samples[:60]
+test_dataset  = samples[60:]
+train_loader  = DataLoader(train_dataset, batch_size=8, shuffle=True)
+test_loader   = DataLoader(test_dataset,  batch_size=8, shuffle=False)
+
+# B. Define a combined GCN + GRU model
+class STGNN(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels):
+        super().__init__()
+        self.gcn = GCNConv(in_channels, hidden_channels)
+        self.gru = GRU(hidden_channels, hidden_channels, batch_first=True)
+        self.lin = torch.nn.Linear(hidden_channels, 1)
+
+    def forward(self, data):
+        # data.x: shape [num_nodes, window]
+        num_nodes = data.x.size(0)
+        # Interpret each time step as a separate “feature vector” of size 1
+        seq = data.x.unsqueeze(-1)  # → [num_nodes, window, 1]
+
+        # Apply GCN at each time step
+        gcn_outs = []
+        for t in range(seq.size(1)):
+            xt = seq[:, t, :]                   # shape: (num_nodes, 1)
+            ht = F.relu(self.gcn(xt, data.edge_index))  # (num_nodes, hidden_channels)
+            gcn_outs.append(ht.unsqueeze(1))    # → (num_nodes, 1, hidden_channels)
+        gcn_seq = torch.cat(gcn_outs, dim=1)     # → (num_nodes, window, hidden_channels)
+
+        # Feed sequence of node embeddings into GRU
+        gru_out, _ = self.gru(gcn_seq)         # (num_nodes, window, hidden_channels)
+        node_emb = gru_out[:, -1, :]           # take last time step: (num_nodes, hidden_channels)
+
+        # Predict next speed per node
+        pred = self.lin(node_emb).squeeze()    # → (num_nodes,)
+        return pred
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model  = STGNN(in_channels=1, hidden_channels=16).to(device)
+opt    = torch.optim.Adam(model.parameters(), lr=0.01)
+
+# C. Training loop
+for epoch in range(20):
+    model.train()
+    total_loss = 0.0
+    for batch in train_loader:
+        batch = batch.to(device)
+        opt.zero_grad()
+        out  = model(batch)           # shape: (num_nodes,)
+        loss = F.mse_loss(out, batch.y.view(-1))
+        loss.backward()
+        opt.step()
+        total_loss += loss.item()
+    print(f"Epoch {epoch+1:02d} – Training MSE: {total_loss / len(train_loader):.4f}")
+
+# D. Evaluation (MAE on test set)
+model.eval()
+mae, count = 0.0, 0
+with torch.no_grad():
+    for batch in test_loader:
+        batch = batch.to(device)
+        out   = model(batch)
+        mae += F.l1_loss(out, batch.y.view(-1), reduction="sum").item()
+        count += out.numel()
+mae /= count
+print(f"Test MAE (km/h): {mae:.3f}")
+```
+
+## Notes on the traffic example:
+
+- We simulate a ring of 10 sensors, each with a synthetic sinusoidal speed + noise.
+- Each graph sample’s node features are the last 10 minutes of speed for that sensor (so each node has a 10-dimensional feature).
+- At each of the 10 past time steps, we apply a GCN (with identical weights) to “mix” each node’s current speed with its neighbors. This yields a sequence of 10 node embeddings.
+- A GRU ingests that sequence (time dimension = 10) for each node, producing a final node embedding. A linear layer then outputs the predicted speed at $t+5$ for each node.
+- We train to minimize MSE; at test time we report MAE. In real life, you’d collect actual loop-detector or GPS traces and build a larger graph reflecting the city’s road network, but this toy version illustrates the same pipeline.
+
+---
+
+## Closing remarks
+
+### “Workable” code:
+Each of the three examples can be copied into a Python file in an environment with the stated dependencies (PyTorch, PyTorch Geometric, RDKit for the molecular case, plus pandas/numpy for the traffic case). Run it as-is to see a small GNN train and evaluate.
+
+---
+
+## Key takeaways:
+
+- **Graph construction** is the critical first step—identify nodes, edges, and node/edge features that capture your domain’s interactions.
+- **Message passing or GCN layers** learn to aggregate neighbor information.
+- **Pooling or downstream modules** (e.g., a classifier, a GRU, or a global readout) let you map those embeddings to a final target (phase label, toxicity, or future speed).
+
+Feel free to modify these snippets—vary the number of GNN layers, hidden dimensions, or dataset size—to explore how GNNs can be adapted to real‐world physics, chemistry, and everyday traffic‐prediction tasks.

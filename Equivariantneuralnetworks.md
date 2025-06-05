@@ -1,7 +1,21 @@
 # Introduction
 
 Equivariant neural networks have emerged as a powerful paradigm for modeling physical systems whose underlying laws respect symmetries. In three-dimensional space, many scientific tasks molecular property prediction, force field modeling, and electronic structure learning require architectures that are equivariant under the Euclidean group E(3): rotations, translations, and inversions. The e3nn (“E3 Equivariant Neural Networks”) library provides building blocks for constructing such architectures in PyTorch, enabling models that inherently respect these symmetries. In this post, we delve into the rationale and mathematical foundations of e3nn, illustrate its core components, and build intuitive understanding of how equivariance is enforced at every layer.
+e3nn itself is a library of equivariant building blocks (irreducible-representation data types, tensor-product linear maps, gated nonlinearities, spherical-harmonic geometric features, etc.).
 
+Most molecular or point-cloud models built with e3nn are implemented as graph‐neural‐network (GNNs), where:
+
+- Nodes correspond to atoms (or points),
+- Edges carry relative-position information (spherical harmonics of $x_j - x_i$),
+- Each message-passing “layer” is assembled from e3nn’s equivariant tensor products, gates, and aggregations.
+
+So while e3nn is not “just a GNN library,” its typical usage is:
+
+1. You define a graph (atoms + edges).
+2. For each edge, you compute equivariant geometric features (spherical harmonics, radial basis).
+3. For each node, you keep a collection of irreps ($l = 0, 1, 2, \dots$) as the node embedding.
+4. You perform message-passing exactly as described in e3nn’s examples: tensor-product messages, gated activations, sum-aggregation, update irreps.
+5. At the end, you read off an invariant quantity (e.g., total energy) from the $l = 0$ channels, or an equivariant quantity (e.g., forces, dipole) from the $l = 1$ channels.
 ## Why Equivariance Matters
 
 ### The Curse of Ignoring Symmetry
@@ -229,21 +243,7 @@ more [example](https://www.youtube.com/watch?v=q9EwZsHY1sk)
 
 ![image](https://github.com/user-attachments/assets/7dd7f7b4-5394-4ca5-a974-bd5355786cb8)
 
-e3nn itself is a library of equivariant building blocks (irreducible-representation data types, tensor-product linear maps, gated nonlinearities, spherical-harmonic geometric features, etc.).
 
-Most molecular or point-cloud models built with e3nn are implemented as graph‐neural‐network (GNNs), where:
-
-- Nodes correspond to atoms (or points),
-- Edges carry relative-position information (spherical harmonics of $x_j - x_i$),
-- Each message-passing “layer” is assembled from e3nn’s equivariant tensor products, gates, and aggregations.
-
-So while e3nn is not “just a GNN library,” its typical usage is:
-
-1. You define a graph (atoms + edges).
-2. For each edge, you compute equivariant geometric features (spherical harmonics, radial basis).
-3. For each node, you keep a collection of irreps ($l = 0, 1, 2, \dots$) as the node embedding.
-4. You perform message-passing exactly as described in e3nn’s examples: tensor-product messages, gated activations, sum-aggregation, update irreps.
-5. At the end, you read off an invariant quantity (e.g., total energy) from the $l = 0$ channels, or an equivariant quantity (e.g., forces, dipole) from the $l = 1$ channels.
 
 
 

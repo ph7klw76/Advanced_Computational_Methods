@@ -55,8 +55,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 8. [Graph Theory](graphtheory.md)
 9. [Graph Neural Networks](GNN.md) (https://github.com/Wanlin-Cai/ML_GCN) (https://github.com/chemprop/chemprop?tab=readme-ov-file)
 10. [Equivariant neural networks](Equivariantneuralnetworks.md) Modeling physical systems whose underlying laws respect symmetries
-11. Transfer Learning 
-12. Meta-Learning and Few-Shot Learning
+11. [Physics- Guided  Δ Equivariant Graph Neural Network](Equivariant_Graph_Convolutional.md)
+12. Transfer Learning 
+13. Meta-Learning and Few-Shot Learning
 
 ### There are numerous libraries which are useful including [Scikit-learn](https://scikit-learn.org/stable/), [Tensorflow](https://www.tensorflow.org/tutorials?authuser=1) and [Pytorch](https://pytorch.org/get-started/locally/)
 

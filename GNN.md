@@ -720,7 +720,7 @@ with torch.no_grad():
     prob_toxic = F.softmax(pred, dim=1)[0, 1].item()
     print(f"Predicted toxicity probability for {new_smiles}: {prob_toxic:.3f}")
 ```
-# Everyday Life – Predicting Short-Term Traffic Speeds with a Spatio-Temporal GNN
+# Example 3 Everyday Life – Predicting Short-Term Traffic Speeds with a Spatio-Temporal GNN
 
 This final example simulates a ring of 10 detectors, generates synthetic speed time-series data, and uses a simple combination of a GCN (for spatial mixing) and a GRU (for the temporal dimension). We train the model to predict the speed 5 minutes ahead based on the previous 10 minutes of data.
 

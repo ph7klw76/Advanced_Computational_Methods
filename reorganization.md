@@ -159,3 +159,4 @@ end
 %pal nprocs 16 end
 * XYZFILE 0 1 T.xyz
 ```
+FINAL SINGLE POINT ENERGY is the energy ww need. 

@@ -100,6 +100,94 @@ $$
 \lambda_\text{int} = \frac{1}{2}k(\Delta Q)^2 = E(N,C) - E(N,N) = E(C,N) - E(C,C).
 $$
 
+When comparing two different charge states:
+
+| label you printed | electronic state            | geometry               | solvent polarization*              |
+|-------------------|-----------------------------|------------------------|------------------------------------|
+| “cation (min)”    | ⚡ +1                        | relaxed for +1         | relaxed for +1                     |
+| “neutral (vert)”  | 0 e⁻ (one extra electron)   | frozen at +1 geometry  | (usually) re-relaxed for charge 0  |
+
+*With the default settings in most PCM/COSMO implementations the reaction-field charges are always re-solved self-consistently for the current electron density.  
+So when you “remove the positive charge” (i.e. add an electron) the solvent immediately repolarises around the neutral species unless you explicitly request a non-equilibrium or frozen-solvent calculation.
+
+Because the neutral has one more electron, its absolute electronic energy is intrinsically more negative (there are more e-n attractions and e-e correlations).  
+Add on top of that the fact that the continuum now sees an uncharged solute and lowers the energy further by dropping the electrostatic term, and it is perfectly normal to find
+
+$$
+E_{\text{neutral, vert}} < E_{\text{cation, min}}
+$$
+
+That does not mean geometry relaxation “raised” the cation’s energy; it simply reflects that you are no longer on the same Born–Oppenheimer surface—you changed  
+$N_e$.
+
+## How to compute the quantities you actually care about
+
+| Quantity                   | What to compare                                                  | Geometry              | Solvent model                                          |
+|---------------------------|------------------------------------------------------------------|-----------------------|--------------------------------------------------------|
+| Vertical IP (solution)    | $E_{\text{cat}}(R_0^0) - E_0(R_0^0)$                             | neutral minimum       | non-equilibrium PCM (frozen $\varepsilon_{\text{slow}}$) |
+| Vertical EA (solution)    | $E_0(R_0^{+1}) - E_{\text{cat}}(R_0^{+1})$                       | cation minimum        | non-equilibrium PCM                                   |
+| Inner-sphere λ of cation  | $E_{\text{cat}}(R_0^0) - E_{\text{cat}}(R_0^{+1})$               | neutral vs cation minima | keep same charge, either gas-phase or state-specific PCM |
+
+Stay on the same charge surface when you evaluate reorganization (λ); otherwise you are mixing vertical electron-attachment with geometry relaxation and the sign will look “wrong”.
+
+Tell your code to use frozen-solvent / nonequilibrium solvation for the vertical steps; in Gaussian, for example, that is `SCRF=(PCM,Read) NonEq=Write` on the vertical point.
+
+Remember that absolute DFT/ab-initio energies for species with different $N_e$ cannot be compared directly; you must include the energy of the missing electron (typically taken as 0 in vacuum) to form a proper thermodynamic cycle.
+
+
+Below is the standard two-step workflow TeraChem expects when you want a “frozen-solvent” (state-specific, non-equilibrium) PCM energy for a vertical charge-transfer step. Only keywords that differ from an ordinary COSMO run are shown.
+
+## Generate the equilibrium reaction field for the initial charge state
+
+This converges the slow + fast polarization of the solvent around the initial state and writes it to `solv_eq.field`. No special options are needed.
+
+```text
+# eq_neutral.inp  ── neutral (or cation) at its own minimum
+pcm cosmo
+epsilon 78.39            # static ε of the solvent (e.g. water)
+run   energy             # single-point – geometry is already relaxed
+pcm_write solv_eq.field  # save the converged surface charges
+```
+
+
+##  Vertical step with frozen slow polarization
+
+```text
+# vert_charge_change.inp ── same geometry, different total charge
+pcm cosmo
+epsilon 78.39
+ss_pcm_solvation ground_neq   # “ground-state non-equilibrium” model
+pcm_read   solv_eq.field      # read the slow (frozen) surface charges
+fast_epsilon 2.24              # optical (high-freq) ε of the solvent refractive index sqaured of the solvent
+split_pcm_energy 1            # (optional) print slow vs. fast pieces
+run  energy
+```
+
+- `ss_pcm_solvation ground_neq` tells TeraChem to keep the surface charges you read in (slow polarization) and relax only the fast electronic component – exactly the Marcus-style non-equilibrium you need for vertical IP/EA or inner-sphere λ.
+
+- `pcm_read` must point to the file written in step 1.
+
+- `fast_epsilon` sets the dielectric constant felt by the fast part (≈ $n^2$ of the solvent; 2.0 is the default for water).
+
+These options are recognised only for `run energy` jobs, which is what you need for a vertical single-point. All four keywords are documented together in the TeraChem job-parameter table, including the meaning of `ground_neq`, `pcm_read`/`pcm_write`, and `fast_epsilon`.
+
+---
+
+## Notes & good practice
+
+- **Geometry:** keep the Cartesian coordinates identical between the two input files; the geometry optimizer is not invoked.
+
+- **Same cavity:** do not change any cavity-definition keywords (`pcm_grid`, `radii scale`, etc.) between the steps, otherwise the field you read back will be incompatible.
+
+- **Fast vs. slow energy print-out:** `split_pcm_energy 1` gives you an immediate check that the “slow” contribution is identical in both runs and that only the fast part changed.
+
+- **Excited-state verticals:** for CIS/TDDFT vertical excited states the analogous keyword is `lr_pcm_solvation neq` (linear-response) or `ss_pcm_solvation neq` (state-specific) instead of `ground_neq`.
+
+---
+
+Follow that pair of inputs and the second job will give you the correct non-equilibrium solvation energy for the vertical charge change—with the slow solvent polarization truly frozen.
+
+
 # 4. External Reorganization Energy
 
 ---

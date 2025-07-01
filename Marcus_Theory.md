@@ -743,4 +743,109 @@ plt.gca().spines["left"].set_linewidth(2)
 plt.show()
 ```
 
-calcuculation of electronic coupling can be found at (here)[https://github.com/ph7klw76/gaussian_note/blob/main/electronic_coupling.md]
+sometimes we want to quantify the gaussian disorder. This can be done by calculating all pdb molecular structure extracted from MD and run the terachem through the script after list all the pdb files
+
+```
+# Define TeraChem variables
+export TeraChem=/home/user/woon/terachem-1.96p
+export PATH=$TeraChem/bin:$PATH
+export LD_LIBRARY_PATH=$TeraChem/lib:$LD_LIBRARY_PATH
+export NBOEXE=$TeraChem/bin/nbo6.i4.exe
+
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+#  tc_homo_lumo_batch.sh
+#
+#  • reads pdb_files.txt line-by-line
+#  • builds 1.ts, runs TeraChem synchronously
+#  • extracts HOMO & LUMO (eV) from the output *.molden file
+#  • appends   <pdb>  <HOMO_eV>  <LUMO_eV>   to $WORKDIR/homo_lumo.txt
+#  • deletes   scr.<N>/   after extraction to free disk space
+# ---------------------------------------------------------------------------
+
+set -euo pipefail
+
+PDB_LIST="pdb_files.txt"               # list of .pdb files (one per line)
+WORKDIR="$(pwd)"                       # absolute path for safety
+HL_TABLE="${WORKDIR}/homo_lumo.txt"    # consolidated output
+HARTREE2EV=27.211386245988             # CODATA-2022
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+[[ -f "$PDB_LIST" ]] || die "$PDB_LIST not found."
+
+# fresh results file with header row
+echo -e "#pdb\tHOMO_eV\tLUMO_eV" > "$HL_TABLE"
+
+# ───────────────────────── Homo/Lumo extractor ────────────────────────────
+extract_homo_lumo () (
+    # Args: 1 = molden file, 2 = label to print (pdb name)
+    molden="$1"
+    label="$2"
+
+    awk -v h2e="$HARTREE2EV" -v lab="$label" '
+        /Ene[[:space:]]*=/  { sub(/.*Ene[[:space:]]*=[[:space:]]*/, "", $0);  E[n]=$1; next }
+        /Occup[[:space:]]*=/ { sub(/.*Occup[[:space:]]*=[[:space:]]*/, "", $0); O[n]=$1; n++ }
+        END {
+            if (n==0) { print "No orbitals found in " lab > "/dev/stderr"; exit 2 }
+            homo=-1e9; lumo=1e9
+            for (i=0;i<n;i++) {
+                if (O[i]>0 && E[i]>homo) homo=E[i]
+                if (O[i]==0 && E[i]<lumo) lumo=E[i]
+            }
+            printf("%s\t%.6f\t%.6f\n", lab, homo*h2e, lumo*h2e)
+        }' "$molden" >> "$HL_TABLE" \
+        && echo "  → appended HOMO/LUMO to homo_lumo.txt"
+)
+
+# ─────────────────────────── Main processing loop ─────────────────────────
+while IFS= read -r pdb || [[ -n "$pdb" ]]; do
+    # skip blanks or comment lines
+    [[ -z "$pdb" || "$pdb" =~ ^[[:space:]]*# ]] && continue
+
+    echo "=== Processing $pdb ==="
+
+    # 1) build 1.ts
+    cat > 1.ts <<EOF
+basis          def2-svp
+coordinates    $pdb
+charge         0
+spinmult       1
+method         wpbeh
+rc_w           0.04975834695659544 #CHANGE THIS
+pcm            cosmo
+epsilon        2.38
+pcm_scale      1
+maxit          500
+run            energy
+end
+EOF
+
+    # 2) run TeraChem (blocking)
+    if ! terachem "${WORKDIR}/1.ts"; then
+        echo " TeraChem failed for $pdb — skipping extraction." >&2
+        continue
+    fi
+
+    # 3) locate Molden file in scr.<N>/  (N = first integer in pdb name)
+    num=$(echo "$pdb" | grep -oE '[0-9]+' | head -n1)
+    scrdir="scr.${num}"
+
+    molden=$(find "$scrdir" -maxdepth 1 -type f -name '*.molden' -print -quit 2>/dev/null || true)
+    if [[ -z "$molden" ]]; then
+        echo " No .molden file found in $scrdir — skipping." >&2
+        continue
+    fi
+
+    # 4) extract HOMO/LUMO and append to table
+    extract_homo_lumo "$molden" "$pdb"
+
+    # 5) remove the scr.<N> directory (including the Molden file)
+    rm -rf "$scrdir"
+    echo "  → removed directory $scrdir"
+done < "$PDB_LIST"
+
+echo "All jobs complete.  Consolidated results in $HL_TABLE"
+```
+
+calculation of electronic coupling can be found at (here)[https://github.com/ph7klw76/gaussian_note/blob/main/electronic_coupling.md]

@@ -745,7 +745,8 @@ plt.show()
 
 sometimes we want to quantify the gaussian disorder. This can be done by calculating all pdb molecular structure extracted from MD and run the terachem through the script after list all the pdb files
 
-```
+```txt
+
 # Define TeraChem variables
 export TeraChem=/home/user/woon/terachem-1.96p
 export PATH=$TeraChem/bin:$PATH

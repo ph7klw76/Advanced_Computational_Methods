@@ -406,3 +406,249 @@ If DF varies **weakly with temperature** (or linearly with mobility changes) →
 
 By combining **time-resolved, intensity-dependent, and temperature-dependent** measurements, one can robustly diagnose whether **TTA** or **TADF** dominates the delayed fluorescence mechanism.
 
+```python
+"""
+Dual-Theory Spectrum Matcher   ––  Gaussian broadening in ENERGY (eV)
+---------------------------------------------------------------------
+• LEFT  y-axis  – experimental absorption
+• RIGHT y-axis  – two theoretical spectra (triplet-triplet & singlet-singlet)
+• X-axis fixed  – 500 … 950 nm
+• Broadening FWHM slider now in eV
+"""
+
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import os
+
+# ----------------------------------------------------------------------
+# Globals
+# ----------------------------------------------------------------------
+triplet_df       = None       # theoretical: triplet-triplet
+singlet_df       = None       # theoretical: singlet-singlet
+experimental_df  = None       # experimental
+
+# ----------------------------------------------------------------------
+# File-reading utilities
+# ----------------------------------------------------------------------
+def _read_theory_file(path):
+    """Expect two whitespace columns: Energy(eV)  OscStrength"""
+    df = pd.read_csv(path, delim_whitespace=True, header=None,
+                     names=["Energy", "OscStrength"])
+    df["Energy"]      = pd.to_numeric(df["Energy"],      errors="coerce")
+    df["OscStrength"] = pd.to_numeric(df["OscStrength"], errors="coerce")
+    df.dropna(inplace=True)
+    df.sort_values("Energy", inplace=True)        # keep ascending eV
+    return df.reset_index(drop=True)
+
+def _read_expt_file(path):
+    """Expect two whitespace columns: Wavelength(nm)  Absorption"""
+    df = pd.read_csv(path, delim_whitespace=True, header=None,
+                     names=["Wavelength", "Absorption"])
+    df["Wavelength"] = pd.to_numeric(df["Wavelength"], errors="coerce")
+    df["Absorption"] = pd.to_numeric(df["Absorption"], errors="coerce")
+    df.dropna(inplace=True)
+    df.sort_values("Wavelength", inplace=True)
+    return df.reset_index(drop=True)
+
+# ----------------------------------------------------------------------
+# Data-loading callbacks
+# ----------------------------------------------------------------------
+def load_triplet():
+    """Triplet-triplet theoretical data"""
+    global triplet_df
+    p = filedialog.askopenfilename(title="Select Triplet–Triplet data")
+    if p and os.path.exists(p):
+        try:
+            triplet_df = _read_theory_file(p)
+            messagebox.showinfo("Triplet–Triplet",
+                                "Triplet–triplet data loaded.")
+            update_plot()
+        except Exception as e:
+            messagebox.showerror("Error", f"Cannot load triplet data:\n{e}")
+
+def load_singlet():
+    """Singlet-singlet theoretical data"""
+    global singlet_df
+    p = filedialog.askopenfilename(title="Select Singlet–Singlet data")
+    if p and os.path.exists(p):
+        try:
+            singlet_df = _read_theory_file(p)
+            messagebox.showinfo("Singlet–Singlet",
+                                "Singlet–singlet data loaded.")
+            update_plot()
+        except Exception as e:
+            messagebox.showerror("Error", f"Cannot load singlet data:\n{e}")
+
+def load_experimental():
+    """Experimental absorption data"""
+    global experimental_df
+    p = filedialog.askopenfilename(title="Select Experimental data")
+    if p and os.path.exists(p):
+        try:
+            experimental_df = _read_expt_file(p)
+            messagebox.showinfo("Experimental",
+                                "Experimental data loaded.")
+            update_plot()
+        except Exception as e:
+            messagebox.showerror("Error", f"Cannot load experimental data:\n{e}")
+
+# ----------------------------------------------------------------------
+# Energy-domain Gaussian broadening
+# ----------------------------------------------------------------------
+def broaden_energy(df, fwhm_eV, E_grid):
+    """
+    Build continuous spectrum in **energy space**.
+    Parameters
+    ----------
+    df         : DataFrame with columns ['Energy', 'OscStrength']
+    fwhm_eV    : scalar – full width at half maximum in eV
+    E_grid     : numpy array (eV) – evaluation grid
+    Returns
+    -------
+    numpy array same length as E_grid (or None if df empty)
+    """
+    if df is None or df.empty:
+        return None
+    sigma = fwhm_eV / (2*np.sqrt(2*np.log(2)))
+    spec  = np.zeros_like(E_grid)
+    for _, r in df.iterrows():
+        spec += r.OscStrength * np.exp(-0.5 * ((E_grid - r.Energy)/sigma)**2)
+    return spec
+
+# ----------------------------------------------------------------------
+# Plot refresh
+# ----------------------------------------------------------------------
+def update_plot(event=None):
+    # ----------- read GUI widgets ------------------------------------
+    try:
+        fwhm_eV  = float(fwhm_scale.get())     # eV
+    except Exception:
+        fwhm_eV  = 0.05
+    try:
+        shift_eV = float(shift_scale.get())    # eV
+    except Exception:
+        shift_eV = 0.0
+    try:
+        exp_ymin = float(exp_ymin_scale.get())
+    except Exception:
+        exp_ymin = 0.0
+
+    # ----------- clear both y-axes -----------------------------------
+    ax.clear()
+    ax2.clear()
+
+    # ----------- build shared ENERGY grid if any theory present ------
+    theory_dfs = [d for d in (triplet_df, singlet_df)
+                  if d is not None and not d.empty]
+    if theory_dfs:
+        E_min = min(d.Energy.min() for d in theory_dfs) - 0.5   # eV padding
+        E_max = max(d.Energy.max() for d in theory_dfs) + 0.5
+        E_grid = np.linspace(E_min, E_max, 5000)
+    else:
+        E_grid = None
+
+    # ----------- plot theoretical curves (right axis) ----------------
+    if E_grid is not None:
+        spec_trip = broaden_energy(triplet_df, fwhm_eV, E_grid)
+        if spec_trip is not None:
+            wl_trip = 1239.84 / E_grid          # nm
+            order   = np.argsort(wl_trip)       # wavelength ascending
+            ax2.plot(wl_trip[order], spec_trip[order],
+                     color="orange", lw=2, label="Triplet–Triplet (theory)")
+
+        spec_sing = broaden_energy(singlet_df, fwhm_eV, E_grid)
+        if spec_sing is not None:
+            wl_sing = 1239.84 / E_grid
+            order   = np.argsort(wl_sing)
+            ax2.plot(wl_sing[order], spec_sing[order],
+                     color="crimson", lw=2, label="Singlet–Singlet (theory)")
+
+    # ----------- experimental (left axis) ----------------------------
+    if experimental_df is not None and not experimental_df.empty:
+        ex = experimental_df.copy()
+        ex["Energy"]           = 1239.84 / ex.Wavelength
+        ex["ShiftedEnergy"]    = ex.Energy + shift_eV
+        ex["ShiftedWavelength"] = 1239.84 / ex.ShiftedEnergy
+        ax.plot(ex.ShiftedWavelength, ex.Absorption,
+                color="steelblue", lw=1.5, label="Experimental")
+
+        # Autoscale then pin lower y-limit
+        ax.relim(); ax.autoscale()
+        ax.set_ylim(bottom=exp_ymin)
+
+    # ----------- cosmetics -------------------------------------------
+    ax.set_xlim(500, 950)                     # nm
+    ax.set_xlabel("Wavelength (nm)", fontsize=14)
+
+    ax.set_ylabel("Absorption (a.u)",        fontsize=14)
+
+    ax.tick_params(axis='both', labelsize=12)
+    ax2.tick_params(axis='y',   labelsize=12)
+
+    # combined legend
+    h1,l1 = ax.get_legend_handles_labels()
+    h2,l2 = ax2.get_legend_handles_labels()
+    if h1 or h2:
+        ax.legend(h1+h2, l1+l2, loc="upper right", fontsize=12)
+
+    ax.grid(False)
+    canvas.draw()
+
+# ----------------------------------------------------------------------
+# GUI assembly
+# ----------------------------------------------------------------------
+root = tk.Tk()
+root.title("Dual-Theory Spectrum Matcher  (Gaussian broadening in eV)")
+
+# ---- plot frame ------------------------------------------------------
+plot_frame = tk.Frame(root)
+plot_frame.pack(fill=tk.BOTH, expand=True)
+
+fig, ax = plt.subplots(figsize=(10,5))
+ax2 = ax.twinx()                               # right y-axis
+canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+# ---- control frame ---------------------------------------------------
+ctl = tk.Frame(root)
+ctl.pack(fill=tk.X)
+
+tk.Button(ctl, text="Load Triplet–Triplet", command=load_triplet
+          ).pack(side=tk.LEFT, padx=5, pady=5)
+
+tk.Button(ctl, text="Load Singlet–Singlet", command=load_singlet
+          ).pack(side=tk.LEFT, padx=5, pady=5)
+
+tk.Button(ctl, text="Load Experimental", command=load_experimental
+          ).pack(side=tk.LEFT, padx=5, pady=5)
+
+# Gaussian FWHM (eV)  – typical excitonic widths ~0.03-0.3 eV
+fwhm_scale = tk.Scale(ctl, from_=0.005, to=0.5, resolution=0.005,
+                      orient=tk.HORIZONTAL, label="Gaussian FWHM (eV)",
+                      command=update_plot)
+fwhm_scale.set(0.05)
+fwhm_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+
+# Experimental energy shift (eV)
+shift_scale = tk.Scale(ctl, from_=-1, to=1, resolution=0.01,
+                       orient=tk.HORIZONTAL, label="Exp Shift (eV)",
+                       command=update_plot)
+shift_scale.set(0.0)
+shift_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+
+# Experimental y-axis lower limit
+exp_ymin_scale = tk.Scale(ctl, from_=-10, to=10, resolution=0.1,
+                          orient=tk.HORIZONTAL, label="Exp y-axis min",
+                          command=update_plot)
+exp_ymin_scale.set(0.0)
+exp_ymin_scale.pack(side=tk.LEFT, padx=5, pady=5, fill=tk.X, expand=True)
+
+# First blank draw
+update_plot()
+root.mainloop()
+```
+

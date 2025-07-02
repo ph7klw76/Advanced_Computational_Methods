@@ -1,5 +1,7 @@
 # Internal Conversion
 
+![image](https://github.com/user-attachments/assets/e5a7a3c3-789d-473c-b4a2-c19e36bbde33)
+
 In quantum‐mechanical terms, non‐radiative decay from one electronic state to another of the same spin multiplicity—i.e. internal conversion (IC)—is treated as a vibronically‐mediated transition and its rate is given by Fermi’s Golden Rule. For an excited triplet state $T_n$ decaying to a lower triplet $T_m$, the rate constant $k_{IC}$ is
 
 $$

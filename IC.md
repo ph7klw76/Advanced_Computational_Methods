@@ -64,3 +64,7 @@ factor.
 
 Taken together, these effects routinely slow LE→CT IC by two or more orders of magnitude compared to LE→LE decays.
 
+
+see https://www.faccts.de/docs/orca/6.0/manual/contents/typical/excitedstates.html#numerical-non-adiabatic-coupling-matrix-elements
+for calculating IC from T1/S1 to ground state. Higher  excited state is not yet implemented.
+

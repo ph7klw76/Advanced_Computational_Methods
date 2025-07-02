@@ -214,3 +214,71 @@ In the high-barrier limit, the Franck–Condon-weighted density of accepting sta
 If the conical intersection sits well above the vibrationally accessible region, population seldom reaches it; the weak-coupling (FGR) picture is indeed valid, albeit predicting an exponentially slow IC channel. As the barrier lowers and the seam becomes thermally accessible, the bottleneck shifts from weak electronic coupling to nuclear barrier crossing, and Eyring/TST becomes the appropriate tool. Once the seam drops to—or below—the Franck–Condon window, both FGR and TST break down and full non-adiabatic dynamics (or nonequilibrium FGR) are required.
 
 
+For most organic dyes in dilute solution the photoluminescence quantum-yield (PLQY, $\Phi_{PL}$) is essentially independent of the excitation wavelength, in accordance with Vavilov’s rule (a corollary of Kasha’s rule). But wavelength-dependent $\Phi_{PL}$ does appear whenever excess photon energy opens, or speeds up, an additional non-radiative channel—for example by giving the hot wave-packet enough energy to climb over the barrier that leads to a conical intersection, or by populating a higher electronic state whose own decay kinetics are different.
+
+## 1 The baseline: why $\Phi_{PL}$ is usually constant
+
+Photoluminescence efficiency is a simple kinetic ratio
+
+$$
+\Phi_{PL} = \frac{k_r}{k_r + k_{IC} + k_{ISC} + k_{\mathrm{other}}},
+$$
+
+where $k_r$ is the radiative rate and $k_{IC}$, $k_{ISC}$ … are the non-radiative ones.
+
+For the overwhelming majority of dyes two experimental facts guarantee wavelength independence:
+
+| fact                                                                                                     | timescale                                                                                     | consequence                                                                                                                       |
+|----------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Internal conversion $S_n \to S_1$ and vibrational cooling within $S_1$ are ultrafast (10–100 fs). edinst.com | Much faster than $k_r$ (ns) or $k_{IC}(S_1)$ (≈10<sup>8</sup> s<sup>−1</sup>).               | No matter which photon excited the dye, the system reaches the same cold $S_1$ before anything else happens.                       |
+| $S_1$ non-radiative paths are not strongly influenced by a few $k_B T$ of vibrational excess once cooling has occurred. |                                                                                               | The rate constants entering $\Phi_{PL}$ are therefore the same for every excitation wavelength.                                  |
+
+This is the physical basis of Vavilov’s rule (“$\Phi_{PL}$ is independent of the excitation wavelength”) which most aromatic dyes obey, as illustrated for anthracene.
+
+## 2 How excitation energy can break Vavilov’s rule
+
+The invariance fails whenever any of the rate constants in the denominator becomes a function of the initial excess energy ($E_{ex} = h\nu – E_{0-0}$). Three common scenarios are:
+
+### 2.1 Hot-state access to a conical-intersection barrier
+
+If the minimum-energy CI that funnels $S_1 \to S_0$ sits $\Delta E_{CI}$ above the relaxed $S_1$, then
+
+**Low-energy (near-0-0) excitation:**  
+the wave-packet cools below $\Delta E_{CI}$ before it can reach the seam → $k_{IC}(\text{hot}) \approx 0$ → Vavilov holds.
+
+**High-energy (short-$\lambda$) excitation:**  
+the initial vibrational energy is already above $\Delta E_{CI}$; the packet reaches the seam during cooling → an extra non-radiative channel turns on, effectively adding a term $k_{CI}(E_{ex})$ to the denominator and lowering $\Phi_{PL}$.
+
+Because the CI hop is barrier-less once the seam is reached, $k_{CI}$ can be 10<sup>11–13</sup> s<sup>−1</sup>, so even a modest population that reaches the seam can noticeably quench PL.
+
+### 2.2 Direct population of a higher electronic state
+
+If the photon is energetic enough to reach $S_{n>1}$ (or $T_{n>1}$) whose own non-radiative decay is faster than $S_1$’s, $\Phi_{PL}$ decreases. Classic example: pyrene, whose fluorescence spectrum is independent of $\lambda_{exc}$ but whose $\Phi$ drops at higher-energy excitation because $S_2$ opens additional IC channels.
+
+### 2.3 Competition with prompt photochemistry
+
+Photo-isomerisations such as azobenzene show quantum yields that nearly double between 365 nm and 436 nm because the hot wave-packet can choose between two different CIs leading to trans → cis or cis → trans paths.
+
+# 4 Quantitative picture
+
+A minimal hot-state kinetic scheme yields
+
+$$
+\Phi_{PL}(\nu) = \frac{k_r}{k_r + k_{nr}^0 + k_{CI}\,\Theta(E_{ex}-\Delta E_{CI})}
+$$
+
+with $\Theta(x)$ the Heaviside step function. Provided $k_{CI}\gg k_r$, the quantum yield drops abruptly once $h\nu$ exceeds $E_{0-0} + \Delta E_{CI}$, mirroring many experimental “kinks” seen in excitation-dependent PL measurements of flexible push–pull dyes and AIE/TADF molecules. Continuous (Arrhenius-type) dependences appear when reaching the seam requires tunnelling or a distribution of barrier heights.
+
+# 5 Practical implications for spectroscopy and device testing
+
+Verify Vavilov first. Measure $\Phi_{PL}(\lambda_{exc})$ with an integrating sphere; a flat response confirms that only relaxed $S_1$ kinetics matter.
+
+If a drop is observed at high energy, map the dependence against temperature; an activated slope that matches $\Delta E_{CI}/k_B T$ is a signature of the CI-barrier mechanism discussed above.
+
+Device relevance. OLEDs and bio-imaging probes excited electrically or by two-photon NIR pumping create excitations close to the $S_1$ minimum, so a dye that loses $\Phi$ at short-wave optical excitation may still perform well in devices.
+
+## Take-home message
+
+Vavilov’s rule is the norm, but it is not inviolable. If extra photon energy lets the excited molecule reach a low-lying conical intersection or a higher electronic state with faster non-radiative decay, the PLQY becomes excitation-energy dependent. The direction of the effect is unambiguous: shorter, higher-energy wavelengths lower $\Phi_{PL}$, whereas longer wavelengths leave it at its intrinsic value. Understanding the height and accessibility of the relevant CI seams is therefore essential for predicting—and engineering—excitation-dependent photoluminescence.
+
+

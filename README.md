@@ -400,33 +400,35 @@ Energy Barriers for Rotation and Conformational Isomerism
    
 4. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
    
-5. [Triplet-Triplet Annihilation (TTA)](TTA.md) 
+5. [Triplet-Triplet Annihilation (TTA)](TTA.md)
    
-6. Singlet Exciton Fission
-
-7. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+7. [Internal Conversion (IC)](IC.md)
    
-8. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
+8. Singlet Exciton Fission
 
-9. Charge Separation in Donor-Acceptor Systems
-    
-10. Charge Recombination Mechanisms
+9. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+   
+10. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
 
-11. Third-Harmonic Generation (THG)
+11. Charge Separation in Donor-Acceptor Systems
     
-12. Exciton-Polariton Condensates
+12. Charge Recombination Mechanisms
 
-13. Metal-Enhanced Fluorescence
+13. Third-Harmonic Generation (THG)
+    
+14. Exciton-Polariton Condensates
 
-14. Strong Light-Matter Coupling
-    
-15. Spin-Polarized Luminescence
-    
-16. Thermally Activated Delayed Fluorescence
+15. Metal-Enhanced Fluorescence
 
-17. Excited-State Proton Transfer
+16. Strong Light-Matter Coupling
     
-18. [Transient Absorption](TA.md)
+17. Spin-Polarized Luminescence
+    
+18. Thermally Activated Delayed Fluorescence
+
+19. Excited-State Proton Transfer
+    
+20. [Transient Absorption](TA.md)
 
 ### F: OLED Device Dynamics
 

@@ -852,4 +852,4 @@ echo "All jobs complete.  Consolidated results in $HL_TABLE"
 calculation of electronic coupling can be found at (here)[https://github.com/ph7klw76/gaussian_note/blob/main/electronic_coupling.md]
 
 
-Deviation of Marcus theory at low temperature can be found in the thesis Charge and exciton transport in organic semiconductors: The role of molecular vibrations [20190918_de_Vries.pdf]
+Deviation of Marcus theory at low temperature can be found in the thesis Charge and exciton transport in organic semiconductors: The role of molecular vibrations [https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/20190918_de_Vries.pdf]

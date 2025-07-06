@@ -323,7 +323,7 @@ Hence, $\lambda$ in the exponential waiting time distribution usually refers to 
 Marcus theory provides the charge-transfer (CT) rate $k$ for an electron (or hole) hopping from one site (molecule) to another. In its simplest form for non-adiabatic reactions:
 
 $$
-k = \frac{\pi}{\lambda k_B T} V^2 \exp \left[ - \frac{( \Delta G + \lambda )^2}{4 \lambda k_B T} \right],
+k = \frac{\pi}{\lambda k_B T} V^2 \exp \left[ - \frac{( \Delta G + \lambda )^2}{4 \lambda k_B T} \right], (wrong equation)
 $$
 
 where:

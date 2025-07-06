@@ -106,13 +106,9 @@ where $X$ labels one of four successively richer approximations (defined below).
 
 By expanding $\hat{H}_{SOC}$ to first order in each normal coordinate (Herzberg–Teller, HT) and retaining the explicit NA-SVC term, the golden-rule expression decomposes into four additive contributions:
 
-| Tier           | Electronic operator(s)                         | Order in perturbation | Vibrational treatment | Symbol in the paper |
-|----------------|-----------------------------------------------|------------------------|------------------------|----------------------|
-| 1st + Condon   | $\hat{H}_{SOC}$                               | 1st                    | equilibrium (Condon)   | 1st+Condon           |
-| 1st + HT       | $\partial \hat{H}_{SOC} / \partial Q$         | 1st                    | HT modulation          | 1st+HT               |
-| 2nd + Condon   | ![image](https://github.com/user-attachments/assets/b1880c88-5aee-4dc3-8d2b-05e2850bf85f)
-         | 2nd                    | equilibrium            | 2nd+Condon           |
-| 2nd + HT       | $\{\hat{H}_{SOC}, \partial \hat{H}_{SOC}/\partial Q\} \times \hat{H}_{nBO}$ | 2nd | HT modulation          | 2nd+HT               |
+![image](https://github.com/user-attachments/assets/6482399c-c537-41f8-a2b4-c4960f32706b)
+
+
 
 The full rate at the 2nd+HT level is the algebraic sum of these four pieces.
 

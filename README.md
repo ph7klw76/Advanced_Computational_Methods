@@ -333,13 +333,13 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
    
-4. [Marcus–Levich–Jortner Thoery]:(Marcus–Levich–Jortner.md)
+4. [Marcus–Levich–Jortner Thoery:](Marcus–Levich–Jortner.md)
+      
+6.  Dynamic and static disorder
    
-5.  Dynamic and static disorder
+7.  Miller-Abrahams Hopping Model
    
-6.  Miller-Abrahams Hopping Model
-   
-7.  Variable Range Hopping (VRH) in Disordered Systems
+8.  Variable Range Hopping (VRH) in Disordered Systems
    
 9.  Polaron Hopping Mechanisms
     
@@ -386,7 +386,7 @@ Energy Barriers for Rotation and Conformational Isomerism
    
 10. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
 
-11. Non-Radiative Relaxation and Quenching
+11. [Quantum‐Mechanical Portrait of Non‐Radiative Decay](Non‐RadiativeDecay.md)
    
 12. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
     

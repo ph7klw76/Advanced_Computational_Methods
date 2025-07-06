@@ -377,32 +377,34 @@ Energy Barriers for Rotation and Conformational Isomerism
 4. [Reorganization Energy for rISC](reorganization.md)
    
 6. [Franck-Condon (FC) intensities (IntensityFC) and Herzberg-Teller (HT) intensities ](FC_HT.md)
-   
-7. Spectral Line Shapes and Broadening Mechanisms
-   
-8. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
 
-9. Anti-Stokes Fluorescence
+8. Spectral Line Shapes and Broadening Mechanisms
    
-10. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+9. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
 
-11. [Quantum‐Mechanical Portrait of Non‐Radiative Decay](Non‐RadiativeDecay.md)
+10. Anti-Stokes Fluorescence
    
-12. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
+11. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+
+12. [Quantum‐Mechanical Portrait of Non‐Radiative Decay](Non‐RadiativeDecay.md)
+   
+13. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
     
-13. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
+14. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
     
-14. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
+15. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
 
 ### E. Photophysics and Photochemistry
 
 1. [TADF](TADF.md)
    
-3. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
+3. [Spin-Vibronic-Pathways](Spin-Vibronic-Pathways.md)
    
-4. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
+4. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
    
-5. [Triplet-Triplet Annihilation (TTA)](TTA.md)
+5. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
+   
+6. [Triplet-Triplet Annihilation (TTA)](TTA.md)
    
 7. [Internal Conversion (IC)](IC.md)
    

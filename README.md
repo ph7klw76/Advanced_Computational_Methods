@@ -333,9 +333,11 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
    
-3.  Dynamic and static disorder
+4. [Marcus–Levich–Jortner Thoery]:(Marcus–Levich–Jortner.md)
    
-5.  Miller-Abrahams Hopping Model
+5.  Dynamic and static disorder
+   
+6.  Miller-Abrahams Hopping Model
    
 7.  Variable Range Hopping (VRH) in Disordered Systems
    

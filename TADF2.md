@@ -47,9 +47,8 @@ A full three-level kinetic fit (S₁–T₁–S₀) will yield the individual k�
 
 All excitons are created in S₁ under photo-excitation, so
 
-$$
-\eta_{\text{TH}} = \frac{\Phi_{\text{DF}}}{\Phi_{\text{PF}} + \Phi_{\text{DF}}} = \frac{R_{\text{DP}}}{1 + R_{\text{DP}}} \tag{1}
-$$
+![image](https://github.com/user-attachments/assets/b1be1cd7-48e4-4244-8237-f263aba50f99)
+
 
 Equation (1) is what you feed into device simulations; it tells you what fraction of all excitons were turned into photons via the T₁ reservoir.
 
@@ -60,7 +59,8 @@ Equation (1) is what you feed into device simulations; it tells you what fractio
 Measure absolute PLQY in vacuum ($\Phi_{\text{vac}}$) and in air ($\Phi_{\text{air}}$). Because O₂ kills DF but not PF  
 
 
-![image](https://github.com/user-attachments/assets/4264b0a7-5c71-420d-9bae-13f3f28e74df)
+![image](https://github.com/user-attachments/assets/0c9fe010-9a67-4c74-8b5d-13e0fafe8bc6)
+
 
 
 A match (±10 %) between Eq. (1) and the sphere result is a powerful sanity check.

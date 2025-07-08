@@ -277,8 +277,45 @@ If your morphology evolves under excitation (e.g. growing aggregates ≈ time-de
 
 Below is the exact set of coupled population-rate equations once all first-order channels (radiative, non-radiative, ISC, RISC, excimer formation / dissociation, aggregation quenching) and the second-order triplet–triplet interaction channels (TTA/TTS) are included. No terms are dropped, re-labelled, or approximated.
 
+
 ## 3.1 Compact vector form
 
 ![image](https://github.com/user-attachments/assets/e2ae5757-57a6-4160-8ad3-0765ff27913b)
+
+# 4 Physical regimes in which each extra channel matters
+
+| Channel  | Turns on when… | Observable signature | Typical time/fluence domain |
+|----------|----------------|-----------------------|-----------------------------|
+| TTA / TTF | triplet density ≥ 10¹⁶ cm⁻³ (pulsed ns laser; OLED current ≥ 10 mA cm⁻²) | curvature in the delayed-fluorescence semi-log plot; DF yield rises super-linearly with pump power | 0.1 µs – 100 µs after excitation; high-brightness device pixels |
+| TTS | same density threshold as TTA, but materials with a large T₁–T₂ gap suppress fusion so scattering dominates | DF yield does not rise; instead the PF/DF onset shifts (faster T-decay) | identical time domain to TTA |
+| Excimer | > 5 wt % emitter loading or π–π stacking in neat film | red-shifted, broad steady-state PL; micro- to milli-second decay tail distinct from DF | appears from the first nanosecond onward; dominates at longer times if $k_{fE} \gtrsim k_{RISC}$ |
+| AIQ | crystalline or amorphous aggregates present; usually evident above ca. 10 wt % emitter | PLQY drops while transient decays accelerate uniformly (no DF shoulder); microscope shows emissive vs dark grains | all times; especially prominent for slow-hopping (rigid) hosts |
+
+# 5 How to solve or simulate Eq. (3)
+
+**Low-density (linear) limit** – set $T^2 \rightarrow 0$; Eq. (3) collapses to the diagonalisation of $K_1$.
+
+**Weakly non-linear** – replace $T^2(t)$ by $T^2(0)\, e^{-2k_d t}$ (pseudo-1st-order) and keep the analytic Tsuchiya machinery; satisfactory up to $\Phi_{DF} \lesssim 0.2$ extra.
+
+**Full density dependence** – integrate Eq. (3) numerically (Runge–Kutta) or run a kinetic Monte-Carlo that explicitly tracks exciton positions and pair interactions.
+
+**Device-scale drift-diffusion** – embed Eq. (3) (or its numeric fit) inside the exciton-balance equation of an OLED simulator (Setfos, SimOLED, COMSOL).
+
+# 6 Key messages for experimental use
+
+- **Report excitation density or current density.** Without it, nobody can judge whether TTA/TTS is relevant.
+
+- **Inspect the long-time semi-log plot.** Curvature → non-linear loss; straight, single-slope tail → pure first-order.
+
+- **Look for red-shifted excimer PL.** If present, include $E$ and its rates even in the linear part.
+
+- **AIQ cannot be “de-convoluted” by kinetics alone.** Correlate with morphology (AFM, TEM, GIWAXS) or doping-series PLQY to pin it down.
+
+---
+
+By constructing Eq. (3) you now have a comprehensive master equation that nests the original Tsuchiya three-state operator as its fully linear subset and adds every major density-dependent loss / conversion pathway encountered in real high-brightness TADF films and devices.
+
+All subsequent approximations (e.g. the five entries of Table 2 in the paper) amount to switching off selected rows of $F$ or declaring some of the extra first-order rates in $K_1$ to be negligible—exactly the logic chain we traced in the previous answer.
+
 
 

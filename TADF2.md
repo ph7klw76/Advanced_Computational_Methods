@@ -171,7 +171,7 @@ No rate is set to zero a priori.
 Equation (1) is the matrix form of Eqs. 10–12 in the paper;  
 $K$ is the full rate operator that governs every possible first-order transition between $S_1$ and $T_1$ and out of the excited manifold.  
 No hierarchy of magnitudes ![image](https://github.com/user-attachments/assets/972d0e67-ffd4-460f-b913-564007e247a0) is assumed.
-
+(M) is exact for a three-state TADF scheme; it is identical (line-for-line) to the one Tsuchiya uses to derive his cubic characteristic equation (their eq 24) that eventually feeds Table 2. Nothing is missing unless your sample also exhibits second-order channels (TTA, TPA, TADF-exciplexes, etc.) or higher excited states—those are outside the scope of any first-order three-state mode
 # 4 Formal solution
 
 With the initial condition $N(0) = [S_0,\, T_0]^T$,

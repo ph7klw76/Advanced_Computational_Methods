@@ -188,3 +188,97 @@ $$
 which reduce numerically to the familiar prompt ($\tau_{PF} = 1 / k_+$) and delayed ($\tau_{DF} = 1 / k_-$) lifetimes after extra assumptions are introduced.  
 But Eq. (1) itself remains exact.
 
+
+ # Inclusion of non-linear effect
+ “bare” three-state TADF operator so that it also covers second-order triplet–triplet annihilation / fusion (TTA, occasionally written TTS when the energy is recycled into another triplet rather than a singlet),excimer formation and decay, and aggregation-induced quenching (AIQ) of both singlet and triplet excitons.
+
+# 1 State vector and first-order processes (linear part)
+
+We extend the population column vector to hold the extra one-body states
+
+$$
+N(t) =
+\begin{bmatrix}
+S(t) \\
+T(t) \\
+E(t)
+\end{bmatrix},
+$$
+
+where
+
+- $S$: lowest singlet exciton (monomer),  
+- $T$: lowest triplet exciton (monomer),  
+- $E$: bound excimer† (spin-allowed $S_1^*S_1^*$ dimer).
+
+† Triplet excimers do exist, but they almost always convert to monomer triplets on a sub-picosecond time-scale and can be folded into $T$.
+
+All first-order (one-exciton) rate constants appear exactly as in the classic three-state model plus two new rows/columns:
+
+| Symbol           | Process |
+|------------------|---------|
+| $k_{rS}, k_{nrS}$ | $S \rightarrow S_0$ radiative / non-radiative |
+| $k_{ISC}, k_{RISC}$ | $S \leftrightarrow T$ intersystem crossing |
+| $k_{rT}, k_{nrT}$ | $T \rightarrow S_0$ phosphorescence / NR loss |
+| $k_{fE}$          | formation of an excimer: $S + S_0 \rightarrow E$ (pseudo-first order because $[S_0] \gg [S]$) |
+| $k_{dE}$          | dissociation of $E \rightarrow S + S_0$ |
+| $k_{rE}, k_{nrE}$ | radiative / NR decay of the excimer |
+| $k_{AI,S}, k_{AI,T}, k_{AI,E}$ | aggregation-induced NR quenching of $S, T, E$ |
+
+Collecting those terms gives the linear operator
+
+$$
+K_1 =
+\begin{bmatrix}
+-(k_{rS} + k_{nrS} + k_{ISC} + k_{fE} + k_{AI,S}) & k_{RISC} & k_{dE} \\
+k_{ISC} & -(k_{rT} + k_{nrT} + k_{RISC} + k_{AI,T}) & 0 \\
+k_{fE} & 0 & -(k_{rE} + k_{nrE} + k_{dE} + k_{AI,E})
+\end{bmatrix}.
+\tag{1}
+$$
+
+If only the terms in (1) were present the system would obey
+
+$$
+\frac{d}{dt} N(t) = K_1 N(t),
+$$
+
+which is strictly linear and therefore still diagonalised by the usual eigen-value trick.
+
+# 2 Introducing the second-order channels (non-linear part)
+
+## 2.1 Triplet-triplet annihilation / fusion (TTA, TTS)
+
+Two triplet excitons can collide:
+
+$$
+T + T \xrightarrow{k_{TTF}} S + S_0 \quad \text{(fusion / delayed singlet)}, \\
+T + T \xrightarrow{k_{TTS}} T + S_0 \quad \text{(elastic / scattering)},
+$$
+
+with a rate proportional to the square of the triplet density.  
+Let $k_{TTF}$ and $k_{TTS}$ be the intrinsic bimolecular rate constants (units cm³ s⁻¹).  
+If we work with number densities $S, T, E$ (cm⁻³), the TTA contribution to the population derivatives is
+
+![image](https://github.com/user-attachments/assets/81f08525-41da-4d5a-b78d-3c4514b82614)
+
+
+(Each annihilation event removes two triplets, hence the factor 2.)
+
+## 2.2 Aggregation-induced singlet–triplet quenching (higher-order)
+
+If excitons hop until they encounter an aggregated “trap” region they are lost non-radiatively.  
+The simplest coarse-grained description treats the process as pseudo-first order with  
+$k_{AI,S}, k_{AI,T}, k_{AI,E}$ already present in (1).
+
+If your morphology evolves under excitation (e.g. growing aggregates ≈ time-dependent quenchers) you may need to promote AIQ to bimolecular form, but that moves beyond the Tsuchiya framework and usually demands a spatially resolved Monte-Carlo.
+
+# 3 Putting everything together – the master equation
+
+Below is the exact set of coupled population-rate equations once all first-order channels (radiative, non-radiative, ISC, RISC, excimer formation / dissociation, aggregation quenching) and the second-order triplet–triplet interaction channels (TTA/TTS) are included. No terms are dropped, re-labelled, or approximated.
+
+## 3.1 Compact vector form
+
+![image](https://github.com/user-attachments/assets/e2ae5757-57a6-4160-8ad3-0765ff27913b)
+
+

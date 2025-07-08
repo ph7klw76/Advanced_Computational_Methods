@@ -131,3 +131,60 @@ A film with $\eta_{\text{TH}} = 0.42$ and a realistic out-coupling of 0.3 alread
 Master these steps and you can teach a newcomer (or a reviewer!) exactly how much of the triplet reservoir your TADF molecule really harvests—and why they should trust the number.
 
 see details of this for rigorious analysis [TADF](https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/25935/Tsuchiya_2021_JPCA_Kineticanalysis_AAM.pdf?sequence=1)
+
+the above can be converted into Master equations below:
+# 1 Define the state vector
+
+$$
+N(t) =
+\begin{bmatrix}
+S(t) \\
+T(t)
+\end{bmatrix},
+\quad
+S(t) = \text{population of the lowest singlet } (S_1),\quad
+T(t) = \text{population of the lowest triplet } (T_1).
+$$
+
+The ground-state population is not written explicitly because  
+$S_0(t) = 1 - S(t) - T(t)$  
+by conservation of excitons.
+
+# 2 Enumerate every elementary rate
+
+| Symbol     | Process                                              | Acts on |
+|------------|------------------------------------------------------|---------|
+| $k_{rS}$   | radiative decay $S_1 \rightarrow S_0$ (prompt fluorescence) | $S$     |
+| $k_{nrS}$  | non-radiative decay $S_1 \rightarrow S_0$            | $S$     |
+| $k_{ISC}$  | forward intersystem crossing $S_1 \rightarrow T_1$   | $S \rightarrow T$ |
+| $k_{RISC}$ | reverse intersystem crossing $T_1 \rightarrow S_1$   | $T \rightarrow S$ |
+| $k_{rT}$   | radiative decay $T_1 \rightarrow S_0$ (phosphorescence) | $T$     |
+| $k_{nrT}$  | non-radiative decay $T_1 \rightarrow S_0$            | $T$     |
+
+No rate is set to zero a priori.
+
+# 3 Write the coupled differential equations
+
+![image](https://github.com/user-attachments/assets/3f75d973-9d3a-4224-9267-2b32267f8b61)
+
+
+Equation (1) is the matrix form of Eqs. 10–12 in the paper;  
+$K$ is the full rate operator that governs every possible first-order transition between $S_1$ and $T_1$ and out of the excited manifold.  
+No hierarchy of magnitudes ![image](https://github.com/user-attachments/assets/972d0e67-ffd4-460f-b913-564007e247a0) is assumed.
+
+# 4 Formal solution
+
+With the initial condition $N(0) = [S_0,\, T_0]^T$,
+
+![image](https://github.com/user-attachments/assets/41d14911-1c63-4e04-9747-135a8296f809)
+
+
+Diagonalising $K$ (or applying Laplace transforms) yields two eigen-decay constants:
+
+$$
+k_{\pm} = \frac{1}{2} \left[ \text{tr}K \pm \sqrt{(\text{tr}K)^2 - 4\det K} \right],
+$$
+
+which reduce numerically to the familiar prompt ($\tau_{PF} = 1 / k_+$) and delayed ($\tau_{DF} = 1 / k_-$) lifetimes after extra assumptions are introduced.  
+But Eq. (1) itself remains exact.
+

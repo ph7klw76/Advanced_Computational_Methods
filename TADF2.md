@@ -317,5 +317,34 @@ By constructing Eq. (3) you now have a comprehensive master equation that nests 
 
 All subsequent approximations (e.g. the five entries of Table 2 in the paper) amount to switching off selected rows of $F$ or declaring some of the extra first-order rates in $K_1$ to be negligible—exactly the logic chain we traced in the previous answer.
 
+# Enlarging the photophysical landscape: adding a higher-triplet manifold (T*) and an intermolecular charge-transfer state (CT)
+
+We now upgrade the state basis from three (S, T, E) to five:
+
+| Symbol | Physical meaning | Typical energy location | When it becomes relevant |
+|--------|------------------|--------------------------|---------------------------|
+| S      | Lowest singlet FE (local S₁) | reference (0) | always |
+| T      | Lowest triplet FE (local T₁) | ΔE_ST below S | always |
+| T*     | Higher triplet(s) (T₂/T₃ …) with strong spin–orbit coupling | 0.1–0.3 eV above S | mediates RISC when ΔE_ST ≳ 0.25 eV |
+| E      | Excimer / exciplex (bound dimer singlet) | ≥ 0.2 eV below S | emitter wt % ≥ 5 % or host–guest CT |
+| CT     | Intermolecular charge-transfer singlet† | often ≈ E or still lower | electrical excitation; polar hosts |
+
+†For device work a triplet CT can be added analogously, but the dominant emissive channel is the singlet CT; the triplet CT simply funnels into T* or T non-radiatively and is covered by an enlarged T* block.
+
+# 1 First-order processes (linear operator K₂)
+
+All allowed one-exciton transitions are collected below. Loss terms appear on the diagonal with a minus sign; gains sit in the off-diagonals of the same row.
+
+![image](https://github.com/user-attachments/assets/a87989c0-9b43-4ccd-b68e-730e111be9be)
+
+![image](https://github.com/user-attachments/assets/c9d2b19f-926f-4a37-9fc7-5eafb52d83e1)
+![image](https://github.com/user-attachments/assets/38c4b8de-606e-46f6-a4ec-4d9185e5c706)
+![image](https://github.com/user-attachments/assets/70ad534d-2e45-408d-8376-853eee27f8ba)
+
+
+
+
+
+
 
 

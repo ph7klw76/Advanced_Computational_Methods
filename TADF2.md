@@ -129,3 +129,5 @@ A film with $\eta_{\text{TH}} = 0.42$ and a realistic out-coupling of 0.3 alread
 - **Be honest about geometry** – front-face spectra are fine for ratios, never for absolute $\Phi_{\text{PL}}$.
 
 Master these steps and you can teach a newcomer (or a reviewer!) exactly how much of the triplet reservoir your TADF molecule really harvests—and why they should trust the number.
+
+see details of this for rigorious analysis [TADF](https://research-repository.st-andrews.ac.uk/bitstream/handle/10023/25935/Tsuchiya_2021_JPCA_Kineticanalysis_AAM.pdf?sequence=1)

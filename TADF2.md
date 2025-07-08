@@ -60,9 +60,8 @@ Equation (1) is what you feed into device simulations; it tells you what fractio
 Measure absolute PLQY in vacuum ($\Phi_{\text{vac}}$) and in air ($\Phi_{\text{air}}$). Because O₂ kills DF but not PF  
 
 
-$$
-\eta_{\text{TH}}^{(\text{steady})} = \frac{\Phi_{\text{vac}} - \Phi_{\text{air}}}{\Phi_{\text{vac}}}
-$$
+![image](https://github.com/user-attachments/assets/4264b0a7-5c71-420d-9bae-13f3f28e74df)
+
 
 A match (±10 %) between Eq. (1) and the sphere result is a powerful sanity check.
 
@@ -76,9 +75,7 @@ You can still get a relative $\eta_{\text{TH}}$ that is internally consistent:
 
 Compute
 
-$$
-\eta_{\text{TH}}^{(\text{rel})} = \frac{S_{\text{vac}} - S_{\text{air}}}{S_{\text{vac}}} \tag{2}
-$$
+![image](https://github.com/user-attachments/assets/f9c49e66-9a0d-4274-880c-18dd2c613774)
 
 Because PF and DF share the same spectrum, the collection geometry factor cancels in Eq. (2). You cannot quote an absolute PLQY without an integrating sphere, but Eq. (2) is still a valid measure of triplet harvesting provided the film is optically thin ($A < 0.2$ at the excitation wavelength) so that self-absorption is negligible.
 

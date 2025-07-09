@@ -397,6 +397,8 @@ Energy Barriers for Rotation and Conformational Isomerism
 ### E. Photophysics and Photochemistry
 
 1. [TADF](TADF.md)
+
+2. [Photophysics Rate equations of organic molecules](TADF2.md)
    
 3. [Spin-Vibronic-Pathways](Spin-Vibronic-Pathways.md)
    

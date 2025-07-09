@@ -402,7 +402,7 @@ Energy Barriers for Rotation and Conformational Isomerism
    
 3. [Spin-Vibronic-Pathways](Spin-Vibronic-Pathways.md)
    
-4. Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems.
+4. [Photoinduced Electron Transfer: For understanding OPVs and photocatalytic systems](PET.md)
    
 5. [Singlet and Triplet Exciton Dynamics](exciton_dynamics.md): For designing efficient OLED materials.
    
@@ -430,9 +430,7 @@ Energy Barriers for Rotation and Conformational Isomerism
     
 17. Spin-Polarized Luminescence
     
-18. Thermally Activated Delayed Fluorescence
-
-19. Excited-State Proton Transfer
+18. Excited-State Proton Transfer
     
 20. [Transient Absorption](TA.md)
 

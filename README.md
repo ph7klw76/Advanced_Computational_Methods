@@ -333,7 +333,7 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
    
-4. [Marcus–Levich–Jortner Thoery:](Marcus–Levich–Jortner.md)
+4. [Marcus–Levich–Jortner Theory:](Marcus–Levich–Jortner.md)
       
 6.  Dynamic and static disorder
    

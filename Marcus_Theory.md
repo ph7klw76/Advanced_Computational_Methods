@@ -853,3 +853,287 @@ calculation of electronic coupling can be found at (here)[https://github.com/ph7
 
 
 Deviation of Marcus theory at low temperature can be found in the thesis Charge and exciton transport in organic semiconductors: The role of molecular vibrations [https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/20190918_de_Vries.pdf]
+
+
+```python
+"""
+Nearest-neighbour analysis + clustering + 2-sigma flag
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+import matplotlib.gridspec as gridspec
+from sklearn.cluster import KMeans
+import glob
+import os
+import warnings
+
+# ─────────────────────────────────────────────────────────────
+# 1. USER SETTINGS
+# ─────────────────────────────────────────────────────────────
+folder_path = "frame"               # folder that holds many *.gro files
+atom_filter = {
+    "C14", "C9", "C8", "C11", "C13", "C7", "O2",
+    "C4",  "C3", "C2", "C1",  "C6",  "C5", "C10", "O1",
+}
+bins_2d    = 80                     # histogram resolution
+k_clusters = 3                      # K-means clusters
+out_txt    = os.path.join(
+    folder_path, "aggregated_nearest_neighbours_with_clusters.txt"
+)
+# ─────────────────────────────────────────────────────────────
+
+# optional: silence the benign GridSpec warning
+warnings.filterwarnings(
+    "ignore", message="There are no gridspecs with layoutgrids"
+)
+
+
+# ─────────────────────────────────────────────────────────────
+# 2. HELPER FUNCTIONS
+# ─────────────────────────────────────────────────────────────
+def centroid(xyz: np.ndarray) -> np.ndarray:
+    """Return arithmetic mean of a (n,3) coordinate set."""
+    return xyz.mean(axis=0)
+
+
+def plane_normal(xyz: np.ndarray) -> np.ndarray:
+    """Return the unit normal of the best-fit plane to a point set."""
+    centred = xyz - centroid(xyz)
+    w, v = np.linalg.eigh(centred.T @ centred)
+    n = v[:, 0]  # eigen-vector with smallest eigen-value
+    return n / np.linalg.norm(n)
+
+
+def parse_filtered_gro(path: str, wanted_atoms: set[str]):
+    """
+    Read a *.gro file and keep only atoms whose name is in *wanted_atoms*.
+    Returns: (residue_ids, list-of-xyz-arrays, box-vector)
+    """
+    with open(path) as fh:
+        fh.readline()            # title
+        nat = int(fh.readline())
+        coords, res_map = [], {}
+        for _ in range(nat):
+            ln = fh.readline()
+            resid = int(ln[0:5])
+            aname = ln[10:15].strip()
+            if aname not in wanted_atoms:
+                continue
+            xyz = tuple(float(ln[s:e]) for s, e in ((20, 28), (28, 36), (36, 44)))
+            res_map.setdefault(resid, []).append(xyz)
+
+        box = np.fromstring(fh.readline(), sep=" ")
+
+    # keep only residues that contributed ≥1 filtered atom
+    resid_list = sorted(res_map)
+    xyz_list   = [np.asarray(res_map[r]) for r in resid_list]
+    return resid_list, xyz_list, box
+
+
+# ─────────────────────────────────────────────────────────────
+# 3. MAIN PASS — aggregate every distance and angle
+# ─────────────────────────────────────────────────────────────
+all_d, all_a, frame_field = [], [], []   # pooled over all frames
+pair_rows = []                           # one row per nearest-neighbour pair
+
+gro_files = sorted(glob.glob(os.path.join(folder_path, "*.gro")))
+if not gro_files:
+    raise RuntimeError(f"No .gro files found in: {folder_path}")
+
+for f_idx, grof in enumerate(gro_files):
+    resid, xyz_sets, box = parse_filtered_gro(grof, atom_filter)
+
+    centres = np.array([centroid(p) for p in xyz_sets])
+    normals = np.array([plane_normal(p) for p in xyz_sets])
+
+    # minimum-image distances
+    dv   = centres[:, None, :] - centres[None, :, :]
+    dv  -= box * np.round(dv / box)
+    dist = np.linalg.norm(dv, axis=-1)
+    np.fill_diagonal(dist, np.inf)
+    nidx = np.argmin(dist, axis=1)
+    nd   = dist[np.arange(len(resid)), nidx]
+
+    ang = np.degrees(
+        np.arccos(
+            np.clip(np.abs(np.einsum("ij,ij->i", normals, normals[nidx])), 0, 1)
+        )
+    )
+
+    # bookkeeping
+    all_d.extend(nd)
+    all_a.extend(ang)
+    frame_field.extend([f_idx] * len(nd))
+    for i, (j, d, a) in enumerate(zip([resid[k] for k in nidx], nd, ang)):
+        pair_rows.append((f_idx, resid[i], j, d, a))
+
+all_d = np.asarray(all_d)
+all_a = np.asarray(all_a)
+data  = np.column_stack((all_d, all_a))       # shape (N, 2)
+
+
+# ─────────────────────────────────────────────────────────────
+# 4. K-MEANS CLUSTERING (on z-scored data)
+# ─────────────────────────────────────────────────────────────
+zs   = (data - data.mean(0)) / data.std(0)
+km   = KMeans(n_clusters=k_clusters, n_init=10, random_state=0).fit(zs)
+labs = km.labels_
+cent = km.cluster_centers_ * data.std(0) + data.mean(0)
+
+
+# ─────────────────────────────────────────────────────────────
+# 5. ELLIPSE STATISTICS + 2-SIGMA FLAG
+# ─────────────────────────────────────────────────────────────
+μ   = data.mean(0)
+Σ   = np.cov(data.T)
+Σ_inv = np.linalg.inv(Σ)
+
+md2     = np.sum((data - μ) @ Σ_inv * (data - μ), axis=1)  # Mahalanobis²
+inside2 = md2 <= 4                                         # bool mask (N,)
+
+
+# ─────────────────────────────────────────────────────────────
+# 6. WRITE THE AGGREGATED NEIGHBOUR LIST (+ 2-σ FLAG)
+# ─────────────────────────────────────────────────────────────
+with open(out_txt, "w", encoding="utf-8") as fh:
+    fh.write(
+        "Frame\tMol_i\tMol_j_nearest\tDistance_nm\tAngle_deg"
+        "\tCluster\tInside_2sigma\n"
+    )
+    for (fr, mi, mj, dg, ag), cl, flag in zip(pair_rows, labs, inside2):
+        fh.write(
+            f"{fr}\t{mi}\t{mj}\t{dg:.6f}\t{ag:.3f}\t{cl}\t"
+            f"{'Y' if flag else 'N'}\n"
+        )
+
+print(f"Saved neighbour list → {out_txt}")
+
+
+# ─────────────────────────────────────────────────────────────
+# 7. OPTIONAL SUMMARY TABLE (stdout)
+# ─────────────────────────────────────────────────────────────
+summary = pd.DataFrame(
+    {
+        "Cluster": range(k_clusters),
+        "Centre_dist_nm": cent[:, 0],
+        "Centre_angle_deg": cent[:, 1],
+        "Members": np.bincount(labs),
+    }
+)
+print(summary)
+
+
+# ─────────────────────────────────────────────────────────────
+# 8. PLOT  — 2-D HISTOGRAM + σ-ELLIPSES + MARGINALS
+# ─────────────────────────────────────────────────────────────
+def add_sigma(ax, s, w, v, μ, **kw):
+    """
+    Draw the s-sigma ellipse given eigen-values *w* (sorted desc),
+    eigen-vectors *v* (cols sorted accordingly) and centre *μ*.
+    """
+    width, height = 2 * s * np.sqrt(w)
+    angle = np.degrees(np.arctan2(*v[:, 0][::-1]))
+    ax.add_patch(Ellipse(μ, width, height, angle=angle, fill=False, **kw))
+
+
+# histogram bins
+xbins = np.linspace(all_d.min(), all_d.max(), bins_2d + 1)
+ybins = np.linspace(0, 90, bins_2d + 1)
+H, xe, ye = np.histogram2d(all_d, all_a, bins=[xbins, ybins])
+
+# eigen-decomposition (for ellipse drawing)
+w, v = np.linalg.eigh(Σ)
+order = w.argsort()[::-1]
+w, v = w[order], v[:, order]
+
+# figure layout
+fig = plt.figure(figsize=(8, 8))
+gs  = gridspec.GridSpec(
+    2,
+    2,
+    width_ratios=[4, 1.3],
+    height_ratios=[1.3, 4],
+    wspace=0.05,
+    hspace=0.05,
+)
+axH = fig.add_subplot(gs[1, 0])
+axX = fig.add_subplot(gs[0, 0], sharex=axH)
+axY = fig.add_subplot(gs[1, 1], sharey=axH)
+
+# 2-D histogram
+pc = axH.pcolormesh(xe, ye, H.T, cmap="viridis", shading="flat")
+cbar = fig.colorbar(
+    pc,
+    ax=axH,
+    orientation="horizontal",
+    location="bottom",
+    shrink=0.6,
+    aspect=30,
+    pad=0.18,
+)
+cbar.set_label("Frequency")
+
+axH.set_xlim(xe.min(), xe.max())
+axH.set_ylim(ye.min(), ye.max())
+
+# σ-ellipses
+for s, ls in zip((1, 2, 3), ("--", ":", "-.")):
+    add_sigma(axH, s, w, v, μ, color="white", lw=1, ls=ls)
+
+# mean marker
+axH.text(*μ, "μ", color="white", ha="center", va="center", fontsize=9)
+
+# axis labels
+axH.set_xlabel("Nearest-neighbour distance (nm)")
+axH.set_ylabel("Angle between plane normals (°)")
+axY.set_xlabel("Frequency")
+
+# marginal histograms
+axX.hist(all_d, bins=xbins, color="steelblue")
+axY.hist(all_a, bins=ybins, orientation="horizontal", color="firebrick")
+axX.set_ylabel("Frequency")
+
+plt.setp(axX.get_xticklabels(), visible=False)
+plt.setp(axY.get_yticklabels(), visible=False)
+
+plt.show()
+fig.savefig("2Dplot.tiff", dpi=600, bbox_inches="tight")
+print("Figure saved → 2Dplot.tiff")
+
+# ─────────────────────────────────────────────────────────────
+# 5b.  HUMAN-READABLE 2-σ EQUATION  ─ print + store
+#      (place this block right after Σ_inv, md2, inside2 are defined)
+# ─────────────────────────────────────────────────────────────
+# Matrix form:   (x-μ)^T Σ⁻¹ (x-μ)  ≤ 4
+A11, A12, A22 = Σ_inv[0, 0], Σ_inv[0, 1], Σ_inv[1, 1]
+μx, μy        = μ
+
+ineq_line  = (
+    f"{A11:.6g}·(x-{μx:.6g})²  +  "
+    f"2·{A12:.6g}·(x-{μx:.6g})(y-{μy:.6g})  +  "
+    f"{A22:.6g}·(y-{μy:.6g})²  ≤  4"
+)
+matrix_line = (
+    f"(x, y) column-vector satisfies  (x-μ)^T Σ⁻¹ (x-μ) ≤ 4\n"
+    f"μ = [{μx:.6g}, {μy:.6g}],   Σ⁻¹ = [[{A11:.6g}, {A12:.6g}], "
+    f"[{A12:.6g}, {A22:.6g}]]"
+)
+
+print("\nAnalytical 2-σ inequality:\n  ", ineq_line)
+print(matrix_line)
+
+# prepend these two lines to the output file later
+equation_comment = (
+    f"# 2-sigma boundary: {ineq_line}\n"
+    f"# (matrix form)    : {matrix_line}\n"
+)
+```
+
+
+![image](https://github.com/user-attachments/assets/f1aa324d-26f4-4d8a-a691-57a04f25ddaf)
+
+ploting density map of molecular dimer and finding out the equation for 2-sigma 
+

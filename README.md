@@ -333,9 +333,9 @@ Application: Finite element simulations, quantum lattice models.
    
 2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
    
-4. [Marcus–Levich–Jortner Theory:](Marcus–Levich–Jortner.md)
+4. [Marcus–Levich–Jortner Theory:](Marcus–Levich–Jortner.md) for low temperature 
    
-5. [Landau–Zener (LZ) non-adiabatic transition probability:](LZ.md)
+5. [Landau–Zener (LZ) non-adiabatic transition probability:](LZ.md) for large electronic coupling
       
 6.  Dynamic and static disorder
    

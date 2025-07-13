@@ -37,6 +37,8 @@ Beyond pedagogy, $\langle x^2 \rangle$ appears directly in:
 
 ### 2.1 Molecular Vibrations & Spectroscopy
 
+<img width="500" height="433" alt="image" src="https://github.com/user-attachments/assets/074c44bb-8463-4ffe-bcd2-a99468f2c6f3" />
+
 In diatomic molecules modeled by a Morse potential:
 
 $$
@@ -46,6 +48,8 @@ $$
 the ground-state $\langle x^2 \rangle$ predicts bond-length fluctuations, which shift infrared absorption lines and Raman scattering intensities.
 
 ### 2.2 Trapped Ion Qubits
+
+<img width="332" height="165" alt="image" src="https://github.com/user-attachments/assets/a9e1bb14-f797-4dd1-9875-bcc63a4c9816" />
 
 Ions in a Paul trap have motional ground states approximated by a harmonic potential. The rms width $\sqrt{\langle x^2 \rangle}$ sets the Lamb-Dicke parameter:
 
@@ -57,11 +61,65 @@ controlling coupling between internal qubit states and motional modes.
 
 ### 2.3 Nanomechanical Sensors
 
+<img width="242" height="208" alt="image" src="https://github.com/user-attachments/assets/4af69b08-3048-4511-947b-d3ac31be79e5" />
+
 Cantilever or membrane resonators operating near the quantum regime rely on zero-point displacement noise:
 
 $$
 \sqrt{\frac{\hbar}{2m\omega}}, \quad \text{i.e., } \sqrt{\langle x^2 \rangle},
 $$
+
+```python
+import numpy as np
+import time
+from numba import njit, prange
+
+# --- 3.1 Define target density p(x)=|ψ₀|² for HO or Morse --- #
+@njit(fastmath=True)
+def psi0_sq_harmonic(x):
+    # m=ω=ℏ=1
+    return (1/np.sqrt(np.pi)) * np.exp(-x*x)
+
+@njit(fastmath=True)
+def psi0_sq_morse(x, D_e=5.0, α=1.0):
+    # Approximate ground-state |ψ₀|² via analytic form (for demonstration)
+    z = 2 * np.sqrt(2*D_e)/α * np.exp(-α*x)
+    # Proper normalization omitted for brevity
+    return z**(2*np.sqrt(2*D_e)/α - 1) * np.exp(-z)
+
+# --- 3.2 Importance sampler: proposal q(x)=N(0,σ²) --- #
+σ = 2.0
+@njit(fastmath=True)
+def q_pdf(x):
+    return 1/(np.sqrt(2*np.pi)*σ) * np.exp(-x*x/(2*σ*σ))
+
+# --- 3.3 Numba-accelerated MC estimator --- #
+@njit(parallel=True, fastmath=True)
+def mc_expectation(num_samples, seed, target_type=0):
+    np.random.seed(seed)
+    total = 0.0
+    for i in prange(num_samples):
+        x = np.random.normal(0.0, σ)
+        if target_type == 0:
+            p = psi0_sq_harmonic(x)
+        else:
+            p = psi0_sq_morse(x)
+        w = p / q_pdf(x)
+        total += x*x * w
+    return total / num_samples
+
+# --- 3.4 Benchmarking --- #
+if __name__ == "__main__":
+    N = 2_000_000
+    # Warm up Numba
+    mc_expectation(10_000, 0, 0)
+    for target in (0, 1):
+        t0 = time.time()
+        result = mc_expectation(N, seed=12345, target_type=target)
+        dt = time.time() - t0
+        label = "Harmonic" if target==0 else "Morse"
+        print(f"{label:8s} ⟨x²⟩ ≈ {result:.5f}  in {dt:.3f}s")
+```
 
 to define their ultimate force or displacement sensitivity.
 

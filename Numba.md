@@ -133,3 +133,124 @@ if __name__ == "__main__":
         label = "Harmonic" if target==0 else "Morse"
         print(f"{label:8s} ⟨x²⟩ ≈ {result:.5f}  in {dt:.3f}s")
 ```
+@njit(parallel=True) and prange distribute the N-sample loop over CPU threads.
+fastmath=True vectorizes exponentials and arithmetic.
+Seeding once at entry ensures reproducibility (with thread-dependent interleaving).
+On a 6-core machine this typically yields a 20–50× speed-up over a pure-Python/NumPy loop.
+
+High-performance computing is at the heart of modern computational physics. While Python offers a rich ecosystem for scientific programming, its interpreter overhead can become a bottleneck when tight loops or complex algorithms are involved. Numba bridges this gap by compiling selected Python functions to optimized machine code at runtime, often delivering C- or Fortran-like performance with minimal code changes. In this post, we’ll explore how Numba works under the hood, illustrate its key features with Python examples, and demonstrate its impact on two canonical physics problems.
+To learn more about Numba click [here](https://numba.pydata.org/)
+
+### 4.1 Monte Carlo Sampling of $\langle r^2 \rangle$ in 3D
+
+Physically, many problems reduce to asking “what is the average squared displacement” under some distribution of steps—e.g. thermal kicks in a fluid, zero-point vibrational amplitudes in a crystal, or fluctuations in a nanomechanical resonator. In 3D,
+
+$$
+\langle r^2 \rangle = \int_{\mathbb{R}^3} (x^2 + y^2 + z^2) \, p(x, y, z) \, d^3r \approx \frac{1}{N} \sum_{i=1}^{N} (x_i^2 + y_i^2 + z_i^2),
+$$
+
+where $(x_i, y_i, z_i)$ are drawn from the target distribution—or via importance sampling.
+
+#### 4.1.1 Nested Loops with `prange`
+```python
+import numpy as np
+from numba import njit, prange
+import time
+
+σ = 1.0  # assume unit-variance isotropic Gaussian
+
+@njit(parallel=True, fastmath=True)
+def mc_r2_3d_nested(n_particles, n_samples_per, seed):
+    """
+    Monte Carlo: for each 'particle' we draw n_samples_per
+    3D Gaussian displacements and accumulate r^2.
+    """
+    np.random.seed(seed)
+    total = 0.0
+    for i in prange(n_particles):
+        for j in range(n_samples_per):
+            x, y, z = np.random.normal(0.0, σ, size=3)
+            total += x*x + y*y + z*z
+    return total / (n_particles * n_samples_per)
+
+# benchmark
+if __name__ == "__main__":
+    Np, Ns = 5000, 2000
+    # warm-up compile
+    mc_r2_3d_nested(10, 10, 0)
+    t0 = time.time()
+    val = mc_r2_3d_nested(Np, Ns, seed=42)
+    print(f"Nested: ⟨r²⟩ ≈ {val:.5f} in {time.time()-t0:.3f}s")
+```
+
+Outer prange distributes particles across threads.
+Inner loop stays serial, but overall work scales as O(Np×Ns)
+
+### 4.2 Extracting MSD from Trajectory Data
+
+In molecular dynamics or Brownian‐motion experiments, you often have a trajectory $\{r_i(t_k)\}$ for $i = 1 \dots N$ particles over times $t_k$. The mean-square displacement (MSD) at lag $\Delta t = t_{k+\ell} - t_k$ is
+
+$$
+\text{MSD}(\Delta t) = \frac{1}{NM} \sum_{i=1}^{N} \sum_{k=1}^{M} \|r_i(t_{k+\ell}) - r_i(t_k)\|^2.
+$$
+
+Below is a Numba-accelerated routine to compute MSD for a single lag $\ell$. We assume `positions` is a `float64` array of shape `(N_particles, N_frames, 3)`.
+
+```python
+import numpy as np
+from numba import njit, prange
+import time
+
+@njit(parallel=True, fastmath=True)
+def compute_msd(positions, lag):
+    Np, Nf, _ = positions.shape
+    M = Nf - lag
+    total = 0.0
+
+    # Loop over particles in parallel
+    for i in prange(Np):
+        for k in range(M):
+            dx = positions[i, k+lag, 0] - positions[i, k, 0]
+            dy = positions[i, k+lag, 1] - positions[i, k, 1]
+            dz = positions[i, k+lag, 2] - positions[i, k, 2]
+            total += dx*dx + dy*dy + dz*dz
+
+    # Average over all (i, k)
+    return total / (Np * M)
+
+# Example usage
+if __name__ == "__main__":
+    # synthetic random-walk data
+    Np, Nf = 1000, 500
+    rng = np.random.default_rng(0)
+    steps = rng.normal(scale=0.1, size=(Np, Nf, 3))
+    positions = np.cumsum(steps, axis=1)
+
+    # warm-up
+    compute_msd(positions, lag=10)
+
+    t0 = time.time()
+    msd10 = compute_msd(positions, lag=10)
+    print(f"MSD(Δt=10) = {msd10:.5f}  computed in {time.time()-t0:.3f}s")
+```
+## Why This Matters
+
+The long-time slope of $\text{MSD}(\Delta t)$ vs.\ $\Delta t$ gives the diffusion coefficient:
+
+$$
+D = \frac{1}{6} \frac{d\langle r^2 \rangle}{dt}.
+$$
+
+- In biophysics, one tracks particle motions in cells to extract viscosity or active transport rates.
+- In materials science, MSD of atoms over time reveals melting transitions or glassy arrest.
+
+## 4.3 Performance Tips & Best Practices
+
+- **Seed once at function entry** to maintain reproducibility—accept that interleaving across threads may differ if you change thread-count.
+- **Flatten loops** when per-iteration work is uniform; nested `prange` can lead to imbalance if inner loop counts vary.
+- **Contiguous arrays**: ensure `positions` and any large arrays are C-contiguous floats for best memory throughput.
+- **`fastmath`** yields significant vectorization of exponentials and divisions—essential in thermal-motion or Coulomb‐force loops.
+- **Cache warming**: the first call pays compilation overhead; subsequent calls run at full speed.
+
+
+

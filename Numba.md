@@ -450,4 +450,85 @@ In our Python code:
 
 These steps transform a naïve $\mathcal{O}(N^2)$ Python script into an efficient multi-core simulator capable of handling thousands of particles in real time.
 
+## Beyond Numba: Strategies for Scaling Up Performance
+
+After (or alongside) Numba, here are the **main avenues** people reach for when they still need more raw throughput or larger‐scale parallelism. Each tackles a different performance ceiling, and the smartest strategy often combines several:
+
+| **Gap After Numba** | **What to Add** | **Why It Helps** | **Typical Speed-ups** |
+|---------------------|------------------|------------------|------------------------|
+| CPU is saturated, calculation is embarrassingly parallel | **Dask** (`dask.delayed`, `dask.distributed`) | Orchestrates batches of Numba-compiled tasks across all cores of a workstation or cluster with minimal code changes | Linear scaling up to dozens–hundreds of cores for independent trajectories ([dask.org](https://dask.org)) |
+| Need to run on many nodes / HPC super-computer | **mpi4py** | Gives explicit MPI (MPICH/OpenMPI) in Python—Numba kernels run in each rank, while MPI handles domain decomposition or tree-exchange | $1000\times$ scale-outs in astrophysical N-body ([ADMIN Magazine](https://www.admin-magazine.com)) |
+| Memory bandwidth or pairwise loops dominate | **Algorithmic change**: Barnes–Hut / Fast Multipole | Reduces force stage from $\mathcal{O}(N^2)$ to $\mathcal{O}(N \log N)$ by grouping far-away particles into multipole expansions | Fewer interactions trump raw FLOPS ([Wikipedia](https://en.wikipedia.org/wiki/Barnes–Hut_simulation)) |
+| GPU available, array math heavy | **CuPy** or **Numba-CUDA kernels** | $3\times$–$50\times$ on large (>10 kB) arrays via thousands of GPU cores. CuPy mirrors the NumPy API and plays well with Numba-CUDA  |
+| Need custom kernels on GPU but want Python | **PyCUDA / PyOpenCL** | Write the kernel in CUDA/OpenCL C and launch from Python. Useful when Numba-CUDA can't express exotic memory patterns  |
+
+---
+
+## Putting It Together: A Concrete Recipe for an Astrophysical N-Body Simulation
+
+### Tree Algorithm
+
+Build a Barnes–Hut octree in Python, but put the heavy loops (`build_tree`, `compute_multipoles`, `traverse`) under `@njit(parallel=True)`:
+
+- Drops complexity to $\mathcal{O}(N \log N)$
+- Typically yields $10\times$–$100\times$ wall-clock speedup over naïve $\mathcal{O}(N^2)$
+
+###  Two-Level Parallelism
+
+**Inside each MPI rank**:
+
+```python
+# Numba-parallel Barnes–Hut force loop
+forces = compute_force_tree_bh(pos, mass, tree)
+```
+Across ranks:
+
+```python
+comm.Allreduce(MPI.IN_PLACE, forces, op=MPI.SUM)
+```
+
+With a few dozen nodes you can simulate millions of stars in real time.
+
+## Off-load big dense array math to GPU
+
+```python
+import cupy as cp
+pos_gpu  = cp.asarray(pos)    # zero-copy on NVLink systems
+vel_gpu += cp.asarray(forces) * dt / mass_gpu
+```
+
+Nuances: transfer once, keep arrays resident; use CuPy’s RawKernel if you need bespoke integrators.
+
+## Task-orchestrate with Dask
+
+```python
+from dask.distributed import Client, LocalCluster
+cluster = LocalCluster(n_workers=32, threads_per_worker=1)
+client  = Client(cluster)
+
+futures = client.map(run_single_realization, seeds)
+results = client.gather(futures)
+```
+
+Each run_single_realization is itself a Numba-accelerated trajectory; Dask multiplexes thousands of them.
+
+## Profile, then vectorize
+
+Before adding yet another tool, spend an hour with
+
+```python
+python -m line_profiler script.py.lprof
+```
+
+and nvprof (GPU) to be sure the next bottleneck is real.
+
+## Rule of thumb
+First squeeze everything you can out of algorithmic scaling and thread-level speed (Numba).
+Second decide whether your workload is data-parallel (Dask/MPI) or compute-dense (GPU).
+Third mix both when the science demands and your hardware budget allows it.
+
+Do that and you can drive modern N-body or molecular problems to billions of particles per step, while still writing mostly Python.
+
+
+
 

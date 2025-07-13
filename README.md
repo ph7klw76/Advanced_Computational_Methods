@@ -141,7 +141,7 @@ where magic happens
 
 [Concurrency and Parallelism](https://www.youtube.com/watch?v=S05-MZAJqNM)
 
-1. Introduction to Concurrency and Parallelism
+1. [Speeding up calculation using Numba libraries with example in Physics](Numba.md)
 2. Python's Global Interpreter Lock (GIL)
 3. Threading in Python
 4. Multiprocessing in Python

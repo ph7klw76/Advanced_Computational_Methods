@@ -69,6 +69,19 @@ $$
 \sqrt{\frac{\hbar}{2m\omega}}, \quad \text{i.e., } \sqrt{\langle x^2 \rangle},
 $$
 
+
+to define their ultimate force or displacement sensitivity.
+
+## 3. Monte Carlo Estimation with Numba
+
+Closed-form integrals exist for simple potentials, but for complex, multidimensional or anharmonic systems, we turn to importance-sampled Monte Carlo:
+
+$$
+\langle x^2 \rangle = \int x^2 \, p(x) \, dx = \int x^2 \, \frac{p(x)}{q(x)} \, q(x) \, dx \approx \frac{1}{N} \sum_{i=1}^{N} x_i^2 \, w(x_i),
+$$
+
+where $x_i \sim q(x)$, and $w(x) = p/q$. Here’s an accelerated implementation.
+
 ```python
 import numpy as np
 import time
@@ -120,15 +133,3 @@ if __name__ == "__main__":
         label = "Harmonic" if target==0 else "Morse"
         print(f"{label:8s} ⟨x²⟩ ≈ {result:.5f}  in {dt:.3f}s")
 ```
-
-to define their ultimate force or displacement sensitivity.
-
-## 3. Monte Carlo Estimation with Numba
-
-Closed-form integrals exist for simple potentials, but for complex, multidimensional or anharmonic systems, we turn to importance-sampled Monte Carlo:
-
-$$
-\langle x^2 \rangle = \int x^2 \, p(x) \, dx = \int x^2 \, \frac{p(x)}{q(x)} \, q(x) \, dx \approx \frac{1}{N} \sum_{i=1}^{N} x_i^2 \, w(x_i),
-$$
-
-where $x_i \sim q(x)$, and $w(x) = p/q$. Here’s an accelerated implementation.

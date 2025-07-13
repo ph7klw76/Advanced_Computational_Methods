@@ -283,3 +283,168 @@ Numba keys the cache on the combination of function bytecode, argument types, an
 
 In practice, for any non-trivial function—Monte Carlo loops, N-body force kernels, FFT-based solvers—adding `cache=True` is a no-brainer: it turns that one-time compilation cost into something you pay just once per code change, rather than every time you launch your analysis or simulation script.
 
+# 1. Newton’s Law of Universal Gravitation
+
+For a system of $N$ particles with masses $m_i$ and position vectors $r_i$, the pairwise gravitational force on particle $i$ due to particle $j$ is
+
+$$
+F_{ij} = -G \, \frac{m_i m_j}{\|r_i - r_j\|^3} (r_i - r_j),
+$$
+
+where:
+
+- $G$ is the gravitational constant (here set to 1 in arbitrary units),
+- $\|r_i - r_j\|$ is the Euclidean distance between particles $i$ and $j$.
+
+Summing over all $j \ne i$, the total force on particle $i$ is
+
+$$
+F_i = \sum_{\substack{j=1 \\ j \ne i}}^{N} F_{ij}.
+$$
+
+# 2. Equations of Motion and Time Integration
+
+Newton’s second law gives:
+
+$$
+m_i \, \ddot{r}_i = F_i.
+$$
+
+We convert this second-order ODE into two first-order updates:
+
+$$
+v_i(t + \Delta t) = v_i(t) + \frac{\Delta t}{m_i} F_i(t),
+$$
+
+$$
+r_i(t + \Delta t) = r_i(t) + \Delta t \, v_i(t + \Delta t).
+$$
+
+This explicit Euler scheme is simple but only first-order accurate in time. More sophisticated integrators (e.g., leapfrog, Runge–Kutta, or symplectic methods) improve stability and energy conservation.
+
+```python
+import numpy as np
+from numba import njit, prange
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+# ── Physical constants ───────────────────────────────────────────────
+pc_to_m   = 3.0857e16             # 1 parsec in meters
+ly_to_pc  = 0.306601              # 1 light‐year in parsecs
+G_SI      = 6.67430e-11           # gravitational constant (m³ kg⁻¹ s⁻²)
+M_sun     = 1.98847e30            # solar mass (kg)
+
+# ── Simulation parameters ────────────────────────────────────────────
+N_stars   = 1000                   # number of stars
+R_ly      = 1000.0                # sphere radius in light‐years
+R_pc      = R_ly * ly_to_pc       # convert to parsecs
+dt        = 1e13                  # timestep in seconds (~0.3 Myr)
+n_steps   = 50000                   # total steps
+plot_every= 5                     # update plot every this many steps
+
+# ── Initial conditions ──────────────────────────────────────────────
+# Uniformly distribute N_stars within a sphere of radius R_pc (pc)
+u    = np.random.rand(N_stars)
+cost = 2*np.random.rand(N_stars) - 1
+phi  = 2*np.pi*np.random.rand(N_stars)
+r_pc = R_pc * np.cbrt(u)
+sin_t = np.sqrt(1 - cost**2)
+
+pos_pc = np.empty((N_stars,3))
+pos_pc[:,0] = r_pc * sin_t * np.cos(phi)
+pos_pc[:,1] = r_pc * sin_t * np.sin(phi)
+pos_pc[:,2] = r_pc * cost
+
+pos = pos_pc * pc_to_m            # positions in meters
+vel = np.zeros((N_stars,3), dtype=np.float64)
+
+# Sample masses from Salpeter IMF (0.1–50 M⊙)
+α, mmin, mmax = 2.35, 0.1, 50.0
+u2 = np.random.rand(N_stars)
+mass_sun = (mmin**(1-α) + u2*(mmax**(1-α)-mmin**(1-α)))**(1/(1-α))
+mass = mass_sun * M_sun
+
+# ── Numba‐accelerated kernels ────────────────────────────────────────
+@njit(fastmath=True)
+def compute_forces(pos, mass):
+    N = pos.shape[0]
+    F  = np.zeros_like(pos)
+    for i in range(N):
+        xi, yi, zi = pos[i]
+        mi         = mass[i]
+        fxi = fyi = fzi = 0.0
+        for j in range(N):
+            if i == j: continue
+            dx = pos[j,0] - xi
+            dy = pos[j,1] - yi
+            dz = pos[j,2] - zi
+            r2 = dx*dx + dy*dy + dz*dz + 1e-12
+            inv_r3 = 1.0 / (r2 * np.sqrt(r2))
+            f = G_SI * mi * mass[j] * inv_r3
+            fxi += f * dx
+            fyi += f * dy
+            fzi += f * dz
+        F[i,0], F[i,1], F[i,2] = fxi, fyi, fzi
+    return F
+
+@njit(parallel=True, fastmath=True)
+def advance(pos, vel, mass, dt):
+    F = compute_forces(pos, mass)
+    for i in prange(pos.shape[0]):
+        vel[i] += F[i] * dt / mass[i]
+        pos[i] += vel[i] * dt
+    return pos, vel
+
+# ── Prepare animation ────────────────────────────────────────────────
+# Warm‐up compile
+advance(pos, vel, mass, dt)
+
+fig, ax = plt.subplots(figsize=(6,6))
+ax.set_xlim(-R_pc, R_pc)
+ax.set_ylim(-R_pc, R_pc)
+ax.set_xlabel('x (pc)')
+ax.set_ylabel('y (pc)')
+ax.set_title(f'{N_stars} Stars within {int(R_ly)} ly of the Sun')
+
+# Scatter initial positions (convert back to pc)
+scatter = ax.scatter(pos[:,0]/pc_to_m, pos[:,1]/pc_to_m, s=10)
+
+def update(frame):
+    global pos, vel
+    # advance `plot_every` steps between frames
+    for _ in range(plot_every):
+        pos, vel = advance(pos, vel, mass, dt)
+    scatter.set_offsets(pos[:,:2]/pc_to_m)
+    return (scatter,)
+
+ani = FuncAnimation(fig, update,
+                    frames=n_steps//plot_every,
+                    interval=50, blit=True)
+
+# Display the animation in an interactive window
+plt.show()
+
+
+```
+# 3. Computational Complexity
+
+- **Force calculation**: Each of the $N$ particles interacts with $N - 1$ others ⇒ $\mathcal{O}(N^2)$ work per time step.
+- **Time stepping**: Once forces are known, updating $\{v_i, r_i\}$ is $\mathcal{O}(N)$.
+
+**Overall cost per frame**: $\mathcal{O}(N^2)$. For large $N$, one often resorts to:
+
+- **Barnes–Hut** or **Fast Multipole Methods** to reduce to $\mathcal{O}(N \log N)$ or even $\mathcal{O}(N)$.
+- **GPU acceleration** for massively parallel execution.
+- **Symplectic integrators** to permit larger $\Delta t$.
+
+# 4. Numba Acceleration
+
+In our Python code:
+
+- `@njit(fastmath=True)` on `compute_forces` compiles the double loop over $i, j$ into optimized machine code, inlining arithmetic and using vector instructions for multiplications and divisions.
+- `@njit(parallel=True)` on `advance` lets Numba distribute the $N$-particle updates across CPU cores via `prange`, yielding near-linear scaling for the $\mathcal{O}(N)$ step.
+- `cache=True` (if enabled) would store compiled kernels to disk, avoiding recompilation on subsequent runs.
+
+These steps transform a naïve $\mathcal{O}(N^2)$ Python script into an efficient multi-core simulator capable of handling thousands of particles in real time.
+
+

@@ -252,5 +252,34 @@ $$
 - **`fastmath`** yields significant vectorization of exponentials and divisions—essential in thermal-motion or Coulomb‐force loops.
 - **Cache warming**: the first call pays compilation overhead; subsequent calls run at full speed.
 
+## Using `@njit(..., cache=True)` in Numba
 
+When you decorate a Numba-compiled function with `@njit(..., cache=True)`, you’re telling Numba to persist the generated native machine code (and its LLVM IR) to disk—typically under a `__pycache__` directory next to your Python module—so that on later runs (or in subsequent processes) you skip the costly compile step. Here’s why that matters:
+
+### Avoiding Recompilation Overhead
+
+On first invocation, Numba must parse your Python function, perform type inference, lower to LLVM IR, run LLVM’s optimizations, and emit machine code. That can easily be 50–200 ms (or more for complex functions).
+
+By caching, subsequent imports or calls of the same function signature simply load the precompiled object from disk, so your code “starts up” at C-like speed immediately.
+
+### Faster Iteration in Development
+
+When you’re experimenting interactively—tweaking parameters, rerunning scripts, or re-importing modules—repeated compilation can become a painful drag. Cache lets you modify unrelated functions or code paths without paying to rebuild your hot kernels each time.
+
+### Consistent Performance in Production
+
+On HPC clusters or cloud deployments where cold-start time matters, caching ensures that worker processes (e.g.\ in a Dask or MPI pool) won’t all recompile the same kernels in parallel. They’ll share the on-disk cache, leading to faster overall job startup and reduced I/O contention.
+
+### Discrete Cache Keys by Signature
+
+Numba keys the cache on the combination of function bytecode, argument types, and compiler flags (`parallel`, `fastmath`, etc.). If you change your function’s signature (e.g. start passing `float32` instead of `float64`) or toggle `fastmath`, Numba will recompile and cache the new variant.
+
+### Trade-Offs
+
+- **Disk Usage**: Each cached variant consumes a few hundred kilobytes to a few megabytes, depending on complexity.
+- **Stale Caches**: If you edit the function’s code but keep the same signature, Numba will detect the change (via bytecode hash) and rebuild. You can also manually clear `__pycache__` if needed.
+
+---
+
+In practice, for any non-trivial function—Monte Carlo loops, N-body force kernels, FFT-based solvers—adding `cache=True` is a no-brainer: it turns that one-time compilation cost into something you pay just once per code change, rather than every time you launch your analysis or simulation script.
 

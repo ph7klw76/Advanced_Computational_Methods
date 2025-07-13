@@ -103,6 +103,13 @@ where magic happens
 3. [Microwave](micorwave.md)
 4. [Double_slit](doubleslit.py)
 
+## Concurrency and Parallelism
+
+[Concurrency and Parallelism](https://www.youtube.com/watch?v=S05-MZAJqNM)
+
+1. [Speeding up calculation using Numba libraries with example in Physics](Numba.md)
+   
+
 ## Agent-Based Modeling (ABM)
 
 [Agent Based Modelling](https://www.youtube.com/watch?v=uAgxbrLoSxU&list=PLD4TWcPfbZO9HmaSutF_R2Y2RmiNDxvaP)
@@ -135,24 +142,6 @@ where magic happens
 14. Inverse Design Algorithms
 15. t-Distributed Stochastic Neighbor Embedding
     
-
-
-## Concurrency and Parallelism
-
-[Concurrency and Parallelism](https://www.youtube.com/watch?v=S05-MZAJqNM)
-
-1. [Speeding up calculation using Numba libraries with example in Physics](Numba.md)
-2. Python's Global Interpreter Lock (GIL)
-3. Threading in Python
-4. Multiprocessing in Python
-5. Asynchronous Programming
-6. Concurrent Futures
-7. Performance Considerations
-8. Real-World Applications
-9. Error Handling and Debugging
-10. Libraries and Frameworks
-11. Advanced Topics
-12. Project and Case Study
 
 ## Design Pattern in Python
 

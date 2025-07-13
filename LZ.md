@@ -85,14 +85,14 @@ Linearising near $q=0$  gives $k=2\lambda/q_0$ .
 The characteristic velocity with which the nuclei traverse the crossing is set by the vibrational frequency $ω_{eff}$ ω eff:
 
 $$
-v\approx q_0\,ω_{eff}=\frac{2\lambda}{k}\,ω_{eff}.
+v\approx q_0\,ω_{eff}=\frac{2\lambda}{k}.
 $$
 
 
 Combining, the Landau–Zener adiabaticity parameter becomes
 
 $$
-Γ=\frac{J^2}{\hbar\,ω_{eff}\,λ}.
+Γ=\frac{J^2}{\hbar ω_{eff} λ}.
 $$
 
 

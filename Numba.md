@@ -426,6 +426,9 @@ plt.show()
 
 
 ```
+
+<img width="688" height="687" alt="image" src="https://github.com/user-attachments/assets/133c53d4-13be-40d1-921e-f3a78dd305a0" />
+
 # 3. Computational Complexity
 
 - **Force calculation**: Each of the $N$ particles interacts with $N - 1$ others ⇒ $\mathcal{O}(N^2)$ work per time step.

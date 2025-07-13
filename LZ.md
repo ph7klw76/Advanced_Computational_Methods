@@ -143,10 +143,10 @@ Fullerene PCBM dimer in the “face-on” stack: $J≈0.4$\,$eV$, $Γ≈1–2$ �
 
 ## 7 Take-home rules for using Landau–Zener in simulations
 
-- Compute $Γ$ from Eq. (6) for every pair; store $λ$ λ and $ω_{eff}$ ω eff once.
-- Replace Marcus prefactor $J^2$ J2 by $J^2\,[1-\exp(-2\pi\,Γ)]/(\hbar\,ω_{eff}\,λ)$ J2 [1−exp(−2πΓ)]/(ℏω eff λ).
-- Ensure units: $J,λ$ J,λ in eV, $ω_{eff}$ ω eff in eV (1 cm⁻¹ = 1.2398×10⁻⁴ eV).
-- Use $Γ$-dependent rate (7) in your kinetic Monte-Carlo or master equation; this prevents the unphysical “infinitely fast” hopping at very large $J$ J.
+- Compute $Γ$ from Eq. (6) for every pair; store $λ$  and $ω_{eff}$ once.
+- Replace Marcus prefactor $J^2$  by $\[1-\exp(-2\pi Γ)]/(\hbar ω_{eff} λ)$
+- Ensure units: $J,λ$  in eV, $ω_{eff}$ in eV (1 cm⁻¹ = 1.2398×10⁻⁴ eV).
+- Use $Γ$-dependent rate (7) in your kinetic Monte-Carlo or master equation; this prevents the unphysical “infinitely fast” hopping at very large $J$.
 
 ## e⁻ / h⁺ Carrier-Specific Effective Frequency
 

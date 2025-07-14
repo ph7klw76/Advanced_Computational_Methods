@@ -253,3 +253,268 @@ for lab in ["hole", "electron"]:
     print(f"{lab:8s}:  Ω_eff = {Ω*1e3:.2f} meV   ΣS = {ΣS:.2f}   λ = {λ*1e3:.1f} meV")
 ```
 
+#  Marcus × Landau–Zener rate with energy near degeneracy. 
+
+
+
+```python
+"""
+mobility_two_level_uniform_pairs_FAST.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Accelerated version of your zero-field mobility KMC with:
+  • Numba JIT + SIMD, parallelised over trajectories
+  • controlled BLAS thread count (LOKY_MAX_CPU_COUNT = 10)
+  • *Optional* single-channel (HOMO–HOMO) mode ― set ONLY_J_HH = True
+
+Apart from the compile-time flag, the scientific model is **identical**
+to mobility_two_level_uniform_pairs_RIGOROUS.py.
+"""
+
+from __future__ import annotations
+from pathlib import Path
+import os, numpy as np, pandas as pd, matplotlib.pyplot as plt, scipy.stats as st
+from sklearn.mixture import GaussianMixture
+from numba import njit, prange
+
+# ─────────────── User-tunable parameters ──────────────────────────────
+FNAME           = Path("e-coupling_donor.txt")  # coupling file
+USE_GEOM_FILTER = True                          # distance < 0.9 nm
+ONLY_J_HH       = False                     # ← set True for J_HH-only mode
+N_GMM_COMPONENTS = 2
+N_RUNS          = 500_000
+N_HOPS_PER_RUN  = 20_000
+T_K             = 300.0
+lambda_eV       = 0.05975
+sigma_site_eV   = 0.077
+OMEGA_eff_eV    = 0.050
+DELTA_MEAN      = 0.07347
+SEED            = None
+# ───────────────────────────────────────────────────────────────────────
+
+# control external BLAS thread explosion (scikit-learn, SciPy)
+os.environ["LOKY_MAX_CPU_COUNT"] = "10"
+
+# ─────────── Physical constants (SI or eV units where noted) ──────────
+kB_eV_per_K = 8.617_333_262e-5
+kB_J_per_K  = 1.380_649e-23
+hbar_eV_s   = 6.582_119_569e-16
+e_C         = 1.602_176_634e-19
+
+prefactor = 2 * np.pi / hbar_eV_s
+kBT_eV    = kB_eV_per_K * T_K
+sqrt_term = np.sqrt(4 * np.pi * lambda_eV * kBT_eV)
+
+# ───────── 1. read coupling file (+ optional geometric filter) ────────
+cols = ["Mol_i", "Mol_j", "HOMO", "HOMO-1",
+        "HOMO-1HOMO", "HOMOHOMO-1", "Distance_nm"]
+df = pd.read_csv(FNAME, delim_whitespace=True, names=cols, header=0)
+df = df.dropna(subset=cols[2:])
+
+x  = df["Distance_nm"].to_numpy()
+# y = df["Angle_deg"].to_numpy()
+
+# expr = 67.7094*(x-0.683595)**2-2*-0.154972*(x-0.683595)*(y-45.2532) +0.00216742*(y-45.2532)**2
+
+if USE_GEOM_FILTER:
+    df = df[(x <=0.9)|(x < 0.5)].reset_index(drop=True)
+if df.empty:
+    raise RuntimeError("No couplings left after filtering.")
+
+# ───────── 2. static disorder bookkeeping (molecule index map) ────────
+mol_ids = np.union1d(df["Mol_i"].unique(), df["Mol_j"].unique())
+mol2idx = {m: i for i, m in enumerate(mol_ids)}
+N_mols  = len(mol_ids)
+
+# =========================  NUMBA-FRIENDLY DATA  ======================
+n_rows = len(df)
+mol_i_idx = df["Mol_i"].map(mol2idx).astype(np.int32).values
+mol_j_idx = df["Mol_j"].map(mol2idx).astype(np.int32).values
+J_HH      = df["HOMO"].values.astype(np.float64)
+J_LL      = df["HOMO-1"].values.astype(np.float64)
+J_LH      = df["HOMO-1HOMO"].values.astype(np.float64)
+J_HL      = df["HOMOHOMO-1"].values.astype(np.float64)
+dist_m    = (df["Distance_nm"].values * 1e-9).astype(np.float64)
+
+couplings = (mol_i_idx, mol_j_idx, J_HH, J_LL, J_LH, J_HL, dist_m)
+
+rng_global = np.random.default_rng(SEED)
+seeds = rng_global.integers(0, 2**32 - 1, size=N_RUNS, dtype=np.uint32)
+
+# =========================  NUMBA kernels  ============================
+
+@njit(fastmath=True, cache=True)
+def rate_LZ_numba(J, dG):
+    """Marcus × Landau–Zener rate (eV units)."""
+    k_na  = prefactor * J * J / sqrt_term * np.exp(-(dG + lambda_eV) ** 2 /
+                                                   (4 * lambda_eV * kBT_eV))
+    Gamma = J * J / (hbar_eV_s * OMEGA_eff_eV * lambda_eV)
+    return k_na * (1.0 - np.exp(-2.0 * np.pi * Gamma))
+
+
+@njit(parallel=True, fastmath=True, cache=True)
+def kmc_ensemble(seeds, N_runs, N_hops, N_mols,
+                 sigma_site, delta_mean, couplings,
+                 hh_only):
+
+    mol_i_idx, mol_j_idx, J_HH, J_LL, J_LH, J_HL, dist_m = couplings
+    n_rows = mol_i_idx.size
+    mobilities = np.empty(N_runs, dtype=np.float64)
+
+    # Boltzmann occupancy of L vs H
+    p_L = 1.0 / (1.0 + np.exp(-delta_mean / kBT_eV))
+
+    for run in prange(N_runs):
+
+        np.random.seed(seeds[run])                # one seed per trajectory
+
+        # static disorder for this trajectory
+        eps_H = np.random.normal(0, sigma_site, N_mols)
+        eps_L = np.random.normal(0, sigma_site, N_mols)
+
+        # random initial molecule and electronic level
+        posx = posy = posz = 0.0
+        t_tot = 0.0
+        level = 1 if np.random.random() < p_L else 0   # 1 = L, 0 = H
+
+        for _ in range(N_hops):
+
+            r  = np.random.randint(n_rows)
+            i  = mol_i_idx[r]
+            j  = mol_j_idx[r]
+
+            # driving forces
+            dG_HH = eps_H[j] - eps_H[i]
+            dG_LL = eps_L[j] - eps_L[i]
+            dG_LH = eps_H[j] - eps_L[i]   # L → H
+            # no H → L allowed in this model
+
+            # rates
+            k_HH = rate_LZ_numba(J_HH[r], dG_HH)
+            if hh_only:
+                if level == 1:                          # cannot hop from L
+                    continue
+                Ktot = k_HH
+            else:
+                k_LL = rate_LZ_numba(J_LL[r], dG_LL)
+                k_LH = rate_LZ_numba(J_LH[r], dG_LH)
+
+                if level == 0:                          # H origin
+                    Ktot = k_HH                         # H → H only
+                else:                                   # L origin
+                    Ktot = k_LL + k_LH                  # L → L/H
+
+            if Ktot <= 0.0 or not np.isfinite(Ktot):
+                continue
+
+            # waiting time
+            t_tot += np.random.exponential(1.0 / Ktot)
+
+            # choose channel & update level
+            u = np.random.random()
+            if level == 0:                              # H origin
+                # only H → H
+                level = 0
+            else:                                       # L origin
+                if u < k_LL / Ktot:
+                    level = 1                           # stay on L
+                else:
+                    level = 0                           # hop to H
+
+            # isotropic step of length dist_m[r]
+            v0, v1, v2 = np.random.normal(), np.random.normal(), np.random.normal()
+            norm = 1.0 / np.sqrt(v0*v0 + v1*v1 + v2*v2)
+            step = dist_m[r] * norm
+            posx += v0 * step
+            posy += v1 * step
+            posz += v2 * step
+
+        # Einstein relation
+        if t_tot == 0.0:
+            mobilities[run] = np.nan
+        else:
+            D = (posx*posx + posy*posy + posz*posz) / (6.0 * t_tot)
+            mobilities[run] = e_C * D / (kB_J_per_K * T_K) * 1e4  # cm² V⁻¹ s⁻¹
+
+    return mobilities
+
+
+# ─────────── 5. ensemble simulation ───────────────────────────────────
+mobilities = kmc_ensemble(seeds, N_RUNS, N_HOPS_PER_RUN, N_mols,
+                          sigma_site_eV, DELTA_MEAN, couplings,
+                          ONLY_J_HH)
+
+mobilities = mobilities[np.isfinite(mobilities)]
+np.savetxt("mobilities.txt", mobilities, fmt="%.6e",
+           header="zero-field mobilities (cm^2 V^-1 s^-1)")
+
+# ─────────── 6. log-normal (mixture) fit & console summary ────────────
+lnμ = np.log(mobilities)[:, None]
+
+if N_GMM_COMPONENTS == 1:
+    # analytical MLE for a single log-normal
+    μ, σ = lnμ.mean(), lnμ.std(ddof=0)
+    p = 1.0                                        # weight of the (only) component
+    print("-----------------------------------------------------------")
+    print(f"Valid simulations        : {len(mobilities):,} / {N_RUNS:,}")
+    print("\nSingle-component fit:")
+    print(f"  μ, σ                   = {μ:.4f}, {σ:.4f}")
+    print(f"  mode  = {np.exp(μ-σ**2):.3e}")
+    print(f"  median= {np.exp(μ):.3e}")
+    print(f"\nMean ⟨μ⟩                 = {np.exp(μ+0.5*σ**2):.3e} cm² V⁻¹ s⁻¹")
+    print("-----------------------------------------------------------")
+else:
+    gmm = GaussianMixture(2, covariance_type='full', random_state=0).fit(lnμ)
+    w, mus = gmm.weights_.ravel(), gmm.means_.ravel()
+    sigmas = np.sqrt(gmm.covariances_.ravel())
+    order  = np.argsort(mus)               # enforce μ₁<μ₂
+    p      = w[order][0]
+    μ1, μ2 = mus[order];  σ1, σ2 = sigmas[order]
+    mode1, mode2   = np.exp(μ1-σ1**2), np.exp(μ2-σ2**2)
+    median1,median2= np.exp(μ1),       np.exp(μ2)
+    mean_mix = (w * np.exp(mus + 0.5*sigmas**2)).sum()
+
+    print("-----------------------------------------------------------")
+    print(f"Valid simulations        : {len(mobilities):,} / {N_RUNS:,}")
+    print("\nMixture parameters (μ₁<μ₂):")
+    print(f"  weight p               = {p:.3f}")
+    print(f"  μ₁, σ₁                 = {μ1:.4f}, {σ1:.4f}")
+    print(f"  μ₂, σ₂                 = {μ2:.4f}, {σ2:.4f}")
+    print("\nPer-component stats:")
+    print(f"  mode₁ = {mode1:.3e}   median₁ = {median1:.3e}")
+    print(f"  mode₂ = {mode2:.3e}   median₂ = {median2:.3e}")
+    print(f"\nMixture mean ⟨μ⟩         = {mean_mix:.3e} cm² V⁻¹ s⁻¹")
+    print("-----------------------------------------------------------")
+
+# ─────────── 7. histogram + fitted PDF(s) (log–log) ───────────────────
+fig, ax = plt.subplots(figsize=(8, 6))
+xlims = (np.log10(mobilities.min()), np.log10(mobilities.max()))
+bins  = np.logspace(*xlims, 200)
+n, edges, _ = ax.hist(mobilities, bins=bins, density=True, alpha=0.65)
+
+x = np.logspace(*xlims, 600)
+
+if N_GMM_COMPONENTS == 1:
+    pdf = st.lognorm.pdf(x, s=σ, loc=0, scale=np.exp(μ))
+    ax.plot(x, pdf, lw=2, label="single log-normal")
+else:
+    pdf1 = p    * st.lognorm.pdf(x, s=σ1, loc=0, scale=np.exp(μ1))
+    pdf2 = (1-p)* st.lognorm.pdf(x, s=σ2, loc=0, scale=np.exp(μ2))
+    ax.plot(x, pdf1, lw=2, label="component 1")
+    ax.plot(x, pdf2, lw=2, label="component 2")
+
+ax.set_xscale("log"); ax.set_yscale("log")
+ax.set_xlabel("Zero-field mobility μ₀ (cm² V⁻¹ s⁻¹)", fontsize=14)
+ax.set_ylabel("Probability density",            fontsize=14)
+title = "Histogram + " + ("single log-normal fit"
+                          if N_GMM_COMPONENTS == 1
+                          else "two-log-normal fit")
+ax.set_title(title, fontsize=16, pad=8)
+ax.set_ylim(1e-5, None)
+ax.legend(fontsize=11)
+plt.tight_layout(); plt.show()
+
+# Save histogram data (bin centres + densities)
+np.savetxt("mobility_histogram.txt",
+           np.column_stack([0.5*(edges[:-1]+edges[1:]), n]),
+           header="bin_center  density", fmt="%.6e")
+```

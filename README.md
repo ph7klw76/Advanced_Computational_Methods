@@ -325,20 +325,22 @@ Application: Finite element simulations, quantum lattice models.
 4. [Marcus–Levich–Jortner Theory:](Marcus–Levich–Jortner.md) for low temperature 
    
 5. [Landau–Zener (LZ) non-adiabatic transition probability:](LZ.md) for large electronic coupling
+
+6.  [Marcus‑Rate Graphs & Exact Kinetic Monte Carlo (n‑Fold Way)](Marcus_Graph.md) A graph method to take into account of local ordering 
       
-6.  Dynamic and static disorder
+7.  Dynamic and static disorder
    
-7.  Miller-Abrahams Hopping Model
+8.  Miller-Abrahams Hopping Model
    
-8.  Variable Range Hopping (VRH) in Disordered Systems
+9.  Variable Range Hopping (VRH) in Disordered Systems
    
-9.  Polaron Hopping Mechanisms
+10.  Polaron Hopping Mechanisms
     
-10.  Crossover from Hopping to Band Transport
+11.  Crossover from Hopping to Band Transport
     
-11.  Multiple Trapping and Release (MTR) Model
+12.  Multiple Trapping and Release (MTR) Model
     
-12.  Percolation Theory in Organic Films
+13.  Percolation Theory in Organic Films
 
 ### C. Molecular Interactions, Aggregation and Torsional Potential
 

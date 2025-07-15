@@ -256,6 +256,8 @@ Graph theory is far more than a purely mathematical abstraction; it is a univers
 
 you will find that graph theory provides the logical framework, the algorithmic tools, and the theoretical guarantees you need.
 
+read the library tutorial [https://networkx.org/documentation/stable/tutorial.html]
+
 # Example 1
 
 ```python

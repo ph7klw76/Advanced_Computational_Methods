@@ -330,8 +330,52 @@ the choice will not bias the subsequent occupation analysis so long as the corre
   … Cartesian coordinates …
 *
 ```
+## 2 · Choose the level of electron correlation
 
+| Strategy                        | When to use              | One‑command keyword                                                  |
+|--------------------------------|---------------------------|----------------------------------------------------------------------|
+| CASSCF(2,2)                    | < 50 atoms, high accuracy | `! CASSCF(2,2) def2-TZVP TightSCF NoFrozenCore`                      |
+| DLPNO‑NEVPT2//CASSCF(2,2)      | benchmarking              | add `! NEVPT2 TightPNO` in a single step                             |
+| Broken‑symmetry DFT            | > 100 atoms or screening  | `! UKS ωB97X-D def2-TZVP TightSCF`                                   |
 
+Either path yields natural‑orbital occupations:
+
+- **CASSCF** is formally exact for a (2e, 2o) active space.
+- **BS‑DFT** gives a good approximation when the unrestricted solution is genuinely open‑shell.
+
+---
+
+## 3 · Input Templates
+
+### 3.1 CASSCF(2,2) (preferred for molecules < 50 atoms)
+
+Use the same formula as above. A quick sanity check:
+
+- $y_0 \lesssim 0.05$ ⇒ essentially closed‑shell.
+- $0.3 \lesssim y_0 \lesssim 0.7$ ⇒ diradicaloid window (strong oscillator strength).
+- $y_0 \gtrsim 0.8$ ⇒ near‑pure open‑shell; fluorescence is likely quenched.
+
+If the unrestricted SCF collapses to a symmetric (closed‑shell) solution ($n_u \approx 0$),  
+**force broken symmetry** by supplying an ALPHA/BETA charge‑separated guess (`%suspect` block)  
+or by **mixing fragment orbitals**.
+
+```text
+! CASSCF(2,2) def2-TZVP TightSCF
+%casscf
+  nel             2        # electrons in the active space
+  nact            2        # number of active orbitals
+  mult            1        # singlet
+  lroot           1        # ground state only
+  orbitals        {occupied;  core}   # ORCA guesses, refine if needed
+end
+
+%output
+  Print[ NaturalOrbitals ] 1
+  Print[ Basis ] 0
+end
+
+* xyzfile 0 1 final.xyz
+```
 **Spin multiplicity:**  
 When the job finishes, search `*.out` for the **Natural Orbital Occupancies** block.  
 Take the highest sub‑unity value $n_{\text{LUNO}}$. Insert into:
@@ -342,6 +386,23 @@ $$
 
 ### 3.2 Broken‑symmetry DFT (for large systems)
 
+```text
+! UKS ωB97X-D def2-TZVP TightSCF
+%scf
+  UHF         true          # enforce unrestricted
+  guess       generate
+  maxiter     500
+end
+
+%output
+  NaturalOrbPop true
+  Print[ P_Mulliken ] 1
+  Print[ OrbPop ]    1
+end
+
+* xyzfile 0 1 final.xyz
+```
+
 ORCA prints **Natural Orbital Population Analysis** near the end:
 
 - **Singlet diradicaloids**: use a restricted (RKS) guess;  
@@ -349,7 +410,7 @@ ORCA prints **Natural Orbital Population Analysis** near the end:
 
 - **Neutral radicals / doublets**: multiplicity = 2, unrestricted from the outset.
 
-Save the optimised geometry; subsequent jobs will read it via:
+Save the optimised geometr
 
 
 

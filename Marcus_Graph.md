@@ -71,6 +71,7 @@ for (i,j), J in couplings.items():
 
 The **n‑fold way** (Bortz–Kalos–Lebowitz) is a **rejection‑free sampler** for any continuous‑time Markov chain.  
 [CMSR Rutgers](https://courses.physics.illinois.edu/phys466/fa2016/lnotes/KMC.pdf)  
+[https://en.wikipedia.org/wiki/Kinetic_Monte_Carlo]
 
 ---
 

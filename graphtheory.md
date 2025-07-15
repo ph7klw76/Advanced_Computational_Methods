@@ -581,7 +581,7 @@ $$
 Then KCL for all nodes reads compactly:
 
 $$
-Lv = b \tag{1}
+Lv = b 
 $$
 
 Because $\sum_i b_i = 0$ (current conservation), $b$ lies in the column space of $L$. However, $L$ is singular (its nullspace is the constant vectors), so we cannot invert it directly.

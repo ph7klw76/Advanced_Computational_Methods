@@ -495,6 +495,191 @@ In a ferromagnet, atoms on a crystal lattice carry magnetic moments (“spins”
 
 Even this tiny 2×2 example illustrates the key phenomenon: at low $T$, spins align (high $|M|$); at high $T$, thermal agitation randomizes them (low $|M|$). For larger lattices (e.g., 50×50), the same graph‐based approach underlies Monte Carlo simulations that predict the Curie temperature (where the material transitions from ferromagnet to paramagnet).
 
+
+## More examples:
+
+1. Molecular Connectivity: Shortest Path Between Atoms
+Suppose you have a small molecule and want the graph distance (number of bonds) between two atoms:In chemistry you often need the bond‐distance or reaction coordinate between atoms; NetworkX’s shortest_path does exactly that
+
+2. 2D Percolation Clusters on a Lattice
+Model a square lattice where each site is “open” with probability p, then find the size of the largest connected cluster (think fluid percolation or electrical connectivity).Percolation theory describes how connectivity emerges as p crosses a threshold; extracting connected components on the induced subgraph tells you if a “spanning” cluster exists
+
+3. Random‐Walk Diffusion on a Network
+Simulate a single particle doing a simple random walk (useful for modeling diffusion or heat‐bath sampling).andom walks on graphs underpin diffusion models; each move to a random neighbor mimics Brownian motion on a network lattice
+
+```python
+import networkx as nx
+import matplotlib.pyplot as plt
+import random
+
+# Example 1: Molecular connectivity graph
+G1 = nx.Graph()
+bonds = [("A","B"),("B","C"),("C","D"),("D","E")]
+G1.add_edges_from(bonds)
+plt.figure()
+nx.draw(G1, with_labels=True)
+plt.title("Molecular connectivity: A-B-C-D-E")
+
+# Example 2: 2D percolation cluster
+G2 = nx.grid_2d_graph(10, 10)
+random.seed(42)
+p = 0.6
+occupied = {node for node in G2 if random.random() < p}
+G_occ = G2.subgraph(occupied)
+plt.figure()
+nx.draw(G_occ, with_labels=False, node_size=50)
+plt.title("Occupied cluster in 10×10 lattice (p=0.6)")
+
+# Example 3: Random-walk diffusion ring
+G3 = nx.cycle_graph(6)
+plt.figure()
+nx.draw(G3, with_labels=True)
+plt.title("Random-walk diffusion: Ring of 6 sites")
+
+plt.show()
+```
+<img width="400" height="784" alt="image" src="https://github.com/user-attachments/assets/561c9eb9-00e8-45a5-b07b-0b0a583e356c" />
+
+
+## Effective Resistance
+# 1 · Mapping circuits to graphs
+
+- **Nodes** ($V$) ↔ circuit junctions (connection points of wires).  
+- **Edges** ($E$) ↔ resistors between junctions.  
+- **Edge weights** ↔ conductances $G_{ij} = \frac{1}{R_{ij}}$.
+
+Thus, a circuit of $n$ nodes becomes a weighted, undirected graph $G = (V, E)$ with conductance matrix $A$ where
+
+$$
+A_{ij} =
+\begin{cases}
+G_{ij}, & (i, j) \in E \\
+0, & \text{otherwise}
+\end{cases}
+$$
+
+---
+
+# 2 · Kirchhoff’s laws and the graph Laplacian
+
+Kirchhoff’s current law (KCL) at node $i$ states that the net current leaving node $i$ is zero (except at sources/sinks). In matrix form:
+
+$$
+\sum_j G_{ij} (v_i - v_j) = b_i,
+$$
+
+where $v_i$ is the electric potential at node $i$, and $b_i$ is any externally injected current (positive for injection, negative for extraction).
+
+Define the **graph Laplacian** $L \in \mathbb{R}^{n \times n}$ by:
+
+$$
+L_{ii} = \sum_j G_{ij}, \quad L_{ij} = -G_{ij} \quad (i \ne j)
+$$
+
+Then KCL for all nodes reads compactly:
+
+$$
+Lv = b \tag{1}
+$$
+
+Because $\sum_i b_i = 0$ (current conservation), $b$ lies in the column space of $L$. However, $L$ is singular (its nullspace is the constant vectors), so we cannot invert it directly.
+
+---
+
+# 3 · Unit‑current injection and the pseudoinverse
+
+To compute the resistance between two nodes $s$ (source) and $t$ (sink), we inject 1 A at $s$ and extract 1 A at $t$. The right‑hand side vector is:
+
+$$
+b = e_s - e_t,
+$$
+
+where $e_k$ is the unit vector (1 at entry $k$, 0 elsewhere).
+
+We seek a solution $v$ to (1). Among infinitely many (due to the nullspace), the **Moore–Penrose pseudoinverse** $L^+$ gives the minimum‑norm solution:
+
+$$
+v = L^+ b
+$$
+
+By properties of the pseudoinverse, this $v$ satisfies $Lv = b$ and has zero-sum (so potentials are unique up to a constant shift).
+
+---
+
+# 4 · Deriving the effective resistance formula
+
+The potential difference $v_s - v_t$ is exactly the voltage drop when 1 A flows from $s$ to $t$, hence by Ohm’s law:
+
+$$
+R_{\text{eff}}(s, t) = v_s - v_t
+$$
+
+But:
+
+$$
+v_s - v_t = (e_s - e_t)^\top v = (e_s - e_t)^\top L^+ (e_s - e_t)
+$$
+
+Thus, the celebrated result:
+
+$$
+R_{\text{eff}}(s, t) = (e_s - e_t)^\top L^+ (e_s - e_t)
+$$
+
+This holds for any connected network of resistors.
+
+```python
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. Create a more complex grid resistor network (4×3)
+G = nx.grid_2d_graph(4, 3)
+np.random.seed(0)  # for reproducible random resistances
+
+# Assign random resistances (50–200 Ω) and compute conductances
+for u, v in G.edges():
+    R = np.random.randint(50, 201)
+    G.edges[u, v]['resistance'] = R
+    G.edges[u, v]['conductance'] = 1.0 / R
+
+# 2. Compute Laplacian and pseudoinverse
+nodes = list(G.nodes())
+L = nx.laplacian_matrix(G, nodelist=nodes, weight='conductance').toarray()
+L_plus = np.linalg.pinv(L)
+
+# Function to compute effective resistance
+def effective_resistance(Lp, nodes, s, t):
+    idx = {node: i for i, node in enumerate(nodes)}
+    e = np.zeros(len(nodes))
+    e[idx[s]] = 1
+    e[idx[t]] = -1
+    return e @ Lp @ e
+
+# Calculate effective resistance between opposite corners
+source = (0, 0)
+target = (3, 2)
+R_eff = effective_resistance(L_plus, nodes, source, target)
+
+# 3. Plot the network with edge labels
+pos = {node: node for node in G.nodes()}  # node positions correspond to grid coordinates
+plt.figure(figsize=(8, 6))
+nx.draw(G, pos, with_labels=True, node_size=500)
+edge_labels = {(u, v): f"{data['resistance']} Ω" for u, v, data in G.edges(data=True)}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=6)
+plt.title(f"Grid Resistor Network (4×3) — Effective Resistance {source}↔{target}: {R_eff:.2f} Ω")
+plt.axis('off')
+plt.show()
+```
+<img width="422" height="279" alt="image" src="https://github.com/user-attachments/assets/16cadcc6-e38f-4a12-8951-6ea3150b0dfa" />
+
+Above is a 4 × 3 grid resistor network with random resistor values on each edge (between 50 Ω and 200 Ω). We compute the effective resistance between the bottom‑left corner (0, 0) and the top‑right corner (3, 2), which here is about 195.91 Ω.
+You can adapt this template to:
+Larger grids (e.g. 10×10)
+Irregular geometries (import coordinates from images or molecular models)
+Specific designs (e.g. adding diagonal resistors or non‐uniform connectivity)
+By changing the node layout or the edges in the graph, you can model virtually any resistor network and extract its effective resistances using NetworkX and NumPy.
+
 ## Network Formalism
 
 Graph‐theoretic algorithms (like BFS/DFS on the same lattice graph) are used to identify clusters of aligned spins or to simulate domain growth.

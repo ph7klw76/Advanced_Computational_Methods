@@ -9,6 +9,9 @@ Controlling $y_0$ tunes not only redox and magnetic properties but also the radi
 
 ## 2· The exact two‑orbital Hamiltonian
 
+<img width="588" height="390" alt="image" src="https://github.com/user-attachments/assets/d068d5fa-843b-4a1e-8e02-2b07b179f4ec" />
+
+
 Label two orthogonal 1s‑like orbitals $\phi_A$ and $\phi_B$. In an orthonormal basis the valence singlet space of H₂ (and, by diabatic projection, any Kekulé‑type diradicaloid) is spanned by three configuration‑state functions (CSFs):
 
 $$
@@ -34,6 +37,9 @@ The single real parameter $\lambda$ encapsulates the interplay of the one‑elec
 ---
 
 ## 3· Diradical index $y_0$: definition and connection to observables
+
+<img width="633" height="445" alt="image" src="https://github.com/user-attachments/assets/6b6fbefc-db76-4a92-b563-212933d1f17e" />
+
 
 The singlet diradical character is defined as twice the weight of the open‑shell CSF:
 
@@ -77,6 +83,9 @@ These trends reproduce the coloured dashed curves on the workshop slides and, as
 
 ## 5· Optical selection rules in the 2e/2o CI
 
+<img width="601" height="357" alt="image" src="https://github.com/user-attachments/assets/630a7291-e2af-46dd-9e7f-458ecd9ad5e3" />
+
+
 Let the lowest bright singlet be dominated by the covalent CSF $\Phi_{\text{CS}}$  
 (a HOMO→LUMO excitation termed $\Phi_{\text{HL}}$ on the slides).  
 Because the electric‑dipole operator $\hat{\mu}$ changes charge parity, the oscillator strength follows:
@@ -101,6 +110,9 @@ the “dark diradical” regime exploited in singlet‑fission materials.
 
 ### 6.1 Difluorenothiophene diradicaloids
 
+<img width="759" height="542" alt="image" src="https://github.com/user-attachments/assets/71228e58-e934-419d-89f8-97e769bee5f7" />
+
+
 | compound         | donor group | $y_0$ | 0–0 energy / nm | photoluminescence trend |
 |------------------|-------------|-------|------------------|--------------------------|
 | DFTh–PhOMe       | –OCH₃       | 0.51  | 910              | moderate                 |
@@ -124,6 +136,9 @@ Transient‑absorption spectra for QDT₂ reveal sub‑ps equilibration between 
 ---
 
 ## 7· Guidelines for molecular architects
+
+<img width="628" height="459" alt="image" src="https://github.com/user-attachments/assets/4e3f2453-aba6-47e0-b9ef-4f89c4129d1a" />
+
 
 | Target property                        | Desired $y_0$ window | Synthetic levers                                                              |
 |----------------------------------------|-----------------------|--------------------------------------------------------------------------------|
@@ -195,7 +210,7 @@ The lowest bright singlet $S_{\text{bright}}$ is dominated by $\Phi_O$.
 Electric‑dipole operator $\hat{\mu}$ couples ionic ↔ covalent sectors only, so:
 
 $$
-f \propto |ac \langle \Phi_C | \hat{\mu} | \Phi_D \rangle|^2 \Rightarrow f(y_0) \propto (1 - y_0) y_0 \............................(3)
+f\propto |ac \langle \Phi_C | \hat{\mu} | \Phi_D \rangle|^2 \Rightarrow f(y_0) \propto (1 - y_0) y_0 \ ............................(3)
 $$
 
 Equation (3) is maximised at $y_0 = 0.5$.  
@@ -208,9 +223,8 @@ Multi‑reference TD‑DFT screening of >70 Kekulé diradicaloids confirms this 
 
 For internal conversion between two singlets (or two doublets):
 
-$$
-k_{IC}(n \rightarrow n - 1) = \frac{2\pi}{\hbar} |V^{\text{vib}}_{n,n-1}|^2 \, \rho(\Delta E_{n,n-1}) \..............................(4)
-$$
+<img width="348" height="47" alt="image" src="https://github.com/user-attachments/assets/3ec671c9-a71c-404d-b67f-b73a752830f7" />...................(4)
+
 
 The radiation/non‑radiation competition becomes:
 

@@ -305,4 +305,51 @@ only when heavy‑atom solvents restore SOC.
 
 [https://pubs.acs.org/doi/10.1021/jacs.4c11186]
 
+# ORCA Protocol for Extracting Diradical Descriptors
+
+Below is a step‑by‑step, ORCA‑specific protocol for extracting the diradical descriptors:
+
+$$
+y_0 = n_{\text{LUNO}} \quad \text{and} \quad \lambda = \sqrt{\frac{y_0}{2}}
+$$
+
+where $n_{\text{LUNO}}$ is the natural‑orbital occupation of the lowest unoccupied natural orbital (LUNO).  
+The same workflow works for any π‑diradicaloid — azuacene, difluorenothiophene, QDT, etc. — provided you adopt a (2e, 2o) active space  
+or an unrestricted Kohn–Sham determinant that faithfully localises the two frontier electrons.
+
+---
+
+## 1 · Geometry
+
+If you do not have an X‑ray structure, perform a relaxed optimisation at a semi‑local or hybrid DFT level first;  
+the choice will not bias the subsequent occupation analysis so long as the correct spin‑state is used.
+
+```text
+! Opt B3LYP D3BJ def2-SV(P) TightSCF TightOpt
+* xyz 0 1
+  … Cartesian coordinates …
+*
+```
+
+
+**Spin multiplicity:**  
+When the job finishes, search `*.out` for the **Natural Orbital Occupancies** block.  
+Take the highest sub‑unity value $n_{\text{LUNO}}$. Insert into:
+
+$$
+y_0 = n_{\text{LUNO}}, \quad \lambda = \sqrt{\frac{y_0}{2}}
+$$
+
+### 3.2 Broken‑symmetry DFT (for large systems)
+
+ORCA prints **Natural Orbital Population Analysis** near the end:
+
+- **Singlet diradicaloids**: use a restricted (RKS) guess;  
+  if convergence flips to RHF‑like (closed shell), switch to broken‑symmetry in § 3.
+
+- **Neutral radicals / doublets**: multiplicity = 2, unrestricted from the outset.
+
+Save the optimised geometry; subsequent jobs will read it via:
+
+
 

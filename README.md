@@ -4,6 +4,8 @@
   <img src="https://github.com/user-attachments/assets/03fe4773-c529-4de7-8ccf-66e925084214" alt="WhatsApp Image" width="600" height="600" />
 </div>
 
+Python may be the gentle introduction, but if you want to swim with sharks—i.e. build real‑world applications and solve real-world problem, you’ll need to bring some heavy‑duty math and deep physics gear.
+
 This project is more than a collection of computational techniques.  It is my attempt to **capture structure**, **clarify thought**, and **transmit pathways** 
 
 This is where I:

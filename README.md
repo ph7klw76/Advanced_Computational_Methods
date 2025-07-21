@@ -309,12 +309,14 @@ Application: Finite element simulations, quantum lattice models.
 4. [Implicit solvation models](Implicit_Solvation.md)
 
 5. [Explicit solvation models](explict_solvent.md)
+
+6. [Broken‑Symmetry Density‑Functional Theory for Large Systems](Broken‑Symmetry.md)
    
-6. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
+7. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
 
-7. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
+8. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.
 
-8. Multireference Methods: For systems with significant electron correlation, such as biradicals.
+9. Multireference Methods: For systems with significant electron correlation, such as biradicals.
 
 ### B Charge Transport Mechanisms
 
@@ -404,30 +406,30 @@ Energy Barriers for Rotation and Conformational Isomerism
 7. [Internal Conversion (IC)](IC.md)
 
 8. [Biradical Photophysics](Diradical_%20character.md)
-   
+
 9. Singlet Exciton Fission
 
-10. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+11. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
    
-11. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
+12. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
 
-12. Charge Separation in Donor-Acceptor Systems
+13. Charge Separation in Donor-Acceptor Systems
     
-13. Charge Recombination Mechanisms
+14. Charge Recombination Mechanisms
 
-14. Third-Harmonic Generation (THG)
+15. Third-Harmonic Generation (THG)
     
-15. Exciton-Polariton Condensates
+16. Exciton-Polariton Condensates
 
-16. Metal-Enhanced Fluorescence
+17. Metal-Enhanced Fluorescence
 
-17. Strong Light-Matter Coupling
+18. Strong Light-Matter Coupling
     
-18. Spin-Polarized Luminescence
+19. Spin-Polarized Luminescence
     
-19. Excited-State Proton Transfer
+20. Excited-State Proton Transfer
     
-20. [Transient Absorption](TA.md)
+21. [Transient Absorption](TA.md)
 
 ### F: OLED Device Dynamics
 

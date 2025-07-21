@@ -387,20 +387,21 @@ $$
 ### 3.2 Broken‑symmetry DFT (for large systems)
 
 ```text
-! UKS ωB97X-D def2-TZVP TightSCF
+! UKS B3LYP D3 TightSCF
 %scf
   UHF         true          # enforce unrestricted
   guess       generate
   maxiter     500
 end
-
 %output
-  NaturalOrbPop true
+  PrintLevel Normal
+  Print[ P_NatPop] 1 
   Print[ P_Mulliken ] 1
-  Print[ OrbPop ]    1
+  Print[ P_OrbPopMO_M ]    1
 end
-
-* xyzfile 0 1 final.xyz
+%maxcore 3000
+%pal nprocs 32 end
+* XYZFILE 0 3 radical.xyz
 ```
 
 ORCA prints **Natural Orbital Population Analysis** near the end:

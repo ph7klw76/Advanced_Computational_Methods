@@ -108,6 +108,7 @@ where magic happens
 [Concurrency and Parallelism](https://www.youtube.com/watch?v=S05-MZAJqNM)
 
 1. [Speeding up calculation using Numba libraries with example in Physics](Numba.md)
+2. [Automating Task Using Snakemake](https://www.youtube.com/watch?v=tUTcfoMQl98)
    
 
 ## Agent-Based Modeling (ABM)

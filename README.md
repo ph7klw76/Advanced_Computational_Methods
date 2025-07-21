@@ -402,28 +402,30 @@ Energy Barriers for Rotation and Conformational Isomerism
 6. [Triplet-Triplet Annihilation (TTA)](TTA.md)
    
 7. [Internal Conversion (IC)](IC.md)
+
+8. [Biradical Photophysics](Diradical_%20character.md)
    
-8. Singlet Exciton Fission
+9. Singlet Exciton Fission
 
-9. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
+10. [Energy Transfer Mechanisms](Energy_transfer.md): Förster Resonance Energy Transfer (FRET) and Dexter transfer
    
-10. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
+11. [Two-Photon Absorption and PhotoPolymerisation](2PA.md) : Quantum Description and Mechanism
 
-11. Charge Separation in Donor-Acceptor Systems
+12. Charge Separation in Donor-Acceptor Systems
     
-12. Charge Recombination Mechanisms
+13. Charge Recombination Mechanisms
 
-13. Third-Harmonic Generation (THG)
+14. Third-Harmonic Generation (THG)
     
-14. Exciton-Polariton Condensates
+15. Exciton-Polariton Condensates
 
-15. Metal-Enhanced Fluorescence
+16. Metal-Enhanced Fluorescence
 
-16. Strong Light-Matter Coupling
+17. Strong Light-Matter Coupling
     
-17. Spin-Polarized Luminescence
+18. Spin-Polarized Luminescence
     
-18. Excited-State Proton Transfer
+19. Excited-State Proton Transfer
     
 20. [Transient Absorption](TA.md)
 

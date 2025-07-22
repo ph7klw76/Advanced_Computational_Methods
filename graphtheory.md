@@ -1,6 +1,6 @@
 # Graph theory 
 
-Graph theory is the mathematical study of graphs—abstract representations of a set of entities (called vertices or nodes) and the relationships between them (called edges or links). Although its origins date back to the 18th century (Euler’s solution of the Königsberg bridges problem), today graph theory provides a unified language and toolkit for modeling and analyzing complex systems across science, engineering, and everyday life. In this technical blog, we will:
+Graph theory is the mathematical study of graphs, abstract representations of a set of entities (called vertices or nodes) and the relationships between them (called edges or links). Although its origins date back to the 18th century (Euler’s solution of the Königsberg bridges problem), today graph theory provides a unified language and toolkit for modeling and analyzing complex systems across science, engineering, and everyday life. In this technical blog, we will:
 
 - Define the basic concepts and terminology of graph theory.
 - Survey fundamental graph‐theoretic properties and algorithms.

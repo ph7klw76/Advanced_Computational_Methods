@@ -389,7 +389,7 @@ $$
 ```text
 ! UKS B3LYP D3 TightSCF
 %scf
-  UHF         true          # enforce unrestricted
+  HFTyp      UHF                   # enforce unrestricted
   guess       generate
   maxiter     500
 end
@@ -402,6 +402,7 @@ end
 %maxcore 3000
 %pal nprocs 32 end
 * XYZFILE 0 3 radical.xyz
+
 ```
 
 ORCA prints **Natural Orbital Population Analysis** near the end:

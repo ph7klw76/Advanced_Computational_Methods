@@ -390,7 +390,6 @@ $$
 ! UKS B3LYP D3 TightSCF
 %scf
   HFTyp      UHF                   # enforce unrestricted
-  guess       generate
   maxiter     500
 end
 %output

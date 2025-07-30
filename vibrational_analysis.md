@@ -389,5 +389,20 @@ In sum, these mathematical frameworks—centered on the harmonic approximation, 
 
 
 
+ORCA RAMAN
+```text
+! DEF2-SVP CPCM(Toluene) NUMFREQ
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.051750776405003786
+END
+%ELPROP
+   POLAR 1
+end
+%maxcore 6000
+%pal nprocs 16 end
+* XYZFILE 0 1 S0.xyz
+```
 
 

@@ -315,7 +315,7 @@ Application: Finite element simulations, quantum lattice models.
 
 6. [Broken‑Symmetry Density‑Functional Theory for Large Systems](Broken‑Symmetry.md)
 
-7.[ ΔSCF for calcuting for accurate excited energy](ΔSCF.md)
+7. [ΔSCF for calcuting for accurate excited energy](ΔSCF.md)
 
 8. [ΔSCF-Derived Diabatic Couplings](ΔSCF.md)
    

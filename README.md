@@ -112,6 +112,17 @@ where magic happens
 1. [Speeding up calculation using Numba libraries with example in Physics](Numba.md)
 2. [Automating Task Using Snakemake](https://www.youtube.com/watch?v=tUTcfoMQl98)
    
+## Important mathematics, computer science to build model thinking
+
+1. Singular Value Decomposition
+2.  Dimensional analysis and scaling laws:Practice Buckingham-π on two systems (heat diffusion in thin films; drift–diffusion in devices). Produce a short scaling memo that predicts trends before any computation.
+3. Complexity, performance, and profiling-Use line and memory profilers; reason about algorithmic vs. constant-factor wins. Produce a performance report featuring flame graphs and actionable changes
+4. Data structures and algorithms for numerics.
+Refresh asymptotics, arrays vs. linked structures, heaps, graphs, and cache-aware thinking. Profile a simulation and remove a hotspot with a better structure.
+5.Testing deep dive (unit, property-based, metamorphic).
+Adopt pytest and hypothesis; design metamorphic relations for numerical code (scale invariance, symmetry).
+6.Bayesian modeling and uncertainty quantification.
+Build a hierarchical model for parameters shared across samples or devices. Use posterior predictive checks and articulate how uncertainty changes a decision.
 
 ## Agent-Based Modeling (ABM)
 

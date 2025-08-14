@@ -124,28 +124,28 @@ NAME = minS1.inp
 DEF2-SVP OPT CPCM(toluene)  # Opt Singlet excited Geo
 %TDDFT  NROOTS  1
         IROOT  1
-         IROOTMULT Singlet
-|  5> END    
-|  6> %method
-|  7>         method dft
-|  8>         functional HYB_GGA_XC_LRC_WPBEH
-|  9>         ExtParamXC "_omega" 0.05175
-| 10> END
-| 11> %maxcore 3000
-| 12> %pal nprocs 32 end
-| 13> * XYZFILE 0 1 minS1.xyz
-| 14> $new_job
-| 15> ! DEF2-SVP CPCM(Toluene) OPT DELTASCF UHF
-| 16> %method
-| 17>         method dft
-| 18>         functional HYB_GGA_XC_LRC_WPBEH
-| 19>         ExtParamXC "_omega" 0.05175
-| 20> END
-| 21> %SCF ALPHACONF 0,1 END
-| 22> %output
-| 23>  	PrintLevel Huge
-| 24> END
-| 25> %maxcore 3000
-| 26> %pal nprocs 32 end
-| 27> * XYZFILE 0 1 minS1.xyz
+        IROOTMULT Singlet
+END    
+%method
+         method dft
+         functional HYB_GGA_XC_LRC_WPBEH
+         ExtParamXC "_omega" 0.05175
+END
+%maxcore 3000
+%pal nprocs 32 end
+* XYZFILE 0 1 minS1.xyz
+$new_job
+! DEF2-SVP CPCM(Toluene) OPT DELTASCF UHF
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.05175
+END
+%SCF ALPHACONF 0,1 END
+%output
+PrintLevel Huge
+END
+%maxcore 3000
+%pal nprocs 32 end
+* XYZFILE 0 1 minS1.xyz
 

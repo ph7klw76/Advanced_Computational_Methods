@@ -113,7 +113,7 @@ NIR femtosecond sources for two-photon lithography (typically Ti:sapphire or Yb-
 
 
 
-## 7) Putting it together: why Se outperforms S in 2PIs
+## 6) Putting it together: why Se outperforms S in 2PIs
 
 **Bigger $\delta$:** Se increases $\mu_{01}$, $\Delta \mu$, and near-resonant contributions—amplifying the SOS numerator and shrinking energy denominators.  
 

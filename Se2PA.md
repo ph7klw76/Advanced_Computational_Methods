@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Selenium substitution (S → Se) in two-photon absorption (2PA) photoinitiators (PIs) is not a cosmetic swap. It systematically re-weights key terms in the two-photon sum-over-states amplitude, strengthens spin–orbit coupling (SOC) to accelerate intersystem crossing (ISC), and tunes electron-transfer thermodynamics to raise radical yields. This article lays out the governing equations, identifies which matrix elements are perturbed by Se, quantifies effects where possible, and closes with a verification workflow (computational + experimental) that lets you test each claim.
+Selenium substitution (S → Se) in two-photon absorption (2PA) photoinitiators (PIs) is not a cosmetic swap. It systematically re-weights key terms in the two-photon sum-over-states amplitude, strengthens spin–orbit coupling (SOC) to accelerate intersystem crossing (ISC), and tunes electron-transfer thermodynamics to raise radical yields. This article lays out the governing equations, identifies which matrix elements are perturbed by Se, quantifies effects where possible, and closes with a verification workflow (computational + experimental) .
 
 ## 1) Two-Photon Absorption: the levers you can actually pull
 

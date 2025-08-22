@@ -35,7 +35,7 @@ so any substitution that simultaneously increases $\delta$ and the radical quant
 ### 2.1 Gap and resonance placement
 
 Replacing S(3p) with Se(4p) increases orbital diffuseness and donor strength, typically raising the HOMO and modestly stabilizing π* levels within a conjugated framework. Net effect: a red-shift of one-photon bands and movement of important intermediate states $E_{n0}$ closer to $\hbar \omega$ for NIR-driven 2PA—i.e., improved denominators in $M^{(2)}$. Direct comparative data for “chalcogenophene” 2PIs show Se analogs exhibit stronger 2PA and superior microfabrication thresholds versus S congeners.  
-PMC
+
 
 ### 2.2 Polarizability, hyperpolarizability, and the two-state picture
 

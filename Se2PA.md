@@ -28,7 +28,7 @@ R_{init} \propto I^2 \delta(2\omega) \Phi_{rad},
 $$
 
 so any substitution that simultaneously increases $\delta$ and the radical quantum yield $\Phi_{rad}$ will multiply performance.  
-PMC
+
 
 ## 2) What Se changes in the electronic structure (relative to S)
 

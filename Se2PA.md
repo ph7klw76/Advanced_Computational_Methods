@@ -104,18 +104,17 @@ becomes more negative if the PI’s oxidation potential drops (or its excited-st
 ### 4.2 Competing deactivation and how Se helps
 
 Fast ISC to productive triplets reduces losses through fluorescence/internal conversion, particularly when triplet manifolds connect efficiently to bond scission or H-abstraction coordinates. Heavy-atom enabled SOC acceleration and El-Sayed-favored coupling pathways underpin this improvement in $\Phi_{rad}$.  
-g
+
 
 ## 5) Matching Se-tuned spectra to lasers and resists
 
-NIR femtosecond sources for two-photon lithography (typically Ti:sapphire or Yb-fiber harmonics) operate near 700–1000 nm; Se-induced red-shifts commonly place strong one-photon bands near 350–450 nm, enabling near-resonant 2PA at ~700–900 nm while avoiding excessive linear absorption at the fundamental—ideal for deep-voxel writing. Reviews of 2PL/TPP document these operational windows and materials constraints.  
-
+NIR femtosecond sources for two-photon lithography (typically Ti:sapphire or Yb-fiber harmonics) operate near 700–1000 nm; Se-induced red-shifts commonly place strong one-photon bands near 350–450 nm, enabling near-resonant 2PA at ~700–900 nm while avoiding excessive linear absorption at the fundamental—ideal for deep-voxel writing.
 
 
 
 ## 6) Putting it together: why Se outperforms S in 2PIs
 
-**Bigger $\delta$:** Se increases $\mu_{01}$, $\Delta \mu$, and near-resonant contributions—amplifying the SOS numerator and shrinking energy denominators.  
+**Bigger $\delta$:** Se increases $\mu_{01}$, $\Delta \mu$, and near-resonant contributions,amplifying the SOS numerator and shrinking energy denominators.  
 
 
 **Higher $\Phi_{rad}$:** SOC↑ (∝ $Z^4$) + El-Sayed-favorable orbital mixing → faster ISC, better access to reactive triplets/CS states.  

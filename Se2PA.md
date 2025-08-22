@@ -75,7 +75,7 @@ $$
 \approx \left(\frac{34}{16}\right)^4 \approx 20,
 $$
 
-boosting ISC and triplet yields—exactly what a 2PI wants.  
+boosting ISC and triplet yields,exactly what a 2PI wants.  
 
 
 ### 3.2 State-mixing rules (El-Sayed)

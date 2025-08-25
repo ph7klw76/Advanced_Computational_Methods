@@ -330,6 +330,8 @@ Application: Finite element simulations, quantum lattice models.
 
 8. [ΔSCF-Derived Diabatic Couplings](ΔSCF.md)
    
+10. [Calculate exchange and direct coulombic energy](Excitonic_Integrals.md)
+   
 7. Post-Hartree-Fock Methods: (e.g., MP2, CCSD) for more accurate calculations when needed, especially for excitonic effects in organic systems.
 
 8. Configuration Interaction (CI): Useful for modeling excited states and singlet-triplet transitions in materials.

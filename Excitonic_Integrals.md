@@ -68,7 +68,7 @@ mo_energy, mo_coeff, mo_occ = pick_spin_block(mo_energy, mo_coeff, mo_occ, which
 If the calculation was **unrestricted**, there are separate **α/β blocks**; `pick_spin_block` chooses one.  
 In **closed-shell** systems, $\alpha = \beta$, so either block is fine to use.
 
-🧪 **Sanity Check:**  
+ **Sanity Check:**  
 The script reports `nao` and `nmo` to ensure correct orientation and dimensions.
 
 ---
@@ -93,7 +93,7 @@ Minor inconsistencies can arise from:
 - upstream processing, or
 - numerical issues.
 
-🔧 So the script:
+ So the script:
 - **verifies** the condition above, and
 - **fixes** $C$ if necessary to enforce $S$-orthonormality.
 

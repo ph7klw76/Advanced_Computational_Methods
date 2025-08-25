@@ -441,4 +441,247 @@ K = \mathrm{Tr}(X^T J[X])
 $$
 
 
+```python
+
+import os
+import shutil
+import tempfile
+from time import time
+import numpy as np
+
+# ---- Python 3.6 compatibility: polyfill contextlib.nullcontext (needed by PySCF exact JK path) ----
+import contextlib
+if not hasattr(contextlib, "nullcontext"):
+    class _NullContext(object):
+        def __init__(self, enter_result=None): self.enter_result = enter_result
+        def __enter__(self): return self.enter_result
+        def __exit__(self, *exc): return False
+    contextlib.nullcontext = _NullContext
+
+from pyscf.tools import molden
+from pyscf import df
+from pyscf.scf import hf
+
+# -------------------- User knobs --------------------
+MOLDEN_PATH       = "111T1cis.molden"   # hardcoded as requested
+SPIN_BLOCK        = "alpha"          # "alpha" or "beta" if unrestricted
+DF_AUXBASIS       = "weigend"        # typical RI/DF aux basis
+DF_MAX_MEMORY_MB  = 4000             # cap DF memory to keep HDF5 chunks safe
+DF_BLOCKDIM       = 8000             # conservative; lower if you still see HDF5 broadcast errors
+DF_KEEP_IN_RAM    = False            # True -> no HDF5 I/O (needs more RAM)
+
+TOL_ORTHO  = 1e-8
+TOL_NONNEG = 1e-8
+HARTREE_TO_EV = 27.211386245988
+
+# -------------------- Helpers --------------------
+def pick_spin_block(mo_energy, mo_coeff, mo_occ, which="alpha"):
+    """Pick one spin block from Molden (alpha/beta). For closed-shell, alpha==beta."""
+    if isinstance(mo_coeff, (tuple, list)):
+        idx = 0 if which.lower().startswith("a") else 1
+        return mo_energy[idx], mo_coeff[idx], mo_occ[idx]
+    return mo_energy, mo_coeff, mo_occ
+
+def homo_lumo_indices(mo_energy, mo_occ, tol=1e-8):
+    """HOMO = last occ>tol ; LUMO = HOMO+1."""
+    occ = np.asarray(mo_occ)
+    occ_idx = np.where(occ > tol)[0]
+    if occ_idx.size == 0:
+        raise RuntimeError("No occupied orbitals found (mo_occ <= tol).")
+    homo = int(occ_idx[-1])
+    lumo = homo + 1
+    if lumo >= occ.size:
+        raise RuntimeError("No LUMO (HOMO is last).")
+    return homo, lumo
+
+def ensure_S_orthonormal(C, S, tol=TOL_ORTHO):
+    """
+    Ensure C^T S C = I. If not, fix via symmetric orthonormalization:
+    C <- C @ ( (C^T S C)^(-1/2) ).
+    """
+    O = C.T @ S @ C
+    I = np.eye(O.shape[0])
+    if np.allclose(O, I, atol=tol):
+        return C, False
+    w, V = np.linalg.eigh(O)
+    if np.any(w <= 0):
+        raise RuntimeError("Non-positive metric in MO overlap; cannot orthonormalize.")
+    Ominushalf = V @ np.diag(1.0 / np.sqrt(w)) @ V.T
+    C_fix = C @ Ominushalf
+    # verify
+    Ofix = C_fix.T @ S @ C_fix
+    if not np.allclose(Ofix, I, atol=10*tol):
+        raise RuntimeError("Failed to enforce S-orthonormality (post-check failed).")
+    return C_fix, True
+
+def quad_form(vL, M, vR):
+    """Return vL^T M vR for column vectors (nao x 1)."""
+    return float(vL.T @ (M @ vR))
+
+def build_densities(C_H, C_L):
+    """
+    D_L  = |L><L|  (nao x nao, Hermitian)   -> for J = (HH|LL)
+    X    = |H><L|  (nao x nao, non-Hermitian) -> for K = Tr(X^T J[X])
+    """
+    D_L = C_L @ C_L.T
+    X   = C_H @ C_L.T
+    return D_L, X
+
+def df_storage_info(dfobj):
+    """Reveal DF HDF5 path for disk checks (best-effort)."""
+    feri = getattr(dfobj, "_cderi", None)
+    path = None
+    try:
+        path = getattr(feri, "filename", None) or getattr(feri, "name", None)
+    except Exception:
+        pass
+    if path:
+        print(">> DF cderi store:", path)
+    return path
+
+def get_J_DF(mol, D, auxbasis=DF_AUXBASIS, max_memory_mb=DF_MAX_MEMORY_MB,
+             blockdim=DF_BLOCKDIM, keep_in_ram=DF_KEEP_IN_RAM):
+    """
+    Build Coulomb AO matrix J[D] via density fitting (DF).
+    Works for Hermitian or non-Hermitian D (hermi=0).
+    """
+    dfobj = df.DF(mol).set(auxbasis=auxbasis)
+    # Older PySCF prints "Overwritten attributes ..." when setting known attrs; harmless.
+    try:
+        dfobj.max_memory = int(max_memory_mb)  # MB
+    except Exception:
+        pass
+    try:
+        dfobj.blockdim = int(blockdim)
+    except Exception:
+        pass
+    if keep_in_ram:
+        dfobj._cderi_to_save = None  # keep 3c integrals in RAM (avoid HDF5)
+
+    # Warn if temp disk space is low (when using HDF5)
+    tmpdir = tempfile.gettempdir()
+    try:
+        free_gb = shutil.disk_usage(tmpdir).free / (1024**3)
+        if not keep_in_ram and free_gb < 10:
+            print("!! Warning: low free space in {}: {:.1f} GB".format(tmpdir, free_gb))
+    except Exception:
+        pass
+
+    dfobj.build()
+    df_storage_info(dfobj)
+
+    # get_jk returns (vj, vk); we request only J to minimize work
+    vj, _ = dfobj.get_jk([D], hermi=0, with_j=True, with_k=False)
+    return vj[0]
+
+def get_J_exact(mol, D):
+    """
+    Build Coulomb AO matrix J[D] via exact (non-DF) streamed AO integrals.
+    No 4-index ERIs are stored in RAM.
+    """
+    vj, _ = hf.get_jk(mol, [D], hermi=0, with_j=True, with_k=False)
+    return vj[0]
+
+def get_J(mol, D):
+    """
+    Try DF first (conservative chunking). If DF fails, fall back to exact.
+    Returns (J_AO, method_str, elapsed_seconds).
+    """
+    try:
+        t0 = time(); J_AO = get_J_DF(mol, D); t1 = time()
+        return J_AO, "DF", t1 - t0
+    except Exception as e:
+        print("\n!! DF J-build failed; using exact J. Reason:", repr(e))
+        t0 = time(); J_AO = get_J_exact(mol, D); t1 = time()
+        return J_AO, "Exact", t1 - t0
+
+# -------------------- Main workflow --------------------
+def main():
+    print(">> Loading Molden:", MOLDEN_PATH)
+    # molden.load parses units/AO order/spin blocks correctly
+    mol, mo_energy, mo_coeff, mo_occ, _, _ = molden.load(MOLDEN_PATH)
+
+    # Choose spin block explicitly
+    mo_energy, mo_coeff, mo_occ = pick_spin_block(mo_energy, mo_coeff, mo_occ, which=SPIN_BLOCK)
+
+    nao, nmo = mo_coeff.shape
+    print(">> Molecule built: nao={}, nmo={}".format(nao, nmo))
+
+    # S-orthonormality (verify/fix)
+    S = mol.intor('int1e_ovlp')
+    mo_coeff, fixed = ensure_S_orthonormal(mo_coeff, S)
+    if fixed:
+        print(">> Warning: MOs were not S-orthonormal; corrected by symmetric orthonormalization.")
+
+    # Canonical HOMO/LUMO to anchor indices
+    homo, lumo = homo_lumo_indices(mo_energy, mo_occ)
+    print(">> Canonical HOMO index = {}, LUMO index = {}".format(homo, lumo))
+
+    # --------- Select the requested transition: HOMO-X -> LUMO+Y ----------
+    i_from = homo
+    i_to   = lumo + 2
+    if i_from < 0 or i_to >= nmo:
+        raise RuntimeError("Requested HOMO-C -> LUMO+Y is out of bounds (i_from={}, i_to={}, nmo={})"
+                           .format(i_from, i_to, nmo))
+
+    # Informative occupation sanity (not fatal)
+    if mo_occ[i_from] <= 1e-8:
+        print("!! Note: HOMO (index {}) is not marked occupied (mo_occ).".format(i_from))
+    if mo_occ[i_to] > 1e-8:
+        print("!! Note: LUMO+2 (index {}) appears occupied (fractional?).".format(i_to))
+
+    print(">> Using transition: from index {} (HOMO) to index {} (LUMO+2)".format(i_from, i_to))
+
+    # Column vectors for this pair
+    C_H = mo_coeff[:, i_from].reshape(-1, 1)   # “H” side = HOMO-X
+    C_L = mo_coeff[:, i_to  ].reshape(-1, 1)   # “L” side = LUMO+Y
+
+    # Densities for J and K
+    D_L, X = build_densities(C_H, C_L)
+
+    # ---- Direct Coulomb: J = (HH|LL) = <H | J[D_L] | H> ----
+    J_AO, method_JL, tJ = get_J(mol, D_L)
+    J = quad_form(C_H, J_AO, C_H)
+
+    # ---- Exchange (singlet): K = Tr( X^T J[X] ), with X = |H><L| ----
+    JX_AO, method_X, tX = get_J(mol, X)
+    K = float(np.sum(X * JX_AO))  # == trace(X.T @ J[X])
+
+    # ---- Sanity checks ----
+    if J < -TOL_NONNEG:
+        print("!! Warning: J is negative beyond tolerance:", J)
+    if K < -TOL_NONNEG:
+        print("!! Warning: K is negative beyond tolerance:", K)
+
+    # Separation sanity diagnostic: <H|L>
+    S_HL = float(C_H.T @ (S @ C_L))
+    ratio = (K / J) if J != 0 else np.nan
+
+    print("\n=== Excitonic Integrals for HOMO -> LUMO+2 (gas-phase, AO-based) ===")
+    print("Direct Coulomb   J = (HH|LL) = {: .10f} Hartree  | {: .6f} eV   [{} J[D_L] in {:.3f}s]"
+          .format(J, J*HARTREE_TO_EV, method_JL, tJ))
+    print("Exchange (singlet) K = Tr(X^T J[X]) = {: .10f} Hartree  | {: .6f} eV   [{} J[X] in {:.3f}s]"
+          .format(K, K*HARTREE_TO_EV, method_X, tX))
+
+    print("\nSanity diagnostics:")
+    print("S-orthonormality check: passed" + (" (fixed)" if fixed else ""))
+    print("Non-negativity (tol {:g}): J {}  |  K {}"
+          .format(TOL_NONNEG, "OK" if J >= -TOL_NONNEG else "FAIL",
+                  "OK" if K >= -TOL_NONNEG else "FAIL"))
+    print("MO overlap  <H|L> = S_HL = {: .3e}".format(S_HL))
+    print("Ratio K/J   = {: .3e}".format(ratio))
+    if abs(S_HL) < 1e-3 and (not np.isnan(ratio)) and ratio > 1e-2:
+        print("  !! Note: |<H|L>| is small but K/J is not; inspect basis/MOs/DF accuracy.")
+    if abs(S_HL) > 1e-1 and K < 1e-5:
+        print("  !! Note: <H|L> sizable but K ~ 0; confirm correct spin block and orbitals.")
+
+    print("\nNotes:")
+    print("K is computed via Coulomb on the transition density (no exchange builder), i.e., K=(HL|LH).")
+    print("DF is approximate; if DF fails, exact J is used (streamed; no 4-index ERIs in RAM).")
+    print("Results are unscreened (gas-phase). Screening in condensed media can reduce J and K substantially.")
+
+if __name__ == "__main__":
+    main()
+```
+
 

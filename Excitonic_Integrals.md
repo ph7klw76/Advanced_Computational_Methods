@@ -135,7 +135,7 @@ The script validates this transformation. If the metric is ill-conditioned (i.e.
 
 ---
 
-### ⚙️ Why It Matters
+###  Why It Matters
 
 With $C^T S C = I$, important simplifications follow:
 

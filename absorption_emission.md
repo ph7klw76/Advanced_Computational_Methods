@@ -1238,7 +1238,7 @@ END
 %method
         method dft
         functional HYB_GGA_XC_LRC_WPBEH
-	ExtParamXC "_omega" 0.07295
+	    ExtParamXC "_omega" 0.07295
 END
 %ESD
   GSHESSIAN  "S0.hess"
@@ -1279,7 +1279,7 @@ and restart the calculation by adding this option
 
 ```text
 ! DEF2-SVP OPT CPCM(Toluene) TightOpt TightSCF FREQ
-%FREQ
+%NUMFREQ
 	restart true
 END
 %TDDFT

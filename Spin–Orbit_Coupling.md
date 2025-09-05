@@ -156,229 +156,140 @@ To extract out the spin-orbit coupling use the python code below along with sing
 
 ```python
 import re
-import math
-import os
-
-def calculate_spin_orbit_coupling(filename):
-    # Dictionary to store the total spin-orbit coupling for each pair of roots
-    total_soc_by_root = {}
-    
-    try:
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-        
-        # Locate the SOCME section and determine start and end indices dynamically
-        start_idx = None
-        end_idx = None
-        
-        for i, line in enumerate(lines):
-            if "CALCULATED SOCME BETWEEN TRIPLETS AND SINGLETS" in line:
-                start_idx = i + 5  # SOCME values start 5 lines below this header
-                break
-
-        if start_idx is not None:
-            # Dynamically find the end index by looking for non-data lines
-            for i in range(start_idx, len(lines)):
-                if not lines[i].strip() or not re.match(r'^\s*\d+', lines[i]):  # Non-numeric or empty lines
-                    end_idx = i - 1
-                    break
-            if end_idx is None:  # If no end detected, process till the end of file
-                end_idx = len(lines) - 1
-
-            # Process SOCME data between start_idx and end_idx
-            for soc_line in lines[start_idx:end_idx + 1]:
-                # Split the line and clean up unwanted characters
-                values = re.split(r'\s+', soc_line.strip())
-                values = [x for x in values if x not in [',', '(', ')']]
-                
-                if len(values) >= 8:  # Ensure there are enough values for processing
-                    try:
-                        root0 = values[0]  # Root 0 (T)
-                        root1 = values[1]  # Root 1 (S)
-                        # Extract real and imaginary parts for Z, X, and Y
-                        z = complex(float(values[2]), float(values[3]))
-                        x = complex(float(values[4]), float(values[5]))
-                        y = complex(float(values[6]), float(values[7]))
-                        # Calculate total SOC magnitude
-                        total_soc = math.sqrt(abs(z)**2 + abs(x)**2 + abs(y)**2)
-                        # Accumulate the SOC value for the root pair
-                        total_soc_by_root[(root0, root1)] = total_soc_by_root.get((root0, root1), 0) + total_soc
-                    except (ValueError, IndexError):
-                        # Handle any parsing errors gracefully
-                        continue
-        
-        return total_soc_by_root
-
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-        return {}
-
-if __name__ == "__main__":
-    filename = "3.out"
-    output_filename = "spin_orbit_couplings.txt"
-    
-    if os.path.exists(filename):
-        total_soc_by_root = calculate_spin_orbit_coupling(filename)
-        
-        # Write results to output file
-        with open(output_filename, 'w') as output_file:
-            if total_soc_by_root:
-                output_file.write("Total Spin-Orbit Coupling for Molecule by Root:\n")
-                for (root0, root1), total_soc in total_soc_by_root.items():
-                    output_file.write(f"Root pair ({root0}, {root1}): {total_soc:.6f} cm-1\n")
-            else:
-                output_file.write("No spin-orbit coupling data found in the file.\n")
-    else:
-        print(f"File {filename} does not exist. Please provide a valid file.")
-        
-
-# File paths
-input_file_path = filename
-output_file_path = 'singlet_triplet_energies.txt'
-
-# Regular expressions to match the start of relevant sections
-td_singlet_section_pattern = re.compile(r'TD-DFT/TDA EXCITED STATES \(SINGLETS\)')
-td_triplet_section_pattern = re.compile(r'TD-DFT/TDA EXCITED STATES \(TRIPLETS\)')
-
-# Flags to track when within relevant sections
-in_singlet_section = False
-in_triplet_section = False
-
-# Lists to store extracted energies
-singlet_energies = []
-triplet_energies = []
-
-# Read the file and process line by line
-with open(input_file_path, 'r') as file:
-    for line in file:
-        if td_singlet_section_pattern.search(line):
-            in_singlet_section = True
-            in_triplet_section = False
-            continue
-        elif td_triplet_section_pattern.search(line):
-            in_triplet_section = True
-            in_singlet_section = False
-            continue
-
-        if in_singlet_section or in_triplet_section:
-            if line.strip().startswith("STATE"):
-                # Extract the fifth element when split by spaces
-                parts = line.split()
-                if len(parts) > 5:
-                    state_energy = float(parts[5])
-                    if in_singlet_section:
-                        singlet_energies.append((parts[0], state_energy))
-                    elif in_triplet_section:
-                        triplet_energies.append((parts[0], state_energy))
-
-# Write the filtered results to the output file
-with open(output_file_path, 'w') as output_file:
-    output_file.write("TD-DFT/TDA Singlet State Energies:\n")
-    for state, energy in singlet_energies:
-        output_file.write(f"{state}: {energy:.6f} eV\n")
-    
-    output_file.write("\nTD-DFT/TDA Triplet State Energies:\n")
-    for state, energy in triplet_energies:
-        output_file.write(f"{state}: {energy:.6f} eV\n")
-
-# Print file path to indicate completion
-print(f"Energies extracted and saved to: {output_file_path}")
-
-```
-
-extract and draw energy levels
-```python
-import re
-
-def extract_energies(filename):
-    with open(filename, 'r') as file:
-        lines = file.readlines()
-    
-    singlet_energies = []
-    triplet_energies = []
-    
-    is_singlet = False
-    is_triplet = False
-    
-    for line in lines:
-        line = line.strip()
-        if 'TD-DFT/TDA Singlet State Energies' in line:
-            is_singlet = True
-            is_triplet = False
-        elif 'TD-DFT/TDA Triplet State Energies' in line:
-            is_singlet = False
-            is_triplet = True
-        elif 'STATE:' in line:
-            match = re.search(r'STATE:\s*([\d\.]+)\s*eV', line)
-            if match:
-                energy = float(match.group(1))
-                if is_singlet:
-                    singlet_energies.append(energy)
-                elif is_triplet:
-                    triplet_energies.append(energy)
-    
-    return singlet_energies, triplet_energies
-
-filename = 'singlet_triplet_energies.txt'
-
-
-# Run the function
-singlet_data, triplet_data = extract_energies(filename)
-
-
+from typing import List, Tuple, Optional
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch
 
-def draw_energy_levels(singlet_levels, triplet_levels, offset=0.05):
-    fig, ax = plt.subplots()
+# -------- Parsing --------
 
-    # Sort the energy levels
-    singlet_levels.sort()
-    triplet_levels.sort()
+SINGLET_HDR = re.compile(r"TD-DFT/TDA\s+Singlet State Energies", re.I)
+TRIPLET_HDR = re.compile(r"TD-DFT/TDA\s+Triplet State Energies", re.I)
+STATE_RE    = re.compile(r"\bSTATE:\s*([+-]?\d+(?:\.\d+)?)\s*eV\b", re.I)
 
-    # Function to add small offset to near-degenerate states
-    def add_offset(levels):
-        new_levels = []
-        for i, level in enumerate(levels):
-            count = levels.count(level)
-            if count > 1:
-                for j in range(count):
-                    new_levels.append(level + j * offset - (count - 1) * offset / 2)
+def extract_energies(filename: str) -> Tuple[List[float], List[float]]:
+    singlet, triplet = [], []
+    mode = None  # "S", "T", or None
+
+    with open(filename, "r", encoding="utf-8", errors="ignore") as f:
+        for raw in f:
+            line = raw.strip()
+            if not line:
+                continue
+            if SINGLET_HDR.search(line):
+                mode = "S"; continue
+            if TRIPLET_HDR.search(line):
+                mode = "T"; continue
+
+            m = STATE_RE.search(line)
+            if m:
+                e = float(m.group(1))
+                if mode == "S":
+                    singlet.append(e)
+                elif mode == "T":
+                    triplet.append(e)
+
+    return singlet, triplet
+
+# -------- Label placement (non-overlapping) --------
+
+def compute_label_positions(values: List[float], min_gap: float) -> List[float]:
+    """Adjust label y-positions so neighbors are at least min_gap apart."""
+    items = list(enumerate(values))           # (original_index, y)
+    items.sort(key=lambda t: t[1])            # sort by y
+
+    out = [None] * len(values)
+    last = float("-inf")
+    for idx, y in items:
+        ly = y if y >= last + min_gap else last + min_gap
+        out[idx] = ly
+        last = ly
+    return out
+
+# -------- Plotting --------
+
+def draw_energy_levels(
+    singlet_levels: List[float],
+    triplet_levels: List[float],
+    *,
+    min_label_gap_eV: Optional[float] = None,
+    # Column centers: halved spacing (0.25 → 0.125 gap on each side, centers 0.35 & 0.60)
+    left_center_x: float = 0.35,
+    right_center_x: float = 0.60,
+    line_halfwidth: float = 0.06,
+    fontsize: int = 16   # match your original font size everywhere
+) -> None:
+    """Two-column diagram with auto-nudged, non-overlapping labels + leader lines."""
+    singlet = sorted([e for e in singlet_levels if e is not None])
+    triplet = sorted([e for e in triplet_levels if e is not None])
+
+    if not singlet and not triplet:
+        raise ValueError("No energies to plot.")
+
+    all_vals = singlet + triplet
+    ymin0, ymax0 = min(all_vals), max(all_vals)
+    span = (ymax0 - ymin0) if ymax0 > ymin0 else 1.0
+
+    # default minimum label gap (~3.5% of span)
+    if min_label_gap_eV is None:
+        min_label_gap_eV = 0.035 * span
+
+    def plot_group(ax, levels, x_center, color, text_side):
+        label_y = compute_label_positions(levels, min_gap=min_label_gap_eV)
+        for y, ly in zip(levels, label_y):
+            # energy level line
+            ax.hlines(y, x_center - line_halfwidth, x_center + line_halfwidth,
+                      color=color, linewidth=2)
+
+            # label position and leader line
+            if text_side == "left":
+                tx = x_center - line_halfwidth - 0.02
+                ha = "right"
+                x_end = x_center - line_halfwidth
             else:
-                new_levels.append(level)
-        return list(set(new_levels))
+                tx = x_center + line_halfwidth + 0.02
+                ha = "left"
+                x_end = x_center + line_halfwidth
 
-    singlet_levels = add_offset(singlet_levels)
-    triplet_levels = add_offset(triplet_levels)
+            if abs(ly - y) > 1e-12:
+                ax.add_patch(FancyArrowPatch((tx, ly), (x_end, y),
+                                             arrowstyle='-',
+                                             mutation_scale=8,
+                                             linewidth=0.8,
+                                             color=color))
+            ax.text(tx, ly, f"{y:.2f} eV", ha=ha, va="center",
+                    fontsize=fontsize, color=color)
 
-    # Draw singlet energy levels
-    for i, level in enumerate(singlet_levels):
-        ax.hlines(level, xmin=0, xmax=1, color='b', linewidth=2, label='Singlet' if i == 0 else "")
-        alignment = 'left' if i % 2 == 0 else 'right'
-        ax.text(0.5, level, f"{level:.2f} eV", verticalalignment='bottom', horizontalalignment=alignment, fontsize=16, color='b')
+    fig, ax = plt.subplots(figsize=(4, 6))
+    plot_group(ax, singlet, left_center_x,  color="tab:blue", text_side="left")
+    plot_group(ax, triplet, right_center_x, color="tab:red",  text_side="right")
 
-    # Draw triplet energy levels
-    for i, level in enumerate(triplet_levels):
-        ax.hlines(level, xmin=2, xmax=3, color='r', linewidth=2, label='Triplet' if i == 0 else "")
-        alignment = 'left' if i % 2 == 0 else 'right'
-        ax.text(2.5, level, f"{level:.2f} eV", verticalalignment='bottom', horizontalalignment=alignment, fontsize=16, color='r')
+    # axes styling
+    ax.set_xlim(0.05, 0.95)
+    ax.set_ylim(ymin0 - 0.08*span, ymax0 + 0.10*span)
+    ax.set_ylabel("Energy (eV)", fontsize=fontsize)     # larger y-axis title
+    ax.tick_params(axis='y', labelsize=fontsize)        # larger tick labels
+    ax.set_xticks([])
+    for spine in ("top", "right", "bottom"):
+        ax.spines[spine].set_visible(False)
 
-    # Add labels and title
-    ax.set_title('Energy Level Diagram', fontsize=16)
-    ax.set_xlabel('Energy Levels', fontsize=16)
-    ax.set_ylabel('Energy (eV)', fontsize=16)
-    ax.yaxis.set_tick_params(labelsize=16)
-    
-    # Place the legend in the middle
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), fontsize=16)
+    # legend (same font size as original)
+    ax.plot([], [], color="tab:blue", linewidth=2, label="Singlet")
+    ax.plot([], [], color="tab:red",  linewidth=2, label="Triplet")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.02),
+              frameon=False, fontsize=fontsize)
 
-    # Show the plot
+    plt.tight_layout()
     plt.show()
 
-# Sample singlet and triplet energy levels in eV
-limit=4.0
-singlet_levels = [item for item in singlet_data if item < limit]
-triplet_levels = [item for item in triplet_data if item < limit]
 
-draw_energy_levels(singlet_levels, triplet_levels)
+if __name__ == "__main__":
+    filename = "singlet_triplet_energies.txt"
+    singlet_data, triplet_data = extract_energies(filename)
+
+    limit = 3.80
+    singlets = [e for e in singlet_data if e < limit]
+    triplets = [e for e in triplet_data if e < limit]
+
+    draw_energy_levels(singlets, triplets)
 ```

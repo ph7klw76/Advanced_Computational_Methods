@@ -224,28 +224,58 @@ To draw the graph
 ```python
 # -*- coding: utf-8 -*-
 """
-Energy-level ladder with spin–orbit coupling arrows (strong colored, non-overlapping labels).
+Energy-level ladder with spin–orbit coupling arrows (no overlapping arrows or labels).
 
-- Reads TD-DFT/TDA singlet/triplet energies from a text file.
-- Reads SOC lines like: "Root pair (n, m): 0.331964 cm-1" from another file.
-- Draws unique-colored double-headed arrows for (n, m) with SOC > threshold,
-  ignoring m = 0, and labels each arrow with the SAME strong color in 3 significant figures,
-  bolded and auto-separated to avoid overlaps (with leader lines).
+✔ Quick edits at the USER SETTINGS block:
+   - ENERGY & SOC filenames
+   - COUPLING_THRESHOLD_CM1
+   - ENERGY_LIMIT_EV
+   - Label spacing + side alternation (left/right)
+   - Arrow curvature (to avoid overlapping arrows)
+   - Arrow endpoint inset + per-level fan-out (different start/end points)
 
-Compatible with Python 3.7+ (uses typing.Optional, not PEP 604 unions).
+Behavior:
+- Parses TD-DFT/TDA singlet/triplet energies (eV) and SOC pairs: "Root pair (n, m): xxx cm-1".
+- Draws double-headed arrows for SOC > threshold (ignores m=0 if enabled).
+- Prevents arrow overlaps by:
+    • curved "arc3" paths with alternating curvature,
+    • per-level fan-out so multiple arrows attach at different points,
+    • slight outward inset so arrowheads don’t touch level lines.
+- Labels “xxx cm⁻¹” are bold, strong-colored, 3 significant figures, non-overlapping, and
+  clearly connected to their arrow via a colored leader line and a small midpoint marker.
+- Labels alternate slightly to the left/right of the center to further improve clarity.
 """
 
-import re
-import argparse
-from typing import List, Tuple, Optional
+# ========= USER SETTINGS (EDIT THESE) ========================================
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyArrowPatch
-import matplotlib.patheffects as patheffects
+ENERGIES_FILE: str = "singlet_triplet_energies.txt"   # TD-DFT/TDA energies file
+SOC_FILE: str       = "spin_orbit_couplings1.txt"     # SOC pairs file
 
+COUPLING_THRESHOLD_CM1: float = 0.5    # Only draw arrows if SOC > this value (cm^-1)
+ENERGY_LIMIT_EV: float         = 3.80  # Plot only states with E < this limit
+IGNORE_M_ZERO: bool            = True  # Ignore SOC entries with m=0
 
-# -------- Strong, high-contrast color palette (Tableau 10) --------
-# Will cycle if there are more arrows than colors.
+# Label spacing / aesthetics
+LABEL_GAP_FRAC: float          = 0.05   # Min vertical gap BETWEEN SOC labels as fraction of span
+LABEL_NUDGE_FRAC: float        = 0.015  # Base upward nudge of SOC labels vs arrow midpoint
+LABEL_ALTERNATE_SIDES: bool    = True   # Alternate label sides (left/right) to reduce clutter
+LABEL_HOFFSET_FRAC: float      = 0.6   # Horizontal offset (fraction of column gap) for labels
+
+# Layout / style
+LEFT_CENTER_X: float           = 0.35   # Singlet column x-center
+RIGHT_CENTER_X: float          = 0.60   # Triplet column x-center
+LINE_HALFWIDTH: float          = 0.06   # Half width of each level's horizontal line
+FONTSIZE: int                  = 16     # Base font size
+
+# Arrow curvature control (to prevent overlapping arrows)
+CURVE_SNAP_FRAC: float         = 0.005  # Energies within this fraction of span are considered "same"
+CURVE_BASE_RAD: float          = 0.18   # Base curvature radius; multiples used: 0, ±rad, ±2rad, ...
+
+# Arrow endpoint control
+ARROW_END_INSET_FRAC: float    = 0.1   # Pull arrowheads off level lines (fraction of column gap)
+ARROW_ENDPOINT_SPREAD_FRAC: float = 0.2  # Per-level fan-out (fraction of column gap)
+
+# Strong, high-contrast colors (Tableau 10). Cycles if more arrows than colors.
 STRONG_COLORS = [
     "#1f77b4",  # blue
     "#d62728",  # red
@@ -258,6 +288,15 @@ STRONG_COLORS = [
     "#bcbd22",  # olive
     "#17becf",  # cyan
 ]
+
+# =============================================================================
+
+import re
+from typing import List, Tuple, Optional, Dict
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch
+import matplotlib.patheffects as patheffects
 
 
 # -------- Parsing energies --------
@@ -295,7 +334,6 @@ def extract_energies(filename: str) -> Tuple[List[float], List[float]]:
 
 
 # -------- Parsing SOC pairs --------
-
 # Accepts integers for n,m; value can be plain or scientific notation; "cm-1" or "cm^-1".
 SOC_RE = re.compile(
     r"Root\s+pair\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)\s*:\s*"
@@ -353,32 +391,78 @@ def compute_label_positions(values: List[float], min_gap: float) -> List[float]:
     return out
 
 
+# -------- Arrow curvature assignment to avoid overlaps --------
+
+def assign_curvatures(
+    pairs: List[Tuple[int, int, float]],
+    singlet: List[float],
+    triplet: List[float],
+    span: float,
+    snap_frac: float = CURVE_SNAP_FRAC,
+    base_rad: float = CURVE_BASE_RAD,
+) -> List[float]:
+    """
+    For arrows that would otherwise overlap (same/very-close endpoints), assign
+    different curvature radii so the drawn arcs separate visually.
+
+    - We bin arrows by rounded (yS, yT) using a small snapping tolerance.
+    - Within each bin, we cycle radii [0, +r, -r, +2r, -2r, ...].
+
+    Returns a list of 'rad' (connectionstyle arc3 radius) for each pair in order.
+    """
+    mags = [0.0, base_rad, -base_rad, 2*base_rad, -2*base_rad,
+            3*base_rad, -3*base_rad, 4*base_rad, -4*base_rad]
+
+    res = snap_frac * span
+    bins: Dict[Tuple[int, int], List[int]] = {}
+    yS_list = []
+    yT_list = []
+
+    for i, (n, m, _val) in enumerate(pairs):
+        yS = singlet[m]
+        yT = triplet[n]
+        yS_list.append(yS)
+        yT_list.append(yT)
+        key = (int(round(yS / res)), int(round(yT / res)))
+        bins.setdefault(key, []).append(i)
+
+    rads = [0.0] * len(pairs)
+    for key, idxs in bins.items():
+        # sort by midpoint (optional aesthetic)
+        idxs.sort(key=lambda i: 0.5 * (yS_list[i] + yT_list[i]))
+        for j, i in enumerate(idxs):
+            rads[i] = mags[j % len(mags)]
+    return rads
+
+
 # -------- Plotting --------
 
 def draw_energy_levels(
     singlet_levels: List[float],
     triplet_levels: List[float],
     *,
-    couplings: Optional[List[Tuple[int, int, float]]] = None,  # (n, m, value_cm1), 1-based
-    coupling_threshold_cm1: float = 0.1,
-    ignore_m_zero: bool = True,
+    couplings: Optional[List[Tuple[int, int, float]]] = None,  # (n, m, value_cm1), 1-based in file -> 0-based here
+    coupling_threshold_cm1: float = COUPLING_THRESHOLD_CM1,
+    ignore_m_zero: bool = IGNORE_M_ZERO,
 
     # spacing controls
-    min_label_gap_eV: Optional[float] = None,   # for energy level labels
-    label_gap_frac: float = 0.05,               # min gap between SOC labels as fraction of span
-    label_base_nudge_frac: float = 0.015,       # base upward nudge of SOC labels vs arrow mid
+    min_label_gap_eV: Optional[float] = None,       # for energy level labels
+    label_gap_frac: float = LABEL_GAP_FRAC,         # min gap between SOC labels (fraction of span)
+    label_base_nudge_frac: float = LABEL_NUDGE_FRAC,# upward nudge of SOC labels vs arrow mid
 
     # layout parameters
-    left_center_x: float = 0.35,
-    right_center_x: float = 0.60,
-    line_halfwidth: float = 0.06,
-    fontsize: int = 16
+    left_center_x: float = LEFT_CENTER_X,
+    right_center_x: float = RIGHT_CENTER_X,
+    line_halfwidth: float = LINE_HALFWIDTH,
+    fontsize: int = FONTSIZE
 ) -> None:
     """
     Two-column diagram with energy levels and SOC arrows.
-    - Each valid (n, m, val_cm1) gets a unique-colored <-> arrow.
-    - Its label ("xxx cm^-1") is bold, strong-colored (same color), 3 significant figures,
-      and auto-separated to prevent overlaps (with vertical leader line).
+    - Each valid (n, m, val_cm1) gets a strong-colored <-> arrow.
+    - Arrows that would overlap are given different curvatures (arc3,rad).
+    - Per-level fan-out attaches multiple arrows at different points; endpoints are slightly
+      outside the level lines so arrowheads don't touch the lines.
+    - Labels are bold, colored, and non-overlapping with leader lines and midpoint markers.
     """
 
     # Sort ascending to keep indices natural
@@ -448,20 +532,83 @@ def draw_energy_levels(
                 valid.append((n, m, val))
 
         if valid:
-            # Geometry shared by arrows
-            x1 = left_center_x + line_halfwidth      # singlet right edge
-            x2 = right_center_x - line_halfwidth     # triplet left edge
-            dx = x2 - x1
+            # Geometry shared by columns
+            x1_edge = left_center_x + line_halfwidth      # singlet right edge
+            x2_edge = right_center_x - line_halfwidth     # triplet left edge
+            dx_total = x2_edge - x1_edge
+
+            inset = max(0.0, min(ARROW_END_INSET_FRAC * dx_total, 0.45 * dx_total))  # safety clamp
+            base_x1 = x1_edge + inset    # base start (right of singlet line)
+            base_x2 = x2_edge - inset    # base end   (left  of triplet line)
+
+            # Per-level fan-out: figure out how many arrows touch each singlet/triplet
+            singlet_to_is: Dict[int, List[int]] = {}
+            triplet_to_is: Dict[int, List[int]] = {}
+            for i, (n, m, _v) in enumerate(valid):
+                singlet_to_is.setdefault(m, []).append(i)
+                triplet_to_is.setdefault(n, []).append(i)
+
+            # Stable ordering within each level to assign slots deterministically
+            # Use the energy on the opposite side as the sort key for fan-out ordering
+            for m, idxs in singlet_to_is.items():
+                idxs.sort(key=lambda i: triplet[valid[i][0]])
+            for n, idxs in triplet_to_is.items():
+                idxs.sort(key=lambda i: singlet[valid[i][1]])
+
+            # Precompute fan-out slot indices for each arrow index
+            s_slot_idx: Dict[int, Tuple[int, int]] = {}  # i -> (k, count)
+            t_slot_idx: Dict[int, Tuple[int, int]] = {}
+            for m, idxs in singlet_to_is.items():
+                count = len(idxs)
+                for k, i in enumerate(idxs):
+                    s_slot_idx[i] = (k, count)
+            for n, idxs in triplet_to_is.items():
+                count = len(idxs)
+                for k, i in enumerate(idxs):
+                    t_slot_idx[i] = (k, count)
+
+            # Spread per slot (keep small relative to gap)
+            spread_step = max(0.0, ARROW_ENDPOINT_SPREAD_FRAC * dx_total)
+
             base_nudge = label_base_nudge_frac * span
+
+            # Assign curvature radii to avoid overlapping arrows (still helpful)
+            rads = assign_curvatures(valid, singlet, triplet, span,
+                                     snap_frac=CURVE_SNAP_FRAC,
+                                     base_rad=CURVE_BASE_RAD)
 
             # Compute arrow midpoints and base label targets (midpoint + small nudge)
             mids_x = []
             mids_y = []
             lbl_targets = []  # desired y positions before separation
-            for (n, m, val) in valid:
+
+            # Per-arrow start/end x positions with fan-out
+            x1_per: List[float] = [base_x1] * len(valid)
+            x2_per: List[float] = [base_x2] * len(valid)
+
+            # Assign per-level slot offsets, centered around the base positions
+            for i, (n, m, _val) in enumerate(valid):
+                # Singlet side: center the k in [-...,+...] around zero
+                kS, cS = s_slot_idx[i]
+                offsetS = (kS - 0.5 * (cS - 1)) * spread_step
+                x1i = base_x1 + offsetS
+                # Clamp so we stay outside the singlet line and well before the triplet side
+                x1i = max(x1_edge + 0.6 * inset, min(x1i, base_x2 - 0.10 * (base_x2 - base_x1)))
+                x1_per[i] = x1i
+
+                # Triplet side
+                kT, cT = t_slot_idx[i]
+                offsetT = (kT - 0.5 * (cT - 1)) * spread_step
+                x2i = base_x2 + offsetT
+                # Clamp so we stay outside the triplet line and not too close to singlet side
+                x2i = min(x2_edge - 0.6 * inset, max(base_x1 + 0.10 * (base_x2 - base_x1), x2i))
+                x2_per[i] = x2i
+
+            # Now compute midpoints/labels based on individualized endpoints
+            for i, (n, m, _val) in enumerate(valid):
                 yS = singlet[m]
                 yT = triplet[n]
-                mx = x1 + 0.5 * dx
+                mx = 0.5 * (x1_per[i] + x2_per[i])
                 my = 0.5 * (yS + yT)
                 mids_x.append(mx)
                 mids_y.append(my)
@@ -470,6 +617,13 @@ def draw_energy_levels(
             # Compute non-overlapping label y-positions
             label_min_gap = label_gap_frac * span
             lbl_y = compute_nonoverlap_positions(lbl_targets, min_gap=label_min_gap)
+
+            # Decide label sides (alternate left/right by vertical order if enabled)
+            ordered = sorted(range(len(valid)), key=lambda i: lbl_targets[i])
+            side_sign = [1] * len(valid)  # +1 = right of center, -1 = left
+            if LABEL_ALTERNATE_SIDES:
+                for rank, i in enumerate(ordered):
+                    side_sign[i] = 1 if (rank % 2 == 0) else -1
 
             # Expand ylim later if labels exceed current ymax
             max_label_y_seen = max(max_label_y_seen, max(lbl_y) if lbl_y else ymax0)
@@ -482,26 +636,35 @@ def draw_energy_levels(
                 my = mids_y[i]
                 my_label = lbl_y[i]
                 color = STRONG_COLORS[i % len(STRONG_COLORS)]
+                rad = rads[i]                     # curvature radius
+                sx = side_sign[i]                 # side: +1 right, -1 left
+                dx_local = x2_per[i] - x1_per[i]
+                hx = LABEL_HOFFSET_FRAC * dx_local  # horizontal offset magnitude
 
-                # double-headed arrow in strong color
+                # double-headed curved arrow in strong color
                 ax.add_patch(FancyArrowPatch(
-                    (x1, yS), (x2, yT),
+                    (x1_per[i], yS), (x2_per[i], yT),
                     arrowstyle="<->",
+                    connectionstyle=f"arc3,rad={rad}",
                     mutation_scale=11,
-                    linewidth=1.5,
+                    linewidth=1.6,
                     alpha=0.95,
                     color=color,
                     zorder=2
                 ))
 
-                # small vertical leader from arrow midpoint to label (same color)
-                ax.plot([mx, mx], [my + 0.002 * span, my_label - 0.002 * span],
-                        linewidth=1.0, alpha=0.9, color=color, zorder=2)
+                # midpoint marker (clarifies which arrow is referenced by the label)
+                ax.scatter([mx], [my], s=18, color=color, zorder=3,
+                           edgecolors="white", linewidths=0.6)
 
-                # bold label in same strong color, 3 significant figures
-                # Add a thin white stroke under text for legibility.
-                text_pe = [patheffects.withStroke(linewidth=2.5, foreground="white")]
-                ax.text(mx, my_label, f"{val:.3g} cm$^{{-1}}$",
+                # angled leader line from midpoint to label position (same color)
+                lx = mx + sx * hx
+                ax.plot([mx, lx], [my, my_label],
+                        linewidth=1.1, alpha=0.95, color=color, zorder=2)
+
+                # bold label in same strong color, 3 significant figures (+ white halo)
+                text_pe = [patheffects.withStroke(linewidth=2.6, foreground="white")]
+                ax.text(lx, my_label, f"{val:.3g} cm$^{{-1}}$",
                         ha="center", va="bottom",
                         fontsize=max(11, fontsize - 3),
                         fontweight="bold",
@@ -529,49 +692,31 @@ def draw_energy_levels(
     plt.show()
 
 
-# -------- CLI / main --------
+# -------- main --------
 
 def main():
-    parser = argparse.ArgumentParser(description="Draw singlet/triplet levels with strongly-colored, non-overlapping SOC labels.")
-    parser.add_argument("--energies", default="singlet_triplet_energies.txt",
-                        help="Path to energies file (default: singlet_triplet_energies.txt)")
-    parser.add_argument("--soc", default="spin_orbit_couplings4.txt",
-                        help="Path to SOC file (default: spin_orbit_couplings4.txt)")
-    parser.add_argument("--limit", type=float, default=3.80,
-                        help="Energy cutoff in eV; plot states with E < limit (default: 3.80)")
-    parser.add_argument("--threshold", type=float, default=0.1,
-                        help="SOC threshold in cm^-1; draw arrows only if value > threshold (default: 0.1)")
-    parser.add_argument("--ignore_m_zero", action="store_true", default=True,
-                        help="Ignore SOC entries with m=0 (default: True)")
-    parser.add_argument("--no_ignore_m_zero", dest="ignore_m_zero", action="store_false",
-                        help="Do not ignore m=0")
-    parser.add_argument("--label_gap_frac", type=float, default=0.05,
-                        help="Min vertical gap between SOC labels as fraction of energy span (default: 0.05)")
-    parser.add_argument("--label_nudge_frac", type=float, default=0.015,
-                        help="Base upward nudge of SOC labels vs arrow mid, as fraction of span (default: 0.015)")
-    args = parser.parse_args()
-
     # Read data
-    singlet_data, triplet_data = extract_energies(args.energies)
-    soc_pairs = parse_soc_pairs(args.soc)
+    singlet_data, triplet_data = extract_energies(ENERGIES_FILE)
+    soc_pairs = parse_soc_pairs(SOC_FILE)
 
     # Apply energy cutoff
-    singlets = [e for e in singlet_data if e < args.limit]
-    triplets = [e for e in triplet_data if e < args.limit]
+    singlets = [e for e in singlet_data if e < ENERGY_LIMIT_EV]
+    triplets = [e for e in triplet_data if e < ENERGY_LIMIT_EV]
 
     # Draw
     draw_energy_levels(
         singlets,
         triplets,
         couplings=soc_pairs,
-        coupling_threshold_cm1=args.threshold,
-        ignore_m_zero=args.ignore_m_zero,
-        label_gap_frac=args.label_gap_frac,
-        label_base_nudge_frac=args.label_nudge_frac
+        coupling_threshold_cm1=COUPLING_THRESHOLD_CM1,
+        ignore_m_zero=IGNORE_M_ZERO,
+        label_gap_frac=LABEL_GAP_FRAC,
+        label_base_nudge_frac=LABEL_NUDGE_FRAC
     )
 
 
 if __name__ == "__main__":
     main()
+
 
 ```

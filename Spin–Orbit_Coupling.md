@@ -155,19 +155,52 @@ END
 To extract out the spin-orbit coupling use the python code below along with singlet and triplet energy
 
 ```python
+# -*- coding: utf-8 -*-
+"""
+Energy-level ladder with spin–orbit coupling arrows (strong colored, non-overlapping labels).
+
+- Reads TD-DFT/TDA singlet/triplet energies from a text file.
+- Reads SOC lines like: "Root pair (n, m): 0.331964 cm-1" from another file.
+- Draws unique-colored double-headed arrows for (n, m) with SOC > threshold,
+  ignoring m = 0, and labels each arrow with the SAME strong color in 3 significant figures,
+  bolded and auto-separated to avoid overlaps (with leader lines).
+
+Compatible with Python 3.7+ (uses typing.Optional, not PEP 604 unions).
+"""
+
 import re
+import argparse
 from typing import List, Tuple, Optional
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch
+import matplotlib.patheffects as patheffects
 
-# -------- Parsing --------
+
+# -------- Strong, high-contrast color palette (Tableau 10) --------
+# Will cycle if there are more arrows than colors.
+STRONG_COLORS = [
+    "#1f77b4",  # blue
+    "#d62728",  # red
+    "#2ca02c",  # green
+    "#ff7f0e",  # orange
+    "#9467bd",  # purple
+    "#e377c2",  # pink
+    "#8c564b",  # brown
+    "#7f7f7f",  # gray
+    "#bcbd22",  # olive
+    "#17becf",  # cyan
+]
+
+
+# -------- Parsing energies --------
 
 SINGLET_HDR = re.compile(r"TD-DFT/TDA\s+Singlet State Energies", re.I)
 TRIPLET_HDR = re.compile(r"TD-DFT/TDA\s+Triplet State Energies", re.I)
 STATE_RE    = re.compile(r"\bSTATE:\s*([+-]?\d+(?:\.\d+)?)\s*eV\b", re.I)
 
 def extract_energies(filename: str) -> Tuple[List[float], List[float]]:
+    """Parse singlet/triplet energies (in eV) from a TD-DFT/TDA output text file."""
     singlet, triplet = [], []
     mode = None  # "S", "T", or None
 
@@ -177,9 +210,11 @@ def extract_energies(filename: str) -> Tuple[List[float], List[float]]:
             if not line:
                 continue
             if SINGLET_HDR.search(line):
-                mode = "S"; continue
+                mode = "S"
+                continue
             if TRIPLET_HDR.search(line):
-                mode = "T"; continue
+                mode = "T"
+                continue
 
             m = STATE_RE.search(line)
             if m:
@@ -191,14 +226,44 @@ def extract_energies(filename: str) -> Tuple[List[float], List[float]]:
 
     return singlet, triplet
 
-# -------- Label placement (non-overlapping) --------
 
-def compute_label_positions(values: List[float], min_gap: float) -> List[float]:
-    """Adjust label y-positions so neighbors are at least min_gap apart."""
-    items = list(enumerate(values))           # (original_index, y)
-    items.sort(key=lambda t: t[1])            # sort by y
+# -------- Parsing SOC pairs --------
 
-    out = [None] * len(values)
+# Accepts integers for n,m; value can be plain or scientific notation; "cm-1" or "cm^-1".
+SOC_RE = re.compile(
+    r"Root\s+pair\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)\s*:\s*"
+    r"([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s*cm\^?-?1",
+    re.I
+)
+
+def parse_soc_pairs(filename: str) -> List[Tuple[int, int, float]]:
+    """
+    Parse lines like 'Root pair (n, m): 0.331964 cm-1' -> (n, m, value_cm1).
+    NOTE: n and m are 1-based indices in the file.
+    """
+    out: List[Tuple[int, int, float]] = []
+    with open(filename, "r", encoding="utf-8", errors="ignore") as f:
+        for raw in f:
+            m = SOC_RE.search(raw)
+            if m:
+                n = int(m.group(1))
+                mm = int(m.group(2))
+                val = float(m.group(3))
+                out.append((n, mm, val))
+    return out
+
+
+# -------- Utilities for non-overlapping label placement --------
+
+def compute_nonoverlap_positions(targets: List[float], min_gap: float) -> List[float]:
+    """
+    Given desired y-targets, return adjusted y-positions so neighbors are >= min_gap apart.
+    Monotone upward adjustment (never pushes a label below its target).
+    """
+    items = list(enumerate(targets))          # (original_index, y_target)
+    items.sort(key=lambda t: t[1])            # sort by target y
+
+    out = [0.0] * len(targets)
     last = float("-inf")
     for idx, y in items:
         ly = y if y >= last + min_gap else last + min_gap
@@ -206,20 +271,50 @@ def compute_label_positions(values: List[float], min_gap: float) -> List[float]:
         last = ly
     return out
 
+
+def compute_label_positions(values: List[float], min_gap: float) -> List[float]:
+    """For energy level text labels (reused from earlier logic)."""
+    items = list(enumerate(values))
+    items.sort(key=lambda t: t[1])
+
+    out = [0.0] * len(values)
+    last = float("-inf")
+    for idx, y in items:
+        ly = y if y >= last + min_gap else last + min_gap
+        out[idx] = ly
+        last = ly
+    return out
+
+
 # -------- Plotting --------
 
 def draw_energy_levels(
     singlet_levels: List[float],
     triplet_levels: List[float],
     *,
-    min_label_gap_eV: Optional[float] = None,
-    # Column centers: halved spacing (0.25 → 0.125 gap on each side, centers 0.35 & 0.60)
+    couplings: Optional[List[Tuple[int, int, float]]] = None,  # (n, m, value_cm1), 1-based
+    coupling_threshold_cm1: float = 0.1,
+    ignore_m_zero: bool = True,
+
+    # spacing controls
+    min_label_gap_eV: Optional[float] = None,   # for energy level labels
+    label_gap_frac: float = 0.05,               # min gap between SOC labels as fraction of span
+    label_base_nudge_frac: float = 0.015,       # base upward nudge of SOC labels vs arrow mid
+
+    # layout parameters
     left_center_x: float = 0.35,
     right_center_x: float = 0.60,
     line_halfwidth: float = 0.06,
-    fontsize: int = 16   # match your original font size everywhere
+    fontsize: int = 16
 ) -> None:
-    """Two-column diagram with auto-nudged, non-overlapping labels + leader lines."""
+    """
+    Two-column diagram with energy levels and SOC arrows.
+    - Each valid (n, m, val_cm1) gets a unique-colored <-> arrow.
+    - Its label ("xxx cm^-1") is bold, strong-colored (same color), 3 significant figures,
+      and auto-separated to prevent overlaps (with vertical leader line).
+    """
+
+    # Sort ascending to keep indices natural
     singlet = sorted([e for e in singlet_levels if e is not None])
     triplet = sorted([e for e in triplet_levels if e is not None])
 
@@ -230,18 +325,24 @@ def draw_energy_levels(
     ymin0, ymax0 = min(all_vals), max(all_vals)
     span = (ymax0 - ymin0) if ymax0 > ymin0 else 1.0
 
-    # default minimum label gap (~3.5% of span)
+    # default minimum label gap (~3.5% of span) for energy level labels
     if min_label_gap_eV is None:
         min_label_gap_eV = 0.035 * span
 
-    def plot_group(ax, levels, x_center, color, text_side):
-        label_y = compute_label_positions(levels, min_gap=min_label_gap_eV)
+    # Pre-compute energy label positions (non-overlapping)
+    singlet_label_y = compute_label_positions(singlet, min_gap=min_label_gap_eV)
+    triplet_label_y = compute_label_positions(triplet, min_gap=min_label_gap_eV)
+
+    fig, ax = plt.subplots(figsize=(6, 8))
+
+    # Helper to draw one column of energy levels
+    def plot_group(levels, label_y, x_center, color, text_side):
         for y, ly in zip(levels, label_y):
             # energy level line
             ax.hlines(y, x_center - line_halfwidth, x_center + line_halfwidth,
                       color=color, linewidth=2)
 
-            # label position and leader line
+            # label and a small leader if nudged
             if text_side == "left":
                 tx = x_center - line_halfwidth - 0.02
                 ha = "right"
@@ -260,20 +361,98 @@ def draw_energy_levels(
             ax.text(tx, ly, f"{y:.2f} eV", ha=ha, va="center",
                     fontsize=fontsize, color=color)
 
-    fig, ax = plt.subplots(figsize=(4, 6))
-    plot_group(ax, singlet, left_center_x,  color="tab:blue", text_side="left")
-    plot_group(ax, triplet, right_center_x, color="tab:red",  text_side="right")
+    # Draw singlets (left, blue) and triplets (right, red)
+    plot_group(singlet, singlet_label_y, left_center_x,  color="tab:blue", text_side="left")
+    plot_group(triplet, triplet_label_y, right_center_x, color="tab:red",  text_side="right")
 
-    # axes styling
+    # Optional: draw SOC double-headed arrows + labels
+    max_label_y_seen = ymax0  # track to expand ylim if needed
+    if couplings:
+        # Filter to valid arrows that are inside plotted lists and above threshold
+        valid: List[Tuple[int, int, float]] = []
+        for (n1, m1, val) in couplings:
+            if ignore_m_zero and m1 == 0:
+                continue
+            if val <= coupling_threshold_cm1:
+                continue
+            n = n1 - 1  # triplet index (0-based)
+            m = m1 - 1  # singlet index (0-based)
+            if 0 <= n < len(triplet) and 0 <= m < len(singlet):
+                valid.append((n, m, val))
+
+        if valid:
+            # Geometry shared by arrows
+            x1 = left_center_x + line_halfwidth      # singlet right edge
+            x2 = right_center_x - line_halfwidth     # triplet left edge
+            dx = x2 - x1
+            base_nudge = label_base_nudge_frac * span
+
+            # Compute arrow midpoints and base label targets (midpoint + small nudge)
+            mids_x = []
+            mids_y = []
+            lbl_targets = []  # desired y positions before separation
+            for (n, m, val) in valid:
+                yS = singlet[m]
+                yT = triplet[n]
+                mx = x1 + 0.5 * dx
+                my = 0.5 * (yS + yT)
+                mids_x.append(mx)
+                mids_y.append(my)
+                lbl_targets.append(my + base_nudge)
+
+            # Compute non-overlapping label y-positions
+            label_min_gap = label_gap_frac * span
+            lbl_y = compute_nonoverlap_positions(lbl_targets, min_gap=label_min_gap)
+
+            # Expand ylim later if labels exceed current ymax
+            max_label_y_seen = max(max_label_y_seen, max(lbl_y) if lbl_y else ymax0)
+
+            # Draw arrows and labels (each with strong color)
+            for i, (n, m, val) in enumerate(valid):
+                yS = singlet[m]
+                yT = triplet[n]
+                mx = mids_x[i]
+                my = mids_y[i]
+                my_label = lbl_y[i]
+                color = STRONG_COLORS[i % len(STRONG_COLORS)]
+
+                # double-headed arrow in strong color
+                ax.add_patch(FancyArrowPatch(
+                    (x1, yS), (x2, yT),
+                    arrowstyle="<->",
+                    mutation_scale=11,
+                    linewidth=1.5,
+                    alpha=0.95,
+                    color=color,
+                    zorder=2
+                ))
+
+                # small vertical leader from arrow midpoint to label (same color)
+                ax.plot([mx, mx], [my + 0.002 * span, my_label - 0.002 * span],
+                        linewidth=1.0, alpha=0.9, color=color, zorder=2)
+
+                # bold label in same strong color, 3 significant figures
+                # Add a thin white stroke under text for legibility.
+                text_pe = [patheffects.withStroke(linewidth=2.5, foreground="white")]
+                ax.text(mx, my_label, f"{val:.3g} cm$^{{-1}}$",
+                        ha="center", va="bottom",
+                        fontsize=max(11, fontsize - 3),
+                        fontweight="bold",
+                        color=color,
+                        path_effects=text_pe,
+                        zorder=3)
+
+    # axes styling and limits (allow room above for labels)
+    top_pad = 0.14 * span
     ax.set_xlim(0.05, 0.95)
-    ax.set_ylim(ymin0 - 0.08*span, ymax0 + 0.10*span)
-    ax.set_ylabel("Energy (eV)", fontsize=fontsize)     # larger y-axis title
-    ax.tick_params(axis='y', labelsize=fontsize)        # larger tick labels
+    ax.set_ylim(ymin0 - 0.08 * span, max(max_label_y_seen + top_pad, ymax0 + 0.12 * span))
+    ax.set_ylabel("Energy (eV)", fontsize=fontsize)
+    ax.tick_params(axis='y', labelsize=fontsize)
     ax.set_xticks([])
     for spine in ("top", "right", "bottom"):
         ax.spines[spine].set_visible(False)
 
-    # legend (same font size as original)
+    # legend
     ax.plot([], [], color="tab:blue", linewidth=2, label="Singlet")
     ax.plot([], [], color="tab:red",  linewidth=2, label="Triplet")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.02),
@@ -283,13 +462,49 @@ def draw_energy_levels(
     plt.show()
 
 
+# -------- CLI / main --------
+
+def main():
+    parser = argparse.ArgumentParser(description="Draw singlet/triplet levels with strongly-colored, non-overlapping SOC labels.")
+    parser.add_argument("--energies", default="singlet_triplet_energies.txt",
+                        help="Path to energies file (default: singlet_triplet_energies.txt)")
+    parser.add_argument("--soc", default="spin_orbit_couplings4.txt",
+                        help="Path to SOC file (default: spin_orbit_couplings4.txt)")
+    parser.add_argument("--limit", type=float, default=3.80,
+                        help="Energy cutoff in eV; plot states with E < limit (default: 3.80)")
+    parser.add_argument("--threshold", type=float, default=0.1,
+                        help="SOC threshold in cm^-1; draw arrows only if value > threshold (default: 0.1)")
+    parser.add_argument("--ignore_m_zero", action="store_true", default=True,
+                        help="Ignore SOC entries with m=0 (default: True)")
+    parser.add_argument("--no_ignore_m_zero", dest="ignore_m_zero", action="store_false",
+                        help="Do not ignore m=0")
+    parser.add_argument("--label_gap_frac", type=float, default=0.05,
+                        help="Min vertical gap between SOC labels as fraction of energy span (default: 0.05)")
+    parser.add_argument("--label_nudge_frac", type=float, default=0.015,
+                        help="Base upward nudge of SOC labels vs arrow mid, as fraction of span (default: 0.015)")
+    args = parser.parse_args()
+
+    # Read data
+    singlet_data, triplet_data = extract_energies(args.energies)
+    soc_pairs = parse_soc_pairs(args.soc)
+
+    # Apply energy cutoff
+    singlets = [e for e in singlet_data if e < args.limit]
+    triplets = [e for e in triplet_data if e < args.limit]
+
+    # Draw
+    draw_energy_levels(
+        singlets,
+        triplets,
+        couplings=soc_pairs,
+        coupling_threshold_cm1=args.threshold,
+        ignore_m_zero=args.ignore_m_zero,
+        label_gap_frac=args.label_gap_frac,
+        label_base_nudge_frac=args.label_nudge_frac
+    )
+
+
 if __name__ == "__main__":
-    filename = "singlet_triplet_energies.txt"
-    singlet_data, triplet_data = extract_energies(filename)
+    main()
 
-    limit = 3.80
-    singlets = [e for e in singlet_data if e < limit]
-    triplets = [e for e in triplet_data if e < limit]
-
-    draw_energy_levels(singlets, triplets)
 ```

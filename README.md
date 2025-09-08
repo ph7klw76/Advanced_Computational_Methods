@@ -104,6 +104,7 @@ where magic happens
 2. [Pacman](https://github.com/ph7klw76/Advanced_Computational_Methods/blob/main/Pacman.py)
 3. [Microwave](micorwave.md)
 4. [Double_slit](doubleslit.py)
+5. [Visualizing molecule](trimesh.md)
 
 ## Concurrency and Parallelism
 

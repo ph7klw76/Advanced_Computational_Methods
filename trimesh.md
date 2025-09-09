@@ -182,3 +182,35 @@ mol only system in water
     1HK4    H25 8400   9.625   9.652   6.172 -1.4345 -1.9781 -1.2928
   11.24798  11.24798  11.24798
 ```
+
+
+Many force fields encode elements in atom names (C1, CA, Cl, OW, …). This heuristic:
+Special-cases water (OW, HW…), common in MD files.
+Extracts alphabetic chars and returns either a one-letter element (C, O) or a properly capitalized two-letter one (Cl, Na) when the second letter is lowercase.
+
+icosphere creates a near-uniform triangle mesh sphere.Detail is controlled by sphere_subdiv (2 = moderate; higher → smoother → heavier).
+Scale: sphere_radius_scale scales the vdW radius.
+Note: The inline comment says “2.0 × van der Waals radius”, but the value in the code is 1.5. If you truly want “space-filling” visuals, set sphere_radius_scale = 2.0; for classic ball-and-stick, 1.2–1.5 is common.
+
+Threshold formula:
+A bond is drawn when
+
+<img width="334" height="54" alt="image" src="https://github.com/user-attachments/assets/facd7e5c-3193-4be5-b696-8b881c631187" />
+
+The 1.2 factor (a fudge factor) tolerates slight geometry noise and radius variance. Uniqueness: i < j ensures each pair only once.Then it draws cylinders along each bonded segment
+
+```python
+for i, j in pairs:
+    seg = np.vstack((coords[i], coords[j]))
+    cyl = trimesh.creation.cylinder(radius=bond_radius, segment=seg, sections=24)
+    meshes.append(cyl)
+segment=seg orients and lengths the cylinder between atom positions.
+```
+
+sections (24) is a reasonable compromise between smoothness and triangle count. Complexity note (verifiable by timing): Distance-matrix construction is O(n²) in both time and memory. For a few thousand atoms this is fine; beyond that, consider a neighbor search (e.g., cKDTree) with a cutoff ≈ the largest thr to prune candidates.
+
+
+```python
+molecule = trimesh.util.concatenate(meshes)
+```
+This merges all spheres and cylinders into a single Trimesh. That’s convenient for I/O and ray tests, but you lose per-atom identity unless you keep a parallel index.

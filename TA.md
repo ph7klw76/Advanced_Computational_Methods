@@ -236,3 +236,6 @@ The ratio of signal amplitudes scales as $|\mu_{S_1 S_n}|^2 / |\mu_{T_1 T_n}|^2$
 Transient Absorption arises from the third-order polarization because it is the result of the system's nonlinear response to the applied pump and probe fields. The third-order nonlinear interaction provides a detailed mapping of the system's excited-state dynamics, allowing us to probe the system’s behavior on ultrafast time scales, often in the femtosecond to picosecond range.
 
 The polarization we observe at the probe frequency is directly related to the absorption characteristics of the system and reflects contributions from ground-state bleaching, stimulated emission, and excited-state absorption. Each of these processes encodes important information about the molecular system, which can be extracted through careful analysis of the time-resolved data.
+
+<img width="1049" height="380" alt="image" src="https://github.com/user-attachments/assets/e3fff44e-4fd4-4b2f-b9ad-9e3eaac35f95" />
+

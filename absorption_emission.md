@@ -1443,6 +1443,8 @@ done
 exit $status
 ```
 
-then those file is deleted. It is recommended to increase the MEM per processor if the error keep occuring.
+then those file is deleted. It is recommended to double MEM per processor (by halfing number of proecessor) if the error keep occuring.
+
+
 
 

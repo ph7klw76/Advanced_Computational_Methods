@@ -1279,7 +1279,7 @@ and restart the calculation by adding this option
 
 ```text
 ! DEF2-SVP OPT CPCM(Toluene) TightOpt TightSCF FREQ
-%NUMFREQ
+%FREQ
 	restart true
 END
 %TDDFT
@@ -1333,5 +1333,116 @@ fig.tight_layout()
 plt.show()
 ```
 
+
+sometimes the numerical frequency calculation results in error such as
+
+```text
+ORCA finished by error termination in CIS
+Calling Command: /home/user/woon/ORCA/orca/orca_cis S1_D00256.cisinp.tmp >S1_D00256.lastcis
+[file orca_tools/qcmsg.cpp, line 394]: 
+  .... aborting the run
+
+	<< Calculating gradient on displaced geometry 315 (of 1152) >>
+```
+In order to restart, it is important to delete those files.
+You can run the .out file that contains the error inorder to extract those filenames using teh code below
+```python
+# Re-run after state reset: Extract tokens from PI4-1.out
+import os
+import pandas as pd
+from collections import Counter
+
+input_path = "PI4-1.out"
+tokens_txt = "PI4-1_cisinp_tokens.txt"
+tokens_counts_csv = "PI4-1_cisinp_tokens_counts.csv"
+
+tokens = []
+if os.path.exists(input_path):
+    with open(input_path, "r", errors="ignore") as f:
+        for line in f:
+            for tok in line.split():
+                if "cisinp.tmp" in tok:
+                    tokens.append(tok)
+
+    unique_tokens = sorted(set(tokens))
+    counts = Counter(tokens)
+    df_counts = pd.DataFrame(sorted(counts.items(), key=lambda x: (-x[1], x[0])), columns=["token", "count"])
+
+    with open(tokens_txt, "w") as out:
+        for t in unique_tokens:
+            out.write(f"{t}\n")
+    df_counts.to_csv(tokens_counts_csv, index=False)
+
+    from caas_jupyter_tools import display_dataframe_to_user
+    display_dataframe_to_user("PI4-1: Tokens containing 'cisinp.tmp' (with counts)", df_counts)
+
+    print(f"Found {len(tokens)} total matches across {len(unique_tokens)} unique tokens.")
+    print(f"Unique tokens (one per line): {tokens_txt}")
+    print(f"Token counts CSV: {tokens_counts_csv}")
+else:
+    print(f"Input file not found at {input_path}")
+```
+
+then format those number into the code below
+
+```python
+#!/usr/bin/env bash
+# delete_s1d_embedded.sh — delete files beginning with S1_D<code> for the embedded list
+# Usage:
+#   ./delete_s1d_embedded.sh [-n] [-d DIR]
+#     -n       Dry-run (print matches, do not delete)
+#     -d DIR   Directory to search (default: current directory)
+
+set -euo pipefail
+
+dry_run=false
+search_dir="."
+
+# >>> EMBEDDED CODE LIST <<<
+CODES=(
+  "00352" "00353" "00354" "00355" "00356" "00357" "00358" "00359"
+  "00360" "00361" "00362" "00363" "00364" "00365" "00366" "00367"
+  "00368" "00371" "00372" "00373" "00374" "00375" "00376" "00378"
+  "00379" "00380" "00381" "00382" "00383"
+)
+
+usage() { echo "Usage: $0 [-n] [-d DIR]"; exit 1; }
+
+while getopts ":nd:" opt; do
+  case "$opt" in
+    n) dry_run=true ;;
+    d) search_dir="$OPTARG" ;;
+    *) usage ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+# Basic checks
+if [ ! -d "$search_dir" ]; then
+  echo "Error: directory '$search_dir' does not exist." >&2
+  exit 2
+fi
+
+if [ ${#CODES[@]} -eq 0 ]; then
+  echo "No codes specified in CODES array. Nothing to do." >&2
+  exit 0
+fi
+
+status=0
+for code in "${CODES[@]}"; do
+  pattern="S1_D${code}*" # CHNANGE THE HEADING
+  if $dry_run; then
+    echo "Dry-run: would delete files matching '$pattern' in '$search_dir':"
+    find "$search_dir" -maxdepth 1 -type f -name "$pattern" -print || true
+  else
+    echo "Deleting files matching '$pattern' in '$search_dir'..."
+    find "$search_dir" -maxdepth 1 -type f -name "$pattern" -print -delete || status=$?
+  fi
+done
+
+exit $status
+```
+
+then those file is deleted. It is recommended to increase the MEM per processor if the error keep occuring.
 
 

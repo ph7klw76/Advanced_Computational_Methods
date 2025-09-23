@@ -1433,5 +1433,5 @@ exit $status
 then those file is deleted. It is recommended to double MEM per processor (by halfing number of proecessor) if the error keep occuring.
 
 
-
-
+<img width="899" height="1042" alt="image" src="https://github.com/user-attachments/assets/d5f19bd0-206a-4105-93b2-f9614dd7faae" />
+<img width="879" height="123" alt="image" src="https://github.com/user-attachments/assets/a45a19f9-bca8-497c-8f86-200d631019d7" />

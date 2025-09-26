@@ -33,7 +33,9 @@ Diagonal with $D_{ii} = $ number of bonds (or sum of bond orders) at atom $i$.
 $$
 L = D - A
 $$  
+
 (combinatorial) or normalized Laplacian:  
+
 $$
 D^{-1/2} L D^{-1/2}
 $$
@@ -110,12 +112,14 @@ $$
 L = D^{-1/2} L D^{-1/2} = I - D^{-1/2} A D^{-1/2}
 $$
 
-Here,  
+Here, 
+
 $$
 D^{-1/2} = \mathrm{diag}(1, 1/ \sqrt{2}, 1)
 $$
 
 Thus,  
+
 $$
 D^{-1/2} A D^{-1/2} =
 \begin{bmatrix}
@@ -208,6 +212,7 @@ L = I - D^{-1/2} A D^{-1/2}
 $$
 
 Since $D = 2I$,  
+
 $$
 D^{-1/2} = \frac{1}{\sqrt{2}} I, \quad \Rightarrow \quad L = I - \frac{1}{2} A
 $$

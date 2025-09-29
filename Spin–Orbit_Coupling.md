@@ -157,13 +157,80 @@ To extract out the spin-orbit coupling use the python code below along with sing
 ```python
 
 import re
+import math
+import os
 
 def calculate_spin_orbit_coupling(filename):
+    # Dictionary to store the total spin-orbit coupling for each pair of roots
+    total_soc_by_root = {}
+    
+    try:
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        
+        # Locate the SOCME section and determine start and end indices dynamically
+        start_idx = None
+        end_idx = None
+        
+        for i, line in enumerate(lines):
+            if "CALCULATED SOCME BETWEEN TRIPLETS AND SINGLETS" in line:
+                start_idx = i + 5  # SOCME values start 5 lines below this header
+                break
+
+        if start_idx is not None:
+            # Dynamically find the end index by looking for non-data lines
+            for i in range(start_idx, len(lines)):
+                if not lines[i].strip() or not re.match(r'^\s*\d+', lines[i]):  # Non-numeric or empty lines
+                    end_idx = i - 1
+                    break
+            if end_idx is None:  # If no end detected, process till the end of file
+                end_idx = len(lines) - 1
+
+            # Process SOCME data between start_idx and end_idx
+            for soc_line in lines[start_idx:end_idx + 1]:
+                # Split the line and clean up unwanted characters
+                values = re.split(r'\s+', soc_line.strip())
+                values = [x for x in values if x not in [',', '(', ')']]
+                
+                if len(values) >= 8:  # Ensure there are enough values for processing
+                    try:
+                        root0 = values[0]  # Root 0 (T)
+                        root1 = values[1]  # Root 1 (S)
+                        # Extract real and imaginary parts for Z, X, and Y
+                        z = complex(float(values[2]), float(values[3]))
+                        x = complex(float(values[4]), float(values[5]))
+                        y = complex(float(values[6]), float(values[7]))
+                        # Calculate total SOC magnitude
+                        total_soc = math.sqrt(abs(z)**2 + abs(x)**2 + abs(y)**2)
+                        # Accumulate the SOC value for the root pair
+                        total_soc_by_root[(root0, root1)] = total_soc_by_root.get((root0, root1), 0) + total_soc
+                    except (ValueError, IndexError):
+                        # Handle any parsing errors gracefully
+                        continue
+        
+        return total_soc_by_root
+
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
         return {}
 
 if __name__ == "__main__":
-    filename = "2SOCAc-2CF3Ph-0.06620546488.out"  # change your file you want to extract
+    filename = "T1-a-1.out"
     output_filename = "spin_orbit_couplings.txt"
+    
+    if os.path.exists(filename):
+        total_soc_by_root = calculate_spin_orbit_coupling(filename)
+        
+        # Write results to output file
+        with open(output_filename, 'w') as output_file:
+            if total_soc_by_root:
+                output_file.write("Total Spin-Orbit Coupling for Molecule by Root:\n")
+                for (root0, root1), total_soc in total_soc_by_root.items():
+                    output_file.write(f"Root pair ({root0}, {root1}): {total_soc:.6f} cm-1\n")
+            else:
+                output_file.write("No spin-orbit coupling data found in the file.\n")
+    else:
+        print(f"File {filename} does not exist. Please provide a valid file.")
         
 
 # File paths

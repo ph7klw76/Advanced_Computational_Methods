@@ -911,6 +911,18 @@ In practice, libraries like `e3nn.o3` do this for $l = 0, 1, 2, \dots$ (degrees 
 
 If you rotate the molecule, these features transform in a mathematically consistent way (**equivariance**),  
 so the network can respect physics.
+<img width="1145" height="474" alt="image" src="https://github.com/user-attachments/assets/a1d4a443-3f62-4017-a138-4ad200e12a33" />
+<img width="604" height="493" alt="image" src="https://github.com/user-attachments/assets/a9de8779-f6b1-46a6-b781-7d8c6ec848a5" />
+<img width="577" height="499" alt="image" src="https://github.com/user-attachments/assets/b2e41b8f-0dc3-4c7e-82a9-debca1d56da9" />
+<img width="550" height="492" alt="image" src="https://github.com/user-attachments/assets/ddba2e06-dd38-4156-9ad7-59f45d2a0899" />
+<img width="549" height="488" alt="image" src="https://github.com/user-attachments/assets/46c2afec-5e37-4311-b915-97a21eaa0aa9" />
+<img width="554" height="486" alt="image" src="https://github.com/user-attachments/assets/8288a814-d9d2-475c-a649-5a9df07ccef8" />
+<img width="587" height="483" alt="image" src="https://github.com/user-attachments/assets/4df1a9b3-8309-4133-919d-88cf396382dd" />
+<img width="559" height="478" alt="image" src="https://github.com/user-attachments/assets/1c890571-e782-4a55-aa8b-59aef2a55a1a" />
+
+
+
+
 
 ```python
 import numpy as np

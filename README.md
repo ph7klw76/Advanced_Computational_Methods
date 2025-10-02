@@ -59,8 +59,9 @@ This guide provides structured pathways for mastering advanced topics in scienti
 10. [Equivariant neural networks](Equivariantneuralnetworks.md) Modeling physical systems whose underlying laws respect symmetries
 11. [Physics- Guided  Δ Equivariant Graph Neural Network](Equivariant_Graph_Convolutional.md)
 12. [Explaination of the use of molecule as a Graph](moleculargraph.md)
-13. Transfer Learning 
-14. Meta-Learning and Few-Shot Learning
+13. [Autoregression mode](Autoregressive.md)
+14. Transfer Learning 
+15. Meta-Learning and Few-Shot Learning
 
 ### There are numerous libraries which are useful including [Scikit-learn](https://scikit-learn.org/stable/), [Tensorflow](https://www.tensorflow.org/tutorials?authuser=1) and [Pytorch](https://pytorch.org/get-started/locally/)
 

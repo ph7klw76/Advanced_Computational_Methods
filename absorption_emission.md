@@ -1230,7 +1230,7 @@ For many systems, it is advisable to **remove** modes with **frequencies below 1
 
 ## The Orca command to calculate the emission spectrum
 ```text
-! DEF2-SVP ESD(FLUOR)
+! DEF2-SVP TightSCF ESD(FLUOR) CPCM(Tolune)
 %TDDFT
 	NROOTS 1
 	IROOT 1
@@ -1289,6 +1289,52 @@ END
 ```
 
 
+## The Orca command to calculate the absprtion spectrum when harmoncity fails  (K*K>30)
+
+```text
+! DEF2-SVP TIGHTSCF ESD(ABS) CPCM(Toluene)
+%TDDFT
+  NROOTS     15
+  IROOT      1
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.062445651649735014
+END
+%ESD
+  GSHESSIAN  "P1_S0.hess"
+  DOHT       TRUE
+  HESSFLAG   AHAS
+  TCUTFREQ   50
+  PrintLevel 4
+END
+%maxcore 3000
+%pal nprocs 32 end
+* XYZFILE 0 1 P1_S0.xyz
+
+```
+else use more rigrious one as below
+
+```text
+! DEF2-SVP TIGHTSCF ESD(ABS) CPCM(Toluene)
+%TDDFT
+  NROOTS     15
+  IROOT      1
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.062445651649735014
+END
+%ESD
+	GSHESSIAN "BEN.hess"
+	ESHESSIAN "BEN_S1.hess"
+	DOHT TRUE
+	END
+* XYZFILE 0 1 BEN.xyz
+
+```
 ## plot the curve
 ```python
 import pandas as pd

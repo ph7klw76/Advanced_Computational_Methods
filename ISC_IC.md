@@ -310,3 +310,36 @@ Conical intersections (CIs) and avoided crossings are critical points where two 
 
 ## 5.3 Vibrational Density of States ($\rho(E)$)
 - Higher $\rho(E)$ at the crossing point provides more pathways for the energy redistribution required for IC.
+
+- To calculate intersystem crossing S1 to T1 assuming harmoonicity K*K<30
+
+  ```text
+  ! DEF2-SVP ESD(ISC) CPCM(Toluene)
+%scf
+  moinp "P1.gbw"
+end
+%TDDFT NROOTS 1
+       SROOT 1
+       TROOT 1
+       TROOTSSL 0
+       DOSOC TRUE
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.062445651649735014
+END
+%ESD
+   ISCISHESSIAN "PI1_S1.hess"
+   ISCFSHESSIAN "PI1_T1.hess"
+   USEJ TRUE
+   DOHT TRUE
+   DELE 5949.86896 # energy difference between diabatic S1 T1
+   SOCME 0.0, 1.96e-6 # S1 to T1 SOC real and Imag
+END
+%maxcore 5000
+%pal nprocs 16 end
+* XYZFILE 0 1 PI1.xyz
+```
+
+

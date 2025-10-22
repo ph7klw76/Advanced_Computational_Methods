@@ -343,7 +343,7 @@ Application: Finite element simulations, quantum lattice models.
 
 ### B Charge Transport Mechanisms
 
-1. [(Electronic Coupling](Electronic_coupling.md): explian what is it
+1. [Electronic Coupling](Electronic_coupling.md): explain what is it
    
 2. [Reorganization Energy](Reorganization_Energy.md): Key parameter in charge hopping and mobility in organic semiconductors.
    

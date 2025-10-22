@@ -97,7 +97,7 @@ Third, a GMH calculation: take the adiabatic pair $\lvert 1 \rangle, \lvert 2 \r
 Modern quantum-chemistry packages document and implement all three strategies, which provides a straightforward way to cross-validate a coupling obtained/
 
 
-“Adiabatic” has a precise meaning in two common contexts—thermodynamics and quantum mechanics—and the word signals “no exchange/mixing with the outside option” in each.
+“Adiabatic” has a precise meaning in two common contexts, thermodynamics and quantum mechanics and the word signals “no exchange/mixing with the outside option” in each.
 
 In thermodynamics, an adiabatic process is one with no heat exchanged with the surroundings: $\delta Q = 0$. If the process is also reversible (quasi-static with no dissipation), the entropy stays constant and you can show for an ideal gas that
 

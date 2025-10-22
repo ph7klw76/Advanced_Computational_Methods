@@ -1494,4 +1494,6 @@ for singlet it is :"The inner energy is: U= E(el) + E(ZPE) + E(vib) + E(rot) + E
 defination
 <img width="1037" height="596" alt="image" src="https://github.com/user-attachments/assets/3f5efb9c-87f9-4335-b8a4-f9e639c28df1" />
 
+<img width="500" height="368" alt="image" src="https://github.com/user-attachments/assets/a51b1053-3ba8-4a8b-9aaa-2439db2484d9" />
+
 

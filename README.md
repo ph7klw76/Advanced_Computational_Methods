@@ -343,9 +343,11 @@ Application: Finite element simulations, quantum lattice models.
 
 ### B Charge Transport Mechanisms
 
-1. [Reorganization Energy](Reorganization_Energy.md): Key parameter in charge hopping and mobility in organic semiconductors.
+1. [(Electronic Coupling](Electronic_coupling.md): explian what is it
    
-2. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
+2. [Reorganization Energy](Reorganization_Energy.md): Key parameter in charge hopping and mobility in organic semiconductors.
+   
+3. [Marcus Theory:](Marcus_Theory.md) For understanding electron and hole transport through hopping mechanisms.
    
 4. [Marcus–Levich–Jortner Theory:](Marcus–Levich–Jortner.md) for low temperature 
    

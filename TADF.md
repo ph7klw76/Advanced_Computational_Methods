@@ -331,3 +331,4 @@ Once these rules are laid out, the $3 \times 3$ matrix in the blog post is not a
 <img width="950" height="825" alt="image" src="https://github.com/user-attachments/assets/8ad86a55-d996-4ff4-b7e8-5348790b05f7" />
 
 
+see https://pubmed.ncbi.nlm.nih.gov/31841330/

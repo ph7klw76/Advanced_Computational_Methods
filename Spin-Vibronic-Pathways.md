@@ -520,7 +520,6 @@ END
    ISCISHESSIAN "PI7-3LE.hess"
    ISCFSHESSIAN "PI7_S1.hess" 
    NPOINTS 327680
-   DELE -161.31
    PrintLevel 4
    LINEW      50
    INLINEW    150 

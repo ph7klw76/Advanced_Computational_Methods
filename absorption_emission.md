@@ -1264,6 +1264,40 @@ and restart the calculation by adding this option
 
 ### ** Before using TightOpt and TightSCF, it is recommended to truncate any long alkyl groups that are known to have no influence on the emission profile. Begin with normal convergence before progressing to TightOpt and TightSCF, followed by VeryTightOpt and VeryTightSCF, to ensure robust convergence to the minimum excited-state geometry. **
 
+if for emission K*K>30, use the below
+
+```text
+! DEF2-SVP TIGHTSCF ESD(FLUOR) RIJCOSX CPCM(Toluene)
+%TDDFT
+	NROOTS 1
+	IROOT 1
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.0628869044748549
+END
+%basis
+         AuxJ  "def2/J"
+END
+%ESD
+  HESSFLAG   AHAS
+  GSHESSIAN  "P1_S0.hess"
+  LINES      VOIGT
+  LINEW      25
+  INLINEW    50
+  PrintLevel 4
+  UNIT       NM
+  TCUTFREQ   50
+  IFREQFLAG  REMOVE
+
+END
+%maxcore 4000
+%pal nprocs 16 end
+* XYZFILE 0 1 P1_S0.xyz
+
+```
+
 ```text
 ! DEF2-SVP OPT TightSCF TightOpt RIJCOSX FREQ CPCM(toluene) 
 %freq

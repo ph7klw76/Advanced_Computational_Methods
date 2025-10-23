@@ -325,3 +325,9 @@ The positions of every non-zero element in the multistate vibronic Hamiltonian f
 3. The fact that the nuclear kinetic energy operator carries no spin  
 
 Once these rules are laid out, the $3 \times 3$ matrix in the blog post is not an *ansatz* but an unambiguous, symmetry-dictated reduction of the exact Hamiltonian.
+
+
+<img width="1300" height="492" alt="image" src="https://github.com/user-attachments/assets/ff0b41cb-764e-42d0-ad5d-d580673a1e41" />
+<img width="950" height="825" alt="image" src="https://github.com/user-attachments/assets/8ad86a55-d996-4ff4-b7e8-5348790b05f7" />
+
+

@@ -155,3 +155,470 @@ The extended 2nd+HT formalism reveals that a low-lying $T_n$ state of contrastin
 ## Closing remarks
 
 By retaining quantum Franck–Condon sums, explicitly coupling SOC derivatives, and embedding indirect NA-SVC pathways, Hagai et al. achieve a single rate expression that reproduces both the temperature dependence and absolute magnitude of RISC across 100 K–300 K, from rigid polymer films to dilute solutions. Their derivations also demystify why the venerable Marcus equation sometimes “works” and, crucially, when it cannot. The article thus sets a new benchmark for predictive modelling and paves the way for rational, heavy-atom-free OLED emitters with near-unity internal quantum efficiencies.
+
+
+To calculate the Hamiltonian of the coupling use the code below
+```python
+# Write a reusable Python script that computes Eq. 2 effective coupling from:
+#  - a Turbomole-format .hess file,
+#  - a NACME text file containing the "CARTESIAN NON-ADIABATIC COUPLINGS" block,
+#  - an ORCA SOCME displacement file or ORCA .out that includes "Reference SOC" and
+#    lines "<<Displacing mode k (+|-)>>  socme = Re, Im"
+# The script will output: V_eff, a CSV of per-mode data, and a CSV of ranked contributions.
+''
+import re
+import math
+import argparse
+from dataclasses import dataclass
+from typing import Dict, Tuple, List, Optional
+import numpy as np
+import pandas as pd
+import sys
+import os
+
+HA_TO_EV = 27.211386245988
+EV_TO_HA = 1/HA_TO_EV
+BOHR_TO_ANG = 0.529177210903
+ANG_TO_BOHR = 1/BOHR_TO_ANG
+CM_TO_HZ = 2.997_924_58e10  # cm^-1 -> Hz
+HBAR = 1.054_571_817e-34    # J*s
+KB = 1.380_649e-23          # J/K
+AMU_KG = 1.660_539_06660e-27
+A_M = 1e-10
+
+@dataclass
+class HessData:
+    masses_amu: np.ndarray    # shape (N,)
+    modes: np.ndarray         # shape (3N, 3N) mass-weighted eigenvectors (columns)
+    freqs_cm: np.ndarray      # shape (3N,)
+
+def parse_hess(path: str) -> HessData:
+    with open(path, 'r', errors='ignore') as f:
+        lines = f.readlines()
+
+    def extract_section(lines, start_label):
+        start = None
+        for i,l in enumerate(lines):
+            if l.strip() == start_label:
+                start = i+1
+                break
+        if start is None:
+            return None
+        # end at next $section or EOF
+        end = len(lines)
+        for i in range(start, len(lines)):
+            if lines[i].startswith('$') and i != start-1:
+                end = i
+                break
+        return [l.rstrip('\n') for l in lines[start:end]]
+
+    atoms_lines = extract_section(lines, '$atoms')
+    if atoms_lines is None:
+        raise RuntimeError("Could not find $atoms section in .hess")
+    n_atoms = int(atoms_lines[0].strip())
+    masses_amu = []
+    for i in range(1, 1+n_atoms):
+        parts = atoms_lines[i].split()
+        masses_amu.append(float(parts[1]))
+    masses_amu = np.array(masses_amu)
+
+    freq_lines = extract_section(lines, '$vibrational_frequencies')
+    if freq_lines is None:
+        raise RuntimeError("Could not find $vibrational_frequencies in .hess")
+    nfreq = int(freq_lines[0].strip())
+    freqs_cm = np.zeros(nfreq)
+    for i in range(1, 1+nfreq):
+        parts = freq_lines[i].split()
+        idx = int(parts[0])
+        freqs_cm[idx] = float(parts[1])
+
+    nm_lines = extract_section(lines, '$normal_modes')
+    if nm_lines is None:
+        raise RuntimeError("Could not find $normal_modes in .hess")
+    dims = list(map(int, nm_lines[0].split()))
+    nrows, ncols = dims
+    U = np.zeros((nrows, ncols))
+    i = 1
+    while i < len(nm_lines):
+        header = nm_lines[i].strip()
+        if (not header) or header.startswith('#'):
+            break
+        # header lists column indices
+        cols = [int(s) for s in header.split()]
+        i += 1
+        rows_read = 0
+        while i < len(nm_lines) and rows_read < nrows:
+            line = nm_lines[i].strip()
+            if (not line) or line.startswith('#'):
+                break
+            parts = line.split()
+            try:
+                row_idx = int(parts[0])
+            except ValueError:
+                break
+            for j,c in enumerate(cols):
+                if 1+j < len(parts):
+                    val = float(parts[1+j].replace('D','E'))
+                    U[row_idx, c] = val
+            i += 1
+            rows_read += 1
+        # continue to next block
+    return HessData(masses_amu=masses_amu, modes=U, freqs_cm=freqs_cm)
+
+def parse_nac_cart(path: str) -> np.ndarray:
+    """Parse lines of the form:
+       '  1   C   :   -0.289474245    0.115032465   -0.035571352'
+       Returns flat array of length 3N, units 1/bohr.
+    """
+    vals: List[float] = []
+    with open(path, 'r', errors='ignore') as f:
+        for line in f:
+            if ':' not in line: 
+                continue
+            parts = line.replace(':',' ').split()
+            if len(parts) < 5: 
+                continue
+            try:
+                # last three tokens should be floats (x,y,z)
+                xs = [float(parts[-3]), float(parts[-2]), float(parts[-1])]
+                vals.extend(xs)
+            except:
+                continue
+    if not vals:
+        raise RuntimeError("No NAC Cartesian components found in file")
+    return np.array(vals, dtype=float)
+
+@dataclass
+class SOCData:
+    soc0_re: float
+    soc0_im: float
+    plus: Dict[int,float]   # mode_index(1-based) -> Im(SOC(+ΔQ))
+    minus: Dict[int,float]  # mode_index(1-based) -> Im(SOC(-ΔQ))
+
+def parse_socme(path: str) -> SOCData:
+    soc0_re = 0.0
+    soc0_im = 0.0
+    have_ref = False
+    plus: Dict[int,float] = {}
+    minus: Dict[int,float] = {}
+    patt_ref = re.compile(r'Reference\s+SOC\s*\(Re\s+and\s+Im\)\s*:\s*([-\d.Ee]+)\s*,\s*([-\d.Ee]+)')
+    patt_displ = re.compile(r'Displacing\s+mode\s+(\d+)\s+\(([+-])\)\)\s*.*?socme\s*=\s*([-\d.Ee]+)\s*,\s*([-\d.Ee]+)')
+    # Some variants have '>>' formatting; be flexible:
+    patt_displ2 = re.compile(r'Displacing\s+mode\s+(\d+)\s+\(([+-])\).*?socme\s*=\s*([-\d.Ee]+)\s*,\s*([-\d.Ee]+)')
+
+    with open(path, 'r', errors='ignore') as f:
+        text = f.read()
+        m = patt_ref.search(text)
+        if m:
+            soc0_re = float(m.group(1)); soc0_im = float(m.group(2)); have_ref=True
+        for patt in (patt_displ, patt_displ2):
+            for mm in patt.finditer(text):
+                idx = int(mm.group(1))
+                sign = mm.group(2)
+                re_part = float(mm.group(3))
+                im_part = float(mm.group(4))
+                if sign == '+':
+                    plus[idx] = im_part
+                else:
+                    minus[idx] = im_part
+    if not have_ref:
+        # try a looser pattern: "socme = re, im" near "Reference SOC"
+        m2 = re.search(r'Reference.*?soc.*?([-\d.Ee]+)\s*,\s*([-\d.Ee]+)', text, re.IGNORECASE|re.DOTALL)
+        if m2:
+            soc0_re = float(m2.group(1)); soc0_im = float(m2.group(2)); have_ref=True
+    if not plus:
+        # try line-per-record file: "<index> <+|-> <im>"
+        for line in text.splitlines():
+            m3 = re.match(r'\s*(\d+)\s*([+-])\s*([-\d.Ee]+)\s*$', line.strip())
+            if m3:
+                idx = int(m3.group(1)); sign = m3.group(2); im_part = float(m3.group(3))
+                (plus if sign=='+' else minus)[idx] = im_part
+    if not have_ref and not plus:
+        raise RuntimeError("Could not parse SOCME data from file")
+    return SOCData(soc0_re=soc0_re, soc0_im=soc0_im, plus=plus, minus=minus)
+
+def thermal_Q2(freq_cm: np.ndarray, T: float) -> np.ndarray:
+    """<Q^2> for mass-weighted normal coordinate, return in amu*Å^2"""
+    omega = 2*np.pi*CM_TO_HZ*freq_cm
+    x = HBAR*omega/(2*KB*T)
+    # avoid overflow at very low frequencies
+    coth = np.cosh(x)/np.sinh(x)
+    Q2_SI = (HBAR/(2*omega)) * coth  # kg*m^2
+    return Q2_SI / (AMU_KG * A_M**2) # amu Å^2
+
+def compute_eq2(hess_path: str, nac_path: str, soc_path: str,
+                delta_e_eV: float, delta_e_den_eV: Optional[float]=None,
+                delta_Q: Optional[float]=None, delta_Q_unit: str='bohr',
+                temperature: float=298.15, soc_units: str='hartree') -> Tuple[float, pd.DataFrame, pd.DataFrame]:
+    """Return V_eff (eV), per-mode dataframe, and ranked contribution dataframe."""
+    if delta_e_den_eV is None:
+        delta_e_den_eV = delta_e_eV
+    if delta_Q is None:
+        # default finite-difference step: 0.01 bohr√amu
+        delta_Q = 0.01
+        delta_Q_unit = 'bohr'
+    if delta_Q_unit.lower().startswith('bohr'):
+        delta_Q_A = delta_Q * BOHR_TO_ANG
+    else:
+        delta_Q_A = delta_Q
+
+    hd = parse_hess(hess_path)
+    masses = hd.masses_amu
+    U = hd.modes  # (3N, 3N), columns are modes
+    freqs_cm = hd.freqs_cm
+
+    nac_cart = parse_nac_cart(nac_path)  # length 3N
+    if len(nac_cart) != 3*len(masses):
+        raise RuntimeError(f"NAC length {len(nac_cart)} != 3N ({3*len(masses)})")
+
+    # Build mass per Cartesian and mass-weighted NAC
+    mass_per_cart = np.repeat(masses, 3)
+    d_mw = nac_cart / np.sqrt(mass_per_cart)   # 1/(bohr*sqrt(amu))
+
+    # project onto vibrational subspace (skip first 6 columns: translations/rotations)
+    start_mode = 6
+    U_vib = U[:, start_mode:]
+    d_k = U_vib.T @ d_mw  # shape (3N-6,)
+
+    # vibronic constants κ_k = ΔE * d_k ; report in eV/(Å√amu)
+    kappa_eV_per_A = (delta_e_eV * d_k) / BOHR_TO_ANG
+
+    # Thermal <Q^2> per mode
+    freq_vib = freqs_cm[start_mode:]
+    Q2 = thermal_Q2(freq_vib, temperature)  # amu Å^2
+
+    # SOC slope proxy s_k = g_k ΔQ from SOC displacement file
+    soc = parse_socme(soc_path)
+    def soc_to_eV(x):
+        return x*HA_TO_EV if soc_units.lower().startswith('hart') else x
+
+    s_k = np.zeros_like(d_k)
+    n_vib = len(d_k)
+    for k in range(1, n_vib+1):
+        if k in soc.minus:
+            s_k[k-1] = 0.5*(soc_to_eV(soc.plus.get(k, soc.soc0_im)) - soc_to_eV(soc.minus[k]))
+        else:
+            s_k[k-1] = soc_to_eV(soc.plus.get(k, soc.soc0_im)) - soc_to_eV(soc.soc0_im)
+
+    # Per-mode contribution (signed)
+    g_k = s_k / delta_Q_A   # eV/(Å√amu)
+    contrib_k_eV2 = g_k * kappa_eV_per_A * Q2  # eV^2
+
+    # Assemble V_eff
+    numerator_eV2 = float(np.sum(contrib_k_eV2))
+    V_eff_eV = numerator_eV2 / delta_e_den_eV
+
+    # Build per-mode DataFrame
+    df = pd.DataFrame({
+        "vib_index_1based": np.arange(1, n_vib+1),
+        "global_mode_index": np.arange(start_mode, start_mode+n_vib),
+        "frequency_cm^-1": freq_vib,
+        "d_k_1/(bohr*sqrt(amu))": d_k,
+        "kappa_eV_per_A_sqrtamu": kappa_eV_per_A,
+        "s_k_eV": s_k,
+        "g_k_eV_per_A_sqrtamu": g_k,
+        "<Q^2>_amu_A^2_(T)": Q2,
+        "contribution_eV^2": contrib_k_eV2
+    })
+    df_rank = df.reindex(df["contribution_eV^2"].abs().sort_values(ascending=False).index).reset_index(drop=True)
+    return V_eff_eV, df, df_rank
+
+def main():
+    ap = argparse.ArgumentParser(description="Compute Eq. 2 effective coupling from .hess, NACME, and SOCME files.")
+    ap.add_argument("--hess", required=True, help="Path to Turbomole-format .hess")
+    ap.add_argument("--nac", required=True, help="Path to NACME text file (CARTESIAN NON-ADIABATIC COUPLINGS block)")
+    ap.add_argument("--soc", required=True, help="Path to SOCME displacement file or ORCA .out")
+    ap.add_argument("--gap", type=float, required=True, help="ΔE (eV) between the two triplet states (for κ_k)")
+    ap.add_argument("--den", type=float, default=None, help="Denominator ΔE_TT (eV). If omitted, uses --gap")
+    ap.add_argument("--dq", type=float, default=None, help="HT displacement step ΔQ (default 0.01 bohr√amu if not found)")
+    ap.add_argument("--dq_unit", choices=["bohr","ang"], default="bohr", help="Unit for ΔQ (bohr or ang for Å)")
+    ap.add_argument("--T", type=float, default=298.15, help="Temperature (K) for <Q^2>")
+    ap.add_argument("--soc_units", choices=["hartree","eV"], default="hartree", help="Units of SOCME values in the SOC file")
+    ap.add_argument("--out_prefix", default="eq2_results", help="Prefix for output CSVs")
+
+    args = ap.parse_args()
+
+    Veff, df, df_rank = compute_eq2(args.hess, args.nac, args.soc,
+                                    delta_e_eV=args.gap,
+                                    delta_e_den_eV=args.den,
+                                    delta_Q=args.dq, delta_Q_unit=args.dq_unit,
+                                    temperature=args.T, soc_units=args.soc_units)
+    print(f"Effective coupling V_eff = {Veff:.6e} eV")
+    print(f"               V_eff = {Veff*8065.544006:.6e} cm^-1")
+    print(f"               V_eff = {Veff*1e6:.6f} µeV")
+
+    df.to_csv(f"{args.out_prefix}_per_mode.csv", index=False)
+    df_rank.head(30).to_csv(f"{args.out_prefix}_top30.csv", index=False)
+    print(f"Wrote: {args.out_prefix}_per_mode.csv and {args.out_prefix}_top30.csv")
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        print("Usage example:")
+        print("  python eq2_effective_coupling.py --hess PI7_T1.hess --nac nac.txt --soc P7-3.out --gap 0.087 --dq 0.01 --dq_unit bohr")
+        sys.exit(0)
+    main()
+```
+
+python eq2_effective_coupling.py \
+  --hess PI7_T1.hess \
+  --nac  nac.txt \
+  --soc  P7-3.out \
+  --gap  0.087 \
+  --dq   0.01 \
+  --dq_unit bohr \
+  --soc_units hartree \
+  --out_prefix results/my_system
+
+The gap is the 3LE-3CT gap
+
+PI7.T1,hess is the T1 opt freq
+the soc is the ISC spin-vibronic output per mode using ISC moduie
+
+eg
+```text
+! def2-SVP ESD(ISC) CPCM(Toluene) RIJCOSX 
+%scf
+  moinp "PI7.gbw" #relexedT1
+end
+%TDDFT NROOTS 3
+       SROOT 1
+       TROOT 2
+       TROOTSSL 0
+       DOSOC TRUE
+END
+%basis
+        AuxJ  "Def2/J" 
+End
+%scf
+  MaxIter 300
+end
+%rel
+  SOCType 3
+  SOCFlags 1,3,3,0     # RI-SOMF(1X): 1e term on; Coulomb via RI; one-center exact exchange; no corr
+  SOCMaxCenter 4
+end
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.06924171915036594
+END
+%ESD
+   USEJ TRUE
+   DOHT TRUE
+   ISCISHESSIAN "PI7-3LE.hess"
+   ISCFSHESSIAN "PI7_S1.hess" 
+   NPOINTS 327680
+   DELE -161.31
+   PrintLevel 4
+   LINEW      50
+   INLINEW    150 
+END
+%maxcore 4000
+%pal nprocs 16 end
+* XYZFILE 0 1 PI7.xyz  #Triplet
+
+```
+
+nac.txt is the exyracyed output using
+
+```text
+! def2-SVP TIGHTSCF CPCM(Toluene) RIJCOSX 
+%TDDFT  NROOTS  2
+        IROOT   1 #must be LE
+        NACME   TRUE
+        ETF     TRUE
+END
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.06924171915036594
+END
+%basis
+        AuxJ  "Def2/J" 
+End
+%scf
+  MaxIter 300
+END
+%maxcore 4000
+%pal nprocs 16 end
+* XYZFILE 0 3 PI7.xyz #Triplet 3CT
+```
+
+
+```text
+extract the text of 
+"---------------------------------
+CARTESIAN NON-ADIABATIC COUPLINGS
+          <GS|d/dx|ES>
+        with built-in ETFs
+---------------------------------
+
+   1   C   :   -0.289474245    0.115032465   -0.035571352
+   2   C   :    0.048823373    0.179764159    0.105771721
+   3   C   :   -0.689728883    0.137789768   -0.179792337
+   4   C   :    0.665269311    0.119418336    0.303792690
+   5   C   :   -0.325768797    0.021894936   -0.088295309
+   6   C   :    0.203959990   -0.085507589    0.020806385
+   7   C   :    0.992782092   -1.871475150   -0.878468100
+   8   C   :   -0.508404636   -0.137775144   -0.382451370
+   9   C   :    0.387260953    0.341736892    0.434340304
+  10   C   :   -0.184520783    0.119487873   -0.027607809
+  11   H   :    0.048854056    0.073097287    0.073177837
+  12   C   :    0.106606435    0.182938866    0.187693359
+  13   C   :   -0.057039524   -0.118552976   -0.112479734
+  14   C   :    0.140988376    0.156928691    0.198306559
+  15   H   :   -0.018894300    0.009869994    0.005050120
+  16   H   :   -0.107099311    0.033027869   -0.025936425
+  17   H   :    0.136042709    0.088059961    0.105024430
+  18   H   :   -0.037578643   -0.001953270   -0.020410559
+  19   H   :    0.002273940    0.017100283    0.012021621
+  20   H   :    0.030776093    0.016052524    0.025268256
+  21   H   :   -0.173944757    0.000067704   -0.089134639
+  22   C   :    0.043792599    0.063178439    0.027106373
+  23   C   :    0.108256642   -0.718098521    0.103499284
+  24   C   :    0.321475344   -0.410934205   -0.339477982
+  25   C   :    0.073657457   -0.145698248   -0.020185820
+  26   C   :   -0.223829738    0.177912588    0.224928614
+  27   C   :   -0.035291060    0.175907337   -0.046669335
+  28   C   :    0.114876632   -0.075455498   -0.137208397
+  29   C   :   -0.041223009   -0.232656425    0.165282285
+  30   H   :   -0.030585246   -0.029641922    0.057169761
+  31   C   :    0.082320491    0.387845423   -0.316961276
+  32   C   :   -0.251020403    0.041857226    0.358471058
+  33   H   :    0.010802308    0.040728130   -0.038745281
+  34   C   :    0.104125329    0.015370978   -0.171162993
+  35   C   :   -0.306227966    0.382122996    0.275393668
+  36   H   :   -0.001159371   -0.006933714    0.007874395
+  37   H   :    0.007830970    0.010339190   -0.016707362
+  38   C   :   -0.132158442    0.449985749   -0.017657908
+  39   H   :   -0.010053361   -0.005797986    0.018513623
+  40   H   :    0.003466383    0.002573203   -0.007170320
+  41   H   :   -0.011776465   -0.011262563    0.025790077
+  42   H   :    0.012752527    0.011495532   -0.024779567
+  43   O   :   -0.513838018    0.936814792    0.436227814
+  44   C   :   -0.270627444    0.551033333    0.134530684
+  45   C   :   -0.012414031   -0.160441377   -0.085333639
+  46   C   :    0.142036326   -0.101087119    0.021049790
+  47   C   :    0.055494076   -0.002634241    0.026356676
+  48   H   :   -0.021965007    0.007620352   -0.006921469
+  49   C   :   -0.034478187   -0.034123594   -0.033967450
+  50   H   :    0.008130342    0.019037159    0.013409726
+  51   C   :    0.009724104   -0.019093967   -0.004516808
+  52   H   :    0.016236918   -0.026004597   -0.004823687
+  53   H   :    0.010900111   -0.027189683   -0.008131685
+  54   H   :    0.004611606   -0.009151934   -0.002204702
+  55   N   :    0.390991121   -0.650351115   -0.242016454
+
+Difference to translation invariance:
+           :   -0.0039830144    0.0042691953    0.0020673453
+
+Norm of the NACs                   ...    3.5487975599
+RMS NACs                           ...    0.2762735153
+MAX NAC                            ...    1.8714751500
+```
+
+
+
+
+
+

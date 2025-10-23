@@ -156,6 +156,18 @@ The extended 2nd+HT formalism reveals that a low-lying $T_n$ state of contrastin
 
 By retaining quantum Franck–Condon sums, explicitly coupling SOC derivatives, and embedding indirect NA-SVC pathways, Hagai et al. achieve a single rate expression that reproduces both the temperature dependence and absolute magnitude of RISC across 100 K–300 K, from rigid polymer films to dilute solutions. Their derivations also demystify why the venerable Marcus equation sometimes “works” and, crucially, when it cannot. The article thus sets a new benchmark for predictive modelling and paves the way for rational, heavy-atom-free OLED emitters with near-unity internal quantum efficiencies.
 
+<img width="521" height="82" alt="image" src="https://github.com/user-attachments/assets/117e33d5-3fb2-4529-8fc8-c63323ac1c43" />
+ Equation 2
+<img width="885" height="253" alt="image" src="https://github.com/user-attachments/assets/de40b402-d7b4-41f3-9fdc-56d3db33b2c3" />
+<img width="762" height="158" alt="image" src="https://github.com/user-attachments/assets/3961fb75-8cc5-4771-92a6-4992abee8c57" />
+<img width="830" height="216" alt="image" src="https://github.com/user-attachments/assets/a1132187-0fda-4665-91e6-ad6470e21df4" />
+<img width="862" height="309" alt="image" src="https://github.com/user-attachments/assets/6ab03d19-3f64-4ff1-85c6-f816a9467706" />
+<img width="864" height="500" alt="image" src="https://github.com/user-attachments/assets/699113c5-ead0-4f2b-81a9-74985fa62fb4" />
+<img width="837" height="416" alt="image" src="https://github.com/user-attachments/assets/2f2f900a-6422-41bf-9a0d-585c025ae680" />
+
+
+
+
 
 To calculate the Hamiltonian of the coupling use the code below
 ```python

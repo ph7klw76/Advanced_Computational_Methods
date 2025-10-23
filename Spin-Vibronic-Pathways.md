@@ -481,7 +481,7 @@ python eq2_effective_coupling.py \
   --soc_units hartree \
   --out_prefix results/my_system
 
-The gap is the 3LE-3CT gap
+The gap is the 3LE-3CT gap ontained by relaxing 3LE and get the gap based on struture.
 
 PI7.T1,hess is the T1 opt freq
 the soc is the ISC spin-vibronic output per mode using ISC moduie

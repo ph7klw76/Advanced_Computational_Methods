@@ -629,7 +629,7 @@ RMS NACs                           ...    0.2762735153
 MAX NAC                            ...    1.8714751500
 ```
 
-
+Triplet state has 3sublevel, wity zero magnetic field, it is degenerate and 3xVeff should be used.
 
 
 

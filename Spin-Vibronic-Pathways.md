@@ -171,13 +171,38 @@ By retaining quantum Franck–Condon sums, explicitly coupling SOC derivatives, 
 
 To calculate the Hamiltonian of the coupling use the code below
 ```python
-# Write a reusable Python script that computes Eq. 2 effective coupling from:
-#  - a Turbomole-format .hess file,
-#  - a NACME text file containing the "CARTESIAN NON-ADIABATIC COUPLINGS" block,
-#  - an ORCA SOCME displacement file or ORCA .out that includes "Reference SOC" and
-#    lines "<<Displacing mode k (+|-)>>  socme = Re, Im"
-# The script will output: V_eff, a CSV of per-mode data, and a CSV of ranked contributions.
-''
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Compute the Eq. 2 effective (³LE-mediated, HT-dominated) spin–vibronic coupling
+
+Inputs:
+  - Turbomole-format .hess at the same geometry R used for NAC/SOC
+  - NACME text file containing the ETF-corrected
+      "CARTESIAN NON-ADIABATIC COUPLINGS  <GS|d/dx|ES>"
+    block (x,y,z per atom; units 1/bohr)
+  - ORCA ESD(ISC) output or text listing:
+      "Reference SOC (Re and Im): ..."  and lines like
+      "<<Displacing mode k (+/-)>>  socme = Re, Im"
+  - ΔE (eV) for κ_k = ΔE * d^(k)  (optionally a separate denominator)
+  - Herzberg–Teller displacement step ΔQ (mass-weighted; default 0.01 bohr√amu)
+
+Outputs:
+  - Prints V_eff in eV, cm^-1, and µeV
+  - CSV: *_per_mode.csv with frequencies, d^(k), κ_k, g_k, <Q^2>, contribution
+  - CSV: *_top30.csv ranked by |contribution|
+
+Usage example:
+  python eq2_effective_coupling.py \
+    --hess PI7_T1.hess \
+    --nac  NAC.txt \
+    --soc  P7-3.out \
+    --gap  0.087 \
+    --dq   0.01 --dq_unit bohr \
+    --soc_units hartree \
+    --out_prefix results/my_system
+"""
+
 import re
 import math
 import argparse
@@ -186,12 +211,10 @@ from typing import Dict, Tuple, List, Optional
 import numpy as np
 import pandas as pd
 import sys
-import os
 
 HA_TO_EV = 27.211386245988
-EV_TO_HA = 1/HA_TO_EV
+EV_TO_HA = 1 / HA_TO_EV
 BOHR_TO_ANG = 0.529177210903
-ANG_TO_BOHR = 1/BOHR_TO_ANG
 CM_TO_HZ = 2.997_924_58e10  # cm^-1 -> Hz
 HBAR = 1.054_571_817e-34    # J*s
 KB = 1.380_649e-23          # J/K
@@ -200,9 +223,9 @@ A_M = 1e-10
 
 @dataclass
 class HessData:
-    masses_amu: np.ndarray    # shape (N,)
-    modes: np.ndarray         # shape (3N, 3N) mass-weighted eigenvectors (columns)
-    freqs_cm: np.ndarray      # shape (3N,)
+    masses_amu: np.ndarray
+    modes: np.ndarray       # (3N, 3N): mass-weighted eigenvectors (columns)
+    freqs_cm: np.ndarray    # (3N,)
 
 def parse_hess(path: str) -> HessData:
     with open(path, 'r', errors='ignore') as f:
@@ -210,16 +233,15 @@ def parse_hess(path: str) -> HessData:
 
     def extract_section(lines, start_label):
         start = None
-        for i,l in enumerate(lines):
+        for i, l in enumerate(lines):
             if l.strip() == start_label:
-                start = i+1
+                start = i + 1
                 break
         if start is None:
             return None
-        # end at next $section or EOF
         end = len(lines)
         for i in range(start, len(lines)):
-            if lines[i].startswith('$') and i != start-1:
+            if lines[i].startswith('$') and i != start - 1:
                 end = i
                 break
         return [l.rstrip('\n') for l in lines[start:end]]
@@ -229,7 +251,7 @@ def parse_hess(path: str) -> HessData:
         raise RuntimeError("Could not find $atoms section in .hess")
     n_atoms = int(atoms_lines[0].strip())
     masses_amu = []
-    for i in range(1, 1+n_atoms):
+    for i in range(1, 1 + n_atoms):
         parts = atoms_lines[i].split()
         masses_amu.append(float(parts[1]))
     masses_amu = np.array(masses_amu)
@@ -239,7 +261,7 @@ def parse_hess(path: str) -> HessData:
         raise RuntimeError("Could not find $vibrational_frequencies in .hess")
     nfreq = int(freq_lines[0].strip())
     freqs_cm = np.zeros(nfreq)
-    for i in range(1, 1+nfreq):
+    for i in range(1, 1 + nfreq):
         parts = freq_lines[i].split()
         idx = int(parts[0])
         freqs_cm[idx] = float(parts[1])
@@ -247,15 +269,13 @@ def parse_hess(path: str) -> HessData:
     nm_lines = extract_section(lines, '$normal_modes')
     if nm_lines is None:
         raise RuntimeError("Could not find $normal_modes in .hess")
-    dims = list(map(int, nm_lines[0].split()))
-    nrows, ncols = dims
+    nrows, ncols = map(int, nm_lines[0].split())
     U = np.zeros((nrows, ncols))
     i = 1
     while i < len(nm_lines):
         header = nm_lines[i].strip()
         if (not header) or header.startswith('#'):
             break
-        # header lists column indices
         cols = [int(s) for s in header.split()]
         i += 1
         rows_read = 0
@@ -268,105 +288,117 @@ def parse_hess(path: str) -> HessData:
                 row_idx = int(parts[0])
             except ValueError:
                 break
-            for j,c in enumerate(cols):
-                if 1+j < len(parts):
-                    val = float(parts[1+j].replace('D','E'))
+            for j, c in enumerate(cols):
+                if 1 + j < len(parts):
+                    val = float(parts[1 + j].replace('D', 'E'))
                     U[row_idx, c] = val
             i += 1
             rows_read += 1
-        # continue to next block
     return HessData(masses_amu=masses_amu, modes=U, freqs_cm=freqs_cm)
 
 def parse_nac_cart(path: str) -> np.ndarray:
-    """Parse lines of the form:
-       '  1   C   :   -0.289474245    0.115032465   -0.035571352'
-       Returns flat array of length 3N, units 1/bohr.
+    """
+    Parse lines like:
+      '  1   C   :   -0.289474245    0.115032465   -0.035571352'
+    Returns flat array of length 3N (x,y,z for each atom), units 1/bohr.
     """
     vals: List[float] = []
     with open(path, 'r', errors='ignore') as f:
         for line in f:
-            if ':' not in line: 
+            if ':' not in line:
                 continue
-            parts = line.replace(':',' ').split()
-            if len(parts) < 5: 
+            parts = line.replace(':', ' ').split()
+            if len(parts) < 5:
                 continue
             try:
-                # last three tokens should be floats (x,y,z)
                 xs = [float(parts[-3]), float(parts[-2]), float(parts[-1])]
                 vals.extend(xs)
-            except:
+            except Exception:
                 continue
     if not vals:
-        raise RuntimeError("No NAC Cartesian components found in file")
+        raise RuntimeError("No NAC Cartesian components found in NAC file")
     return np.array(vals, dtype=float)
 
 @dataclass
 class SOCData:
     soc0_re: float
     soc0_im: float
-    plus: Dict[int,float]   # mode_index(1-based) -> Im(SOC(+ΔQ))
-    minus: Dict[int,float]  # mode_index(1-based) -> Im(SOC(-ΔQ))
+    plus: Dict[int, float]   # mode_index(1-based) -> Im(SOC(+ΔQ))
+    minus: Dict[int, float]  # mode_index(1-based) -> Im(SOC(-ΔQ))
 
 def parse_socme(path: str) -> SOCData:
+    """
+    Robust line parser for ORCA ESD(ISC) SOCME output.
+    Accepts:
+      - 'Reference SOC (Re and Im ...): re, im'
+      - '<<Displacing mode k (+/-)>>  socme = re, im'
+    Stores the *imaginary* part per displaced mode, since that's what couples singlet-triplet.
+    """
     soc0_re = 0.0
     soc0_im = 0.0
-    have_ref = False
-    plus: Dict[int,float] = {}
-    minus: Dict[int,float] = {}
-    patt_ref = re.compile(r'Reference\s+SOC\s*\(Re\s+and\s+Im\)\s*:\s*([-\d.Ee]+)\s*,\s*([-\d.Ee]+)')
-    patt_displ = re.compile(r'Displacing\s+mode\s+(\d+)\s+\(([+-])\)\)\s*.*?socme\s*=\s*([-\d.Ee]+)\s*,\s*([-\d.Ee]+)')
-    # Some variants have '>>' formatting; be flexible:
-    patt_displ2 = re.compile(r'Displacing\s+mode\s+(\d+)\s+\(([+-])\).*?socme\s*=\s*([-\d.Ee]+)\s*,\s*([-\d.Ee]+)')
+    plus: Dict[int, float] = {}
+    minus: Dict[int, float] = {}
 
     with open(path, 'r', errors='ignore') as f:
-        text = f.read()
-        m = patt_ref.search(text)
-        if m:
-            soc0_re = float(m.group(1)); soc0_im = float(m.group(2)); have_ref=True
-        for patt in (patt_displ, patt_displ2):
-            for mm in patt.finditer(text):
-                idx = int(mm.group(1))
-                sign = mm.group(2)
-                re_part = float(mm.group(3))
-                im_part = float(mm.group(4))
+        for line in f:
+            L = line.strip()
+            # Reference line
+            if L.lower().startswith("reference soc") or L.lower().startswith("reference socme"):
+                # e.g. 'Reference SOC (Re and Im): 0.000000e+00, -1.392555e-08'
+                if ":" in L:
+                    right = L.split(":", 1)[1]
+                    toks = [t.strip() for t in right.split(",")]
+                    if len(toks) >= 2:
+                        try:
+                            soc0_re = float(toks[0]); soc0_im = float(toks[1])
+                        except Exception:
+                            pass
+            # Displacing mode lines
+            if "Displacing mode" in L and "socme" in L.lower():
+                # Extract index and sign
+                m = re.search(r'Displacing\s+mode\s+(\d+)\s*\(', L)
+                if not m:
+                    continue
+                idx = int(m.group(1))
+                sign = '+' if '(+)' in L else ('-' if '(-)' in L else '?')
+                # Extract re, im after 'socme ='
+                try:
+                    after = L.split("socme", 1)[1].split("=")[1]
+                    re_im = [t.strip() for t in after.split(",")]
+                    re_part = float(re_im[0]); im_part = float(re_im[1])
+                except Exception:
+                    continue
                 if sign == '+':
                     plus[idx] = im_part
-                else:
+                elif sign == '-':
                     minus[idx] = im_part
-    if not have_ref:
-        # try a looser pattern: "socme = re, im" near "Reference SOC"
-        m2 = re.search(r'Reference.*?soc.*?([-\d.Ee]+)\s*,\s*([-\d.Ee]+)', text, re.IGNORECASE|re.DOTALL)
-        if m2:
-            soc0_re = float(m2.group(1)); soc0_im = float(m2.group(2)); have_ref=True
-    if not plus:
-        # try line-per-record file: "<index> <+|-> <im>"
-        for line in text.splitlines():
-            m3 = re.match(r'\s*(\d+)\s*([+-])\s*([-\d.Ee]+)\s*$', line.strip())
-            if m3:
-                idx = int(m3.group(1)); sign = m3.group(2); im_part = float(m3.group(3))
-                (plus if sign=='+' else minus)[idx] = im_part
-    if not have_ref and not plus:
-        raise RuntimeError("Could not parse SOCME data from file")
+
+    if not plus and not minus:
+        raise RuntimeError("Could not parse any displaced SOCMEs from file")
+
     return SOCData(soc0_re=soc0_re, soc0_im=soc0_im, plus=plus, minus=minus)
 
 def thermal_Q2(freq_cm: np.ndarray, T: float) -> np.ndarray:
-    """<Q^2> for mass-weighted normal coordinate, return in amu*Å^2"""
-    omega = 2*np.pi*CM_TO_HZ*freq_cm
-    x = HBAR*omega/(2*KB*T)
-    # avoid overflow at very low frequencies
-    coth = np.cosh(x)/np.sinh(x)
-    Q2_SI = (HBAR/(2*omega)) * coth  # kg*m^2
-    return Q2_SI / (AMU_KG * A_M**2) # amu Å^2
+    """
+    <Q^2> for mass-weighted normal coordinate at temperature T.
+    Returned in amu*Å^2.
+    """
+    omega = 2 * math.pi * CM_TO_HZ * freq_cm
+    x = HBAR * omega / (2 * KB * T)
+    coth = np.cosh(x) / np.sinh(x)
+    Q2_SI = (HBAR / (2 * omega)) * coth  # kg*m^2
+    return Q2_SI / (AMU_KG * A_M**2)     # amu Å^2
 
 def compute_eq2(hess_path: str, nac_path: str, soc_path: str,
-                delta_e_eV: float, delta_e_den_eV: Optional[float]=None,
-                delta_Q: Optional[float]=None, delta_Q_unit: str='bohr',
-                temperature: float=298.15, soc_units: str='hartree') -> Tuple[float, pd.DataFrame, pd.DataFrame]:
-    """Return V_eff (eV), per-mode dataframe, and ranked contribution dataframe."""
+                delta_e_eV: float, delta_e_den_eV: Optional[float] = None,
+                delta_Q: Optional[float] = None, delta_Q_unit: str = 'bohr',
+                temperature: float = 298.15, soc_units: str = 'hartree'):
+    """
+    Returns: (V_eff in eV, per-mode DataFrame, ranked DataFrame)
+    """
     if delta_e_den_eV is None:
         delta_e_den_eV = delta_e_eV
     if delta_Q is None:
-        # default finite-difference step: 0.01 bohr√amu
         delta_Q = 0.01
         delta_Q_unit = 'bohr'
     if delta_Q_unit.lower().startswith('bohr'):
@@ -374,56 +406,59 @@ def compute_eq2(hess_path: str, nac_path: str, soc_path: str,
     else:
         delta_Q_A = delta_Q
 
+    # Parse Hessian / modes / masses
     hd = parse_hess(hess_path)
     masses = hd.masses_amu
-    U = hd.modes  # (3N, 3N), columns are modes
+    U = hd.modes
     freqs_cm = hd.freqs_cm
 
+    # Parse NACME (Cartesian)
     nac_cart = parse_nac_cart(nac_path)  # length 3N
-    if len(nac_cart) != 3*len(masses):
+    if len(nac_cart) != 3 * len(masses):
         raise RuntimeError(f"NAC length {len(nac_cart)} != 3N ({3*len(masses)})")
 
-    # Build mass per Cartesian and mass-weighted NAC
+    # Mass-weighted NAC
     mass_per_cart = np.repeat(masses, 3)
     d_mw = nac_cart / np.sqrt(mass_per_cart)   # 1/(bohr*sqrt(amu))
 
-    # project onto vibrational subspace (skip first 6 columns: translations/rotations)
+    # Project onto vibrational modes (skip 6 TR)
     start_mode = 6
     U_vib = U[:, start_mode:]
-    d_k = U_vib.T @ d_mw  # shape (3N-6,)
+    d_k = U_vib.T @ d_mw  # (3N-6,)
 
-    # vibronic constants κ_k = ΔE * d_k ; report in eV/(Å√amu)
+    # κ_k in eV/(Å√amu)
     kappa_eV_per_A = (delta_e_eV * d_k) / BOHR_TO_ANG
 
-    # Thermal <Q^2> per mode
+    # Thermal <Q^2> in amu Å^2
     freq_vib = freqs_cm[start_mode:]
-    Q2 = thermal_Q2(freq_vib, temperature)  # amu Å^2
+    Q2 = thermal_Q2(freq_vib, temperature)
 
-    # SOC slope proxy s_k = g_k ΔQ from SOC displacement file
+    # SOCME (+/-) => s_k = g_k * ΔQ
     soc = parse_socme(soc_path)
+
     def soc_to_eV(x):
-        return x*HA_TO_EV if soc_units.lower().startswith('hart') else x
+        return x * HA_TO_EV if soc_units.lower().startswith('hart') else x
 
     s_k = np.zeros_like(d_k)
     n_vib = len(d_k)
-    for k in range(1, n_vib+1):
+    for k in range(1, n_vib + 1):
         if k in soc.minus:
-            s_k[k-1] = 0.5*(soc_to_eV(soc.plus.get(k, soc.soc0_im)) - soc_to_eV(soc.minus[k]))
+            s_k[k - 1] = 0.5 * (soc_to_eV(soc.plus.get(k, soc.soc0_im)) - soc_to_eV(soc.minus[k]))
         else:
-            s_k[k-1] = soc_to_eV(soc.plus.get(k, soc.soc0_im)) - soc_to_eV(soc.soc0_im)
+            s_k[k - 1] = soc_to_eV(soc.plus.get(k, soc.soc0_im)) - soc_to_eV(soc.soc0_im)
 
-    # Per-mode contribution (signed)
-    g_k = s_k / delta_Q_A   # eV/(Å√amu)
-    contrib_k_eV2 = g_k * kappa_eV_per_A * Q2  # eV^2
+    # g_k = s_k / ΔQ   (units: eV/(Å√amu))
+    g_k = s_k / delta_Q_A
 
-    # Assemble V_eff
+    # Per-mode contribution to numerator (eV^2): g_k * κ_k * <Q^2>
+    contrib_k_eV2 = g_k * kappa_eV_per_A * Q2
+
     numerator_eV2 = float(np.sum(contrib_k_eV2))
     V_eff_eV = numerator_eV2 / delta_e_den_eV
 
-    # Build per-mode DataFrame
     df = pd.DataFrame({
-        "vib_index_1based": np.arange(1, n_vib+1),
-        "global_mode_index": np.arange(start_mode, start_mode+n_vib),
+        "vib_index_1based": np.arange(1, n_vib + 1),
+        "global_mode_index": np.arange(start_mode, start_mode + n_vib),
         "frequency_cm^-1": freq_vib,
         "d_k_1/(bohr*sqrt(amu))": d_k,
         "kappa_eV_per_A_sqrtamu": kappa_eV_per_A,
@@ -437,22 +472,21 @@ def compute_eq2(hess_path: str, nac_path: str, soc_path: str,
 
 def main():
     ap = argparse.ArgumentParser(description="Compute Eq. 2 effective coupling from .hess, NACME, and SOCME files.")
-    ap.add_argument("--hess", required=True, help="Path to Turbomole-format .hess")
-    ap.add_argument("--nac", required=True, help="Path to NACME text file (CARTESIAN NON-ADIABATIC COUPLINGS block)")
-    ap.add_argument("--soc", required=True, help="Path to SOCME displacement file or ORCA .out")
-    ap.add_argument("--gap", type=float, required=True, help="ΔE (eV) between the two triplet states (for κ_k)")
-    ap.add_argument("--den", type=float, default=None, help="Denominator ΔE_TT (eV). If omitted, uses --gap")
-    ap.add_argument("--dq", type=float, default=None, help="HT displacement step ΔQ (default 0.01 bohr√amu if not found)")
-    ap.add_argument("--dq_unit", choices=["bohr","ang"], default="bohr", help="Unit for ΔQ (bohr or ang for Å)")
+    ap.add_argument("--hess", required=True, help="Turbomole-format .hess at geometry R")
+    ap.add_argument("--nac", required=True, help="NACME text (CARTESIAN NON-ADIABATIC COUPLINGS block)")
+    ap.add_argument("--soc", required=True, help="ORCA ESD(ISC) .out or text with Reference SOC and Displacing mode k")
+    ap.add_argument("--gap", type=float, required=True, help="ΔE (eV) for κ_k = ΔE * d^(k)")
+    ap.add_argument("--den", type=float, default=None, help="Denominator ΔE_TT (eV) in Eq. 2 (default = --gap)")
+    ap.add_argument("--dq", type=float, default=None, help="HT displacement step ΔQ (mass-weighted). Default 0.01 bohr√amu if omitted.")
+    ap.add_argument("--dq_unit", choices=["bohr", "ang"], default="bohr", help="Unit for ΔQ (bohr or ang for Å)")
     ap.add_argument("--T", type=float, default=298.15, help="Temperature (K) for <Q^2>")
-    ap.add_argument("--soc_units", choices=["hartree","eV"], default="hartree", help="Units of SOCME values in the SOC file")
+    ap.add_argument("--soc_units", choices=["hartree", "eV"], default="hartree", help="SOCME unit in file (ORCA prints Hartree)")
     ap.add_argument("--out_prefix", default="eq2_results", help="Prefix for output CSVs")
 
     args = ap.parse_args()
 
     Veff, df, df_rank = compute_eq2(args.hess, args.nac, args.soc,
-                                    delta_e_eV=args.gap,
-                                    delta_e_den_eV=args.den,
+                                    delta_e_eV=args.gap, delta_e_den_eV=args.den,
                                     delta_Q=args.dq, delta_Q_unit=args.dq_unit,
                                     temperature=args.T, soc_units=args.soc_units)
     print(f"Effective coupling V_eff = {Veff:.6e} eV")
@@ -466,20 +500,13 @@ def main():
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("Usage example:")
-        print("  python eq2_effective_coupling.py --hess PI7_T1.hess --nac nac.txt --soc P7-3.out --gap 0.087 --dq 0.01 --dq_unit bohr")
+        print("  python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --dq 0.01 --dq_unit bohr --soc_units hartree")
         sys.exit(0)
     main()
+
 ```
 
-python eq2_effective_coupling.py \
-  --hess PI7_T1.hess \
-  --nac  nac.txt \
-  --soc  P7-3.out \
-  --gap  0.087 \
-  --dq   0.01 \
-  --dq_unit bohr \
-  --soc_units hartree \
-  --out_prefix results/my_system
+python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --dq 0.01 --dq_unit bohr --soc_units hartree --out_prefix results
 
 The gap is the 3LE-3CT gap ontained by relaxing 3LE and get the gap based on struture.
 

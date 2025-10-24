@@ -513,6 +513,15 @@ The gap is the 3LE-3CT gap ontained by relaxing 3LE and get the gap based on str
 PI7.T1,hess is the T1 opt freq
 the soc is the ISC spin-vibronic output per mode using ISC moduie
 
+[hess](PI7_T1.hess) --[nac](NAC.txt) --[soc](P7-3.out)
+<img width="653" height="573" alt="image" src="https://github.com/user-attachments/assets/f506287f-5ddf-40a8-9969-c17e123e9838" />
+
+note this is only one tripet sub;evel and there is 3 and hence u need to times 3 due to degeneracy.
+
+
+<img width="640" height="151" alt="image" src="https://github.com/user-attachments/assets/618ac661-daff-49bb-9937-91868958d3f3" />
+
+
 eg
 ```text
 ! def2-SVP ESD(ISC) CPCM(Toluene) RIJCOSX 

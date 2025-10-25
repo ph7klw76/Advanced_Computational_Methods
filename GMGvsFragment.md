@@ -1,4 +1,4 @@
-## Electronic coupling gets used to mean two closely related but different things.
+## Two types of Electronic coupling.
 
 The Generalized Mulliken–Hush (GMH) approach gives you a coupling between electronic states, while the fragment-orbital Fock–overlap (FO, often called FO/DFT or FODFT-style) method gives you a coupling between specific molecular orbitals on different fragments. Both quantify “how strongly things interact,” but they live in different bases and answer different questions.
 

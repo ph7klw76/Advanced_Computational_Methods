@@ -396,22 +396,24 @@ Energy Barriers for Rotation and Conformational Isomerism
 4. [Reorganization Energy for rISC](reorganization.md)
    
 6. [Franck-Condon (FC) intensities (IntensityFC) and Herzberg-Teller (HT) intensities ](FC_HT.md)
-
-8. Spectral Line Shapes and Broadening Mechanisms
    
-9. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
+8. [GMH vs. Fragment-Orbital (Fock–Overlap) Coupling](GMGvsFragment.md)
 
-10. Anti-Stokes Fluorescence
+9. Spectral Line Shapes and Broadening Mechanisms
    
-11. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+10. [Spin-Orbit Coupling](Spin–Orbit_Coupling.md): Relevant for phosphorescence in OLEDs.
 
-12. [Quantum‐Mechanical Portrait of Non‐Radiative Decay](Non‐RadiativeDecay.md)
+11. Anti-Stokes Fluorescence
    
-13. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
+12. [Intersystem Crossing and Internal Conversion](ISC_IC.md)
+
+13. [Quantum‐Mechanical Portrait of Non‐Radiative Decay](Non‐RadiativeDecay.md)
+   
+14. [Excited States via RPA, CIS and SF-TDA](Excited_States1.md)
     
-14. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
+15. [Excited State Methods: ROCIS, DFT/ROCIS, and EOM-CCSD](Excited_State_Methods2.md)
     
-15. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
+16. [Excited States via STEOM-CCSD, IH-FSMR-CCSD , PNO-based coupled cluster , DLPNO-STEOM-CCSD](Excited_state_method3.md)
 
 ### E. Photophysics and Photochemistry
 

@@ -145,6 +145,96 @@ In this example:
 
    $\sigma^2 = \frac{1}{n - p} \sum_{i=1}^{n} \left( y_i - f(x_i; \theta) \right)^2$
 
+## Diagonal elements pcov[i, i] (variances):
+
+Each diagonal element is the variance of the estimator for parameter $p_i$.
+
+1σ standard error: $se_i = \sqrt{\text{pcov}[i, i]}$.
+
+Approx. 95% CI: $p_i \pm 1.96 \cdot se_i$ (or use a t-multiplier with dof = $N - m$).
+
+## Off-diagonal elements pcov[i, j] (covariances):
+
+Each off-diagonal term is the covariance between the estimates of $p_i$ and $p_j$.
+
+Turn these into correlations to see coupling strength:
+
+$$
+\text{corr}(p_i, p_j) = \frac{\text{pcov}[i, j]}{\sqrt{\text{pcov}[i, i] \cdot \text{pcov}[j, j]}}
+$$
+
+Values near +1/−1 mean the two parameters trade off strongly in the fit; values near 0 mean they’re largely independent.
+
+---
+
+## Diagonal elements pcov[i, i] (variances):
+
+Each diagonal element is the variance of the estimator for parameter $p_i$.
+
+1σ standard error: $se_i = \sqrt{\text{pcov}[i, i]}$.
+
+Approx. 95% CI: $p_i \pm 1.96 \cdot se_i$ (or use a t-multiplier with dof = $N - m$).
+
+## Off-diagonal elements pcov[i, j] (covariances):
+
+Each off-diagonal term is the covariance between the estimates of $p_i$ and $p_j$.
+
+Turn these into correlations to see coupling strength:
+
+$$
+\text{corr}(p_i, p_j) = \frac{\text{pcov}[i, j]}{\sqrt{\text{pcov}[i, i] \cdot \text{pcov}[j, j]}}
+$$
+
+Values near +1/−1 mean the two parameters trade off strongly in the fit; values near 0 mean they’re largely independent.
+
+---
+
+## Diagonal elements pcov[i, i] (variances):
+
+Each diagonal element is the variance of the estimator for parameter $p_i$.
+
+1σ standard error: $se_i = \sqrt{\text{pcov}[i, i]}$.
+
+Approx. 95% CI: $p_i \pm 1.96 \cdot se_i$ (or use a t-multiplier with dof = $N - m$).
+
+## Off-diagonal elements pcov[i, j] (covariances):
+
+Each off-diagonal term is the covariance between the estimates of $p_i$ and $p_j$.
+
+Turn these into correlations to see coupling strength:
+
+$$
+\text{corr}(p_i, p_j) = \frac{\text{pcov}[i, j]}{\sqrt{\text{pcov}[i, i] \cdot \text{pcov}[j, j]}}
+$$
+
+Values near +1/−1 mean the two parameters trade off strongly in the fit; values near 0 mean they’re largely independent.
+
+---
+
+## Diagonal elements pcov[i, i] (variances):
+
+Each diagonal element is the variance of the estimator for parameter $p_i$.
+
+1σ standard error: $se_i = \sqrt{\text{pcov}[i, i]}$.
+
+Approx. 95% CI: $p_i \pm 1.96 \cdot se_i$ (or use a t-multiplier with dof = $N - m$).
+
+## Off-diagonal elements pcov[i, j] (covariances):
+
+Each off-diagonal term is the covariance between the estimates of $p_i$ and $p_j$.
+
+Turn these into correlations to see coupling strength:
+
+$$
+\text{corr}(p_i, p_j) = \frac{\text{pcov}[i, j]}{\sqrt{\text{pcov}[i, i] \cdot \text{pcov}[j, j]}}
+$$
+
+Values near +1/−1 mean the two parameters trade off strongly in the fit; values near 0 mean they’re largely independent.
+
+---
+
+## 1-σ standard deviation (uncertainty) of parameter $p_k$ is square root of $\text{pcov}[k, k]$
+
 
 ## Conclusion
 

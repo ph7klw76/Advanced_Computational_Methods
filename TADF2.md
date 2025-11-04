@@ -150,6 +150,8 @@ The ground-state population is not written explicitly because
 $S_0(t) = 1 - S(t) - T(t)$  
 by conservation of excitons.
 
+
+
 # 2 Enumerate every elementary rate
 
 | Symbol     | Process                                              | Acts on |
@@ -187,6 +189,111 @@ $$
 
 which reduce numerically to the familiar prompt ($\tau_{PF} = 1 / k_+$) and delayed ($\tau_{DF} = 1 / k_-$) lifetimes after extra assumptions are introduced.  
 But Eq. (1) itself remains exact.
+
+## Derivation (exact, no approximations)
+
+Let
+
+$$
+\mathbf{K} =
+\begin{pmatrix}
+ -a & k_{\mathrm{RISC}} \\
+ k_{\mathrm{ISC}} & -b
+\end{pmatrix},
+\quad
+a \equiv k_{rS} + k_{nrS} + k_{ISC},
+\quad
+b \equiv k_{rT} + k_{nrT} + k_{RISC}.
+$$
+
+The characteristic polynomial is
+
+$$
+\det(\mathbf{K} - \lambda \mathbf{I}) = (-a - \lambda)(-b - \lambda) - k_{ISC}k_{RISC} = 0.
+$$
+
+Let the observable decay constants from the transient be $k_p, k_d > 0$ (so the eigenvalues are $\lambda_1 = -k_p$, $\lambda_2 = -k_d$). Then
+
+$$
+k_p + k_d = a + b, \qquad
+k_p k_d = a b - k_{ISC} k_{RISC}.
+$$
+
+Eliminate $b$ using the first relation ($b = k_p + k_d - a$) and solve the second for $k_{\mathrm{RISC}}$:
+
+$$
+k_{\mathrm{RISC}} =
+\frac{a\,(k_p + k_d - a) - k_p k_d}{k_{ISC}}
+= -\,\frac{(k_p - a)(k_d - a)}{k_{ISC}}.
+$$
+
+This is an identity that follows from the eigenvalue relations, i.e., it’s exact.
+
+
+### How to obtain ISC with no approximation
+1. Low-temperature TRPL (+ absolute PLQY) 
+
+Cool to a rigid glass where $k_{\mathrm{RISC}} \approx 0$. The fluorescence decay becomes single-exponential with lifetime
+
+$$
+\tau_{SLT} = \frac{1}{a}, \quad a = k_{rS} + k_{nrS} + k_{ISC}.
+$$
+
+Measure the absolute fluorescence quantum yield at low-T, $\Phi_{FLT}$ (oxygen-free). Then
+
+$$
+\Phi_{FLT} = \frac{k_{rS}}{a}, \quad
+\Phi_{TLT} = \frac{k_{ISC}}{a}, \quad
+\Phi_{nrSLT} = \frac{k_{nrS}}{a}, \quad
+\Phi_{FLT} + \Phi_{TLT} + \Phi_{nrSLT} = 1.
+$$
+
+Hence,
+
+$$
+k_{ISC} = \Phi_{TLT} \cdot a = \frac{\Phi_{TLT}}{\tau_{SLT}}.
+$$
+
+If nonradiative singlet loss is negligible at low-T ($\Phi_{nrSLT} \approx 0$), you can use
+
+$$
+k_{ISC} \approx \frac{1 - \Phi_{FLT}}{\tau_{SLT}}.
+$$
+
+---
+2 Room-temperature global fit: TRPL (+ gated yields) + one more observable
+
+Measure at RT:
+
+Lifetimes $\tau_p = 1/k_p$, $\tau_d = 1/k_d$ from TRPL,
+
+Gated prompt and delayed fluorescence quantum yields $\Phi_P, \Phi_D$ (absolute, by time-gated PLQY).
+
+The exact relations for the singlet population coefficients are
+
+$$
+A = \frac{a - k_d}{k_p - k_d}, \quad
+B = \frac{k_p - a}{k_p - k_d},
+$$
+
+so the prompt and delayed photon yields are
+
+$$
+\Phi_P = \frac{k_{rS}}{k_p} \cdot A = \frac{k_{rS} (a - k_d)}{k_p (k_p - k_d)}, \quad
+\Phi_D = \frac{k_{rS}}{k_d} \cdot B = \frac{k_{rS} (k_p - a)}{k_d (k_p - k_d)}.
+$$
+
+From $(\Phi_P, \Phi_D, k_p, k_d)$ you can solve for $(a, k_{rS})$. To isolate $k_{ISC}$ from $a = k_{rS} + k_{nrS} + k_{ISC}$ you still need one additional piece:
+
+Either $k_{rS}$ from a Strickler–Berg analysis (then you also need $k_{nrS}$, typically from low-T data),
+
+Or $\Phi_{TLT}$ (route 1).
+
+Once $a$ and $k_{rS}$ (and, if needed, $k_{nrS}$) are known:
+
+$$
+k_{ISC} = a - k_{rS} - k_{nrS}.
+$$
 
 
  # Inclusion of non-linear effect

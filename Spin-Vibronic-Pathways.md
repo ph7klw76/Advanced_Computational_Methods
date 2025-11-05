@@ -666,6 +666,199 @@ MAX NAC                            ...    1.8714751500
 
 Triplet state has 3sublevel, wity zero magnetic field, it is degenerate and the marcus equation rate by 3 should be used.
 
+### Detail explanation of the code
+
+
+We want the effective second-order spin–vibronic coupling that mixes a singlet $S \equiv {}^1\mathrm{CT}$ with a triplet $T \equiv {}^3\mathrm{CT}$ via a mediating triplet ${}^3\mathrm{LE}$, when the coupling is Herzberg–Teller (HT) dominated (linear in nuclear displacements). In second-order perturbation theory and within the harmonic, adiabatic approximation, the thermally averaged, mediator-resolved effective matrix element is
+
+<img width="971" height="127" alt="image" src="https://github.com/user-attachments/assets/f3cde003-28a6-401e-80c3-f9c36cba40d2" />
+
+
+Dimensions check: $g_k$ [eV/(Å√amu)] · $\kappa_k$ [eV/(Å√amu)] · $\langle Q_k^2 \rangle_T$ [amu·Å²] → eV²; divide by $\Delta E_{\mathrm{den}}$ [eV] → eV.
+
+$\Delta E_{\mathrm{den}}$ is the energy detuning between the mediator and the target triplet used in the second-order denominator (flag `--den`, default `--gap`).
+
+The sum runs over vibrational normal modes $k$ (translations/rotations excluded).
+
+---
+
+## The script computes every factor of (1) from three files:
+
+- A **ORCA .hess** (masses, normal modes $U$, and frequencies $\omega_k$)
+- A **text file** with Cartesian nonadiabatic couplings (NACs) $d_\alpha = \langle I \lvert \partial / \partial R_\alpha \rvert J \rangle$ (ETF-corrected)
+- An **ORCA ESD(ISC)** output containing spin–orbit matrix elements displaced along individual modes.
+
+---
+
+## Normal modes and coordinates (from .hess)
+
+The  Hessian provides the mass-weighted normal modes and their frequencies through the eigenproblem
+
+$$
+F\,U = U\,\mathrm{diag}(\omega_k^2), \quad
+F = M^{-1/2}\,H_{\mathrm{cart}}\,M^{-1/2}, \quad
+U^\top U = I,
+$$
+
+where $H_{\mathrm{cart}}$ is the Cartesian Hessian and $M$ is the diagonal mass matrix.  
+The column $U_{\alpha k}$ (dimensionless) is the mass-weighted eigenvector for mode $k$.  
+The corresponding mass-weighted normal coordinate is
+
+$$
+Q_k = \sum_\alpha \sqrt{m_\alpha}\,U_{\alpha k}\,\Delta R_\alpha.
+$$
+
+**Code path.** `parse_hess()` reads:
+
+- `masses_amu` (from `$atoms`)
+- `freqs_cm` (from `$vibrational_frequencies`)
+- `U` (from `$normal_modes`)
+
+It then sets `U_vib = U[:, 6:]` to drop the 6 overall translations/rotations.
+
+---
+
+## Vibronic coupling $\kappa_k$ from NACs
+
+Define the mode-projected NAC:
+
+$$
+d(k) \equiv \langle I \lvert \frac{\partial}{\partial Q_k} \rvert J \rangle.
+$$
+
+Using the chain rule between Cartesian and normal coordinates,
+
+$$
+\frac{\partial}{\partial Q_k} 
+= \sum_\alpha \frac{\partial R_\alpha}{\partial Q_k} \frac{\partial}{\partial R_\alpha}
+= \sum_\alpha U_{\alpha k} \sqrt{m_\alpha}\, \frac{\partial}{\partial R_\alpha},
+$$
+
+hence
+
+<img width="806" height="129" alt="image" src="https://github.com/user-attachments/assets/6e4eb03a-752c-4b22-a798-1d6b191b4d79" />
+
+
+Units: $d_\alpha$ [1/bohr] → $d(k)$ [1/(bohr√amu)].
+
+By differentiating the adiabatic eigenvalue equation (Hellmann–Feynman / off-diagonal form), for $I \ne J$:
+
+<img width="926" height="140" alt="image" src="https://github.com/user-attachments/assets/9a36cd9a-d5e3-4d83-806b-b40425d8055e" />
+
+
+with $\Delta E \equiv E_J - E_I$.  
+Here $I \equiv {}^3\mathrm{LE}$ and $J \equiv {}^3\mathrm{CT}$.
+
+---
+
+## Code path
+
+- **Read NACs:** `nac_cart` (length 3N, xyz per atom; units 1/bohr)
+- **Mass-weight:** `d_mw = nac_cart / sqrt(mass_per_cart)` → $d_\alpha^{mw} = d_\alpha / \sqrt{m_\alpha}$
+- **Project:** `d_k = U_vib.T @ d_mw` implements Eq. (2)
+- **Multiply by the energy gap and convert bohr→Å**
+
+```python
+kappa_eV_per_A = (delta_e_eV * d_k) / BOHR_TO_ANG
+```
+
+so $\kappa_k$ has units eV/(Å√amu), consistent with $g_k$ below.
+
+---
+
+## HT SOC gradient $g_k$ from displaced SOCMEs
+
+Expand the spin–orbit coupling matrix element between $S$ and mediator ${}^3\mathrm{LE}$ to first order in $Q_k$ (HT term):
+
+<img width="942" height="117" alt="image" src="https://github.com/user-attachments/assets/411e2a24-df5f-4be5-a5a7-139b0801a962" />
+
+
+The imaginary part is the part that couples singlet↔triplet in this phase convention. ORCA ESD prints, for each mode $k$, the SOCME at displacements $Q_k = \pm \Delta Q$. The script forms a finite difference:
+
+$$
+s_k \equiv 
+\begin{cases}
+\frac{\mathrm{Im}\,V_{SO}(+\Delta Q) - \mathrm{Im}\,V_{SO}(-\Delta Q)}{2} & \text{if both } \pm \Delta Q \text{ are printed}, \\
+\mathrm{Im}\,V_{SO}(+\Delta Q) - \mathrm{Im}\,V_{SO}(0) & \text{otherwise},
+\end{cases}
+$$
+
+then
+
+$$
+g_k = \frac{s_k}{\Delta Q}
+$$
+
+with $\Delta Q$ expressed in mass-weighted units (bohr√amu or Å√amu). The code stores $\Delta Q$ as `delta_Q_A` in Å√amu and converts SOCMEs from Hartree to eV.
+
+---
+
+## Code path
+
+**`parse_socme()`** extracts:
+
+- `soc0_im = Im[V_SO(0)]`
+- per-mode `plus[k] = Im[V_SO(+ΔQ)]`, `minus[k] = Im[V_SO(−ΔQ)]`
+- unit conversion via `soc_to_eV`
+- build `s_k` mode-by-mode (central if both ±, forward otherwise)
+- divide by `ΔQ`: `g_k = s_k / delta_Q_A` → units eV/(Å√amu)
+
+---
+
+## Thermal mean-square amplitude $\langle Q_k^2 \rangle_T$
+
+In the harmonic approximation, for a quantum oscillator of frequency $\omega_k$ at temperature $T$:
+
+<img width="694" height="129" alt="image" src="https://github.com/user-attachments/assets/d2e4651b-dac9-42c4-9a75-920749c7d391" />
+
+
+expressed here in mass-weighted coordinate units (kg·m²). The code converts to amu·Å² by dividing by $m_u \,\text{Å}^2$ (with $m_u$ the atomic mass unit).
+
+**Limits:**
+
+- $T \to 0$: $\langle Q_k^2 \rangle \to \hbar / (2 \omega_k)$ (zero-point)
+- $k_B T \gg \hbar \omega_k$: $\langle Q_k^2 \rangle \approx k_B T / \omega_k^2$ (classical)
+
+---
+
+## Code path `thermal_Q2()`
+
+- `omega = 2\pi c` (cm⁻¹→Hz)
+- `x = \hbar \omega / (2 k_B T)`, `coth = \cosh(x) / \sinh(x)`
+- `Q2_SI = (\hbar / 2\omega) \cdot \coth`
+- convert to amu·Å²
+
+---
+
+## Assembly of $V_{\mathrm{eff}}$
+
+Per-mode contribution to the numerator of (1) is
+
+$$
+C_k = g_k\, \kappa_k\, \langle Q_k^2 \rangle_T \quad \text{(units eV}^2\text{)}.
+$$
+
+The script builds
+
+```python
+contrib_k_eV2 = g_k * kappa_eV_per_A * Q2
+numerator_eV2 = np.sum(contrib_k_eV2)
+V_eff_eV = numerator_eV2 / delta_e_den_eV
+```
+## Units and consistency (all factors in the product)
+
+$d(k)$: $1/(\text{bohr} \cdot \sqrt{\text{amu}})$
+
+$\Delta E$: eV  
+⇒ $\kappa_k = \Delta E \cdot d(k)$ in eV/(bohr√amu)  
+⇒ divide by 0.529177… to get eV/(Å√amu)
+
+$g_k$: from eV change over $\Delta Q$ in Å√amu ⇒ eV/(Å√amu)
+
+$\langle Q_k^2 \rangle_T$: amu·Å²
+
+**Product → eV²**, then divided by `--den` (eV) → eV
+$V_{\mathrm{eff}}$: the HT-dominated, ${}^3\mathrm{LE}$-mediated, thermally averaged second-order coupling between ${}^1\mathrm{CT}$ and ${}^3\mathrm{CT}$. This is a direct, mathematically consistent implementation of Eq. (1), with $\kappa_k$ obtained from the Hellmann–Feynman off-diagonal identity (3), $g_k$ from finite differences of displaced SOCMEs, and $\langle Q_k^2 \rangle_T$ from the quantum harmonic oscillator result (5).
 
 
 

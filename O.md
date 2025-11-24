@@ -252,7 +252,7 @@ by using more physics-aware and math-aware algorithms.
 Consider discretizing the Laplacian $\nabla^2$ on a grid to solve Poisson’s equation:
 
 $$
-- \nabla^2 u(r) = f(r)
+\nabla^2 u(r) = f(r)
 $$
 
 #### 5.1 Dense Matrix – $O(N^3)$ and $O(N^2)$ Memory
@@ -292,7 +292,8 @@ Use iterative solvers like:
 
 - Each matrix-vector multiply costs ~$O(\text{nnz}) \sim O(N)$.
 - Per iteration cost: $O(N)$.
-- Total cost: $O(N \times \text{number\_of\_iterations})$.
+- Total cost:
+$O(N \times \text{number\_of\_iterations})$.
 
 **Preconditioning and multigrid:**
 

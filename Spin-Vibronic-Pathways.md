@@ -516,7 +516,10 @@ the soc is the ISC spin-vibronic output per mode using ISC moduie
 [hess](PI7_T1.hess) --[nac](NAC.txt) --[soc](P7-3.out)
 <img width="653" height="573" alt="image" src="https://github.com/user-attachments/assets/f506287f-5ddf-40a8-9969-c17e123e9838" />
 
-note this is only one tripet sub;evel and there is 3 and hence u need to times 3 due to degeneracy.
+<img width="1075" height="727" alt="image" src="https://github.com/user-attachments/assets/a0a034df-c8ec-4f85-bd19-290f15bfff75" />
+https://www.faccts.de/docs/orca/6.0/manual/contents/typical/esd.html#sec-esd-isc-general-typical
+
+
 
 
 <img width="640" height="151" alt="image" src="https://github.com/user-attachments/assets/618ac661-daff-49bb-9937-91868958d3f3" />

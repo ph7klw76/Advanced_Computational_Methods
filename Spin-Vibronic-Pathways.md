@@ -525,6 +525,8 @@ https://www.faccts.de/docs/orca/6.0/manual/contents/typical/esd.html#sec-esd-isc
 
 <img width="640" height="151" alt="image" src="https://github.com/user-attachments/assets/618ac661-daff-49bb-9937-91868958d3f3" />
 
+important
+So FOLLOWIROOT does not guarantee “keep me on ³LE”. It just avoids jumping between different roots due to reordering, but if the same root changes from LE to CT, it will faithfully follow that.
 
 eg
 ```text

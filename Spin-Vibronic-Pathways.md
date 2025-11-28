@@ -508,8 +508,8 @@ if __name__ == "__main__":
 
 python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --den 0.10 --dq 0.01 --dq_unit bohr --soc_units hartree --out_prefix results
 
-The gap is the 1CT-3CT
-den is the denominator ΔE_TT in the spin–vibronic expression
+the gap is the theoretical 3CT–3LE gap at that same geometry and level of theory (the one ORCA “saw” when it produced the NACME)
+--den = experimental ³CT–³LE gap from 77 K phosphorescence
 
 PI7.T1,hess is the T1 opt freq
 the soc is the ISC spin-vibronic output per mode using ISC moduie

@@ -500,15 +500,16 @@ def main():
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("Usage example:")
-        print("  python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --dq 0.01 --dq_unit bohr --soc_units hartree")
+        print("  python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --den 0.10 --dq 0.01 --dq_unit bohr --soc_units hartree")
         sys.exit(0)
     main()
 
 ```
 
-python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --dq 0.01 --dq_unit bohr --soc_units hartree --out_prefix results
+python eq2_effective_coupling.py --hess PI7_T1.hess --nac NAC.txt --soc P7-3.out --gap 0.087 --den 0.10 --dq 0.01 --dq_unit bohr --soc_units hartree --out_prefix results
 
-The gap is the 3LE-3CT gap ontained by relaxing 3LE and get the gap based on struture.
+The gap is the 1CT-3CT
+den is the denominator ΔE_TT in the spin–vibronic expression
 
 PI7.T1,hess is the T1 opt freq
 the soc is the ISC spin-vibronic output per mode using ISC moduie

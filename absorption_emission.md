@@ -651,6 +651,10 @@ Each of these terms can be estimated using Fermi’s Golden Rule approaches, as 
 
 ## analyse HR and reorganization energy
 
+<img width="1174" height="791" alt="image" src="https://github.com/user-attachments/assets/3ab3365a-f23e-4af4-8e77-31309cf04ecb" />
+
+
+
 ```python
 
 import pandas as pd

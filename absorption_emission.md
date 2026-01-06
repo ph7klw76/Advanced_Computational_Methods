@@ -1534,4 +1534,399 @@ defination
 
 <img width="500" height="368" alt="image" src="https://github.com/user-attachments/assets/a51b1053-3ba8-4a8b-9aaa-2439db2484d9" />
 
+<img width="995" height="744" alt="image" src="https://github.com/user-attachments/assets/a1aa5d21-c0ad-44e3-b3d4-06922c392873" />
+
+```python
+import os
+import numpy as np
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog, ttk, messagebox
+
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+HC_eV_nm = 1239.841984  # (eV·nm)
+
+# ---------- IO helpers ----------
+def read_spectrum(path: str) -> pd.DataFrame:
+    """
+    Reads a .spectrum file with columns like:
+      Energy  TotalSpectrum  IntensityFC  IntensityHT
+    NOTE: In your files, 'Energy' is actually wavelength in nm.
+    """
+    df = pd.read_csv(path, sep=r"\s+", engine="python")
+    df.columns = [c.strip() for c in df.columns]
+
+    # Try to identify wavelength column
+    if "Energy" in df.columns:
+        df = df.rename(columns={"Energy": "nm"})
+    elif "nm" not in df.columns:
+        # Fallback: assume first column is nm
+        df = df.rename(columns={df.columns[0]: "nm"})
+
+    df = df.sort_values("nm").reset_index(drop=True)
+
+    if "TotalSpectrum" not in df.columns:
+        raise ValueError("Missing column 'TotalSpectrum' in selected .spectrum file.")
+    return df[["nm", "TotalSpectrum"]].copy()
+
+def read_experimental(path: str) -> pd.DataFrame:
+    """
+    Experimental file expected as two columns:
+      wavelength(nm) intensity
+    Handles whitespace or comma separated, with or without header.
+    """
+    # Try whitespace (no header)
+    try:
+        df = pd.read_csv(path, sep=r"\s+", engine="python", header=None)
+        if df.shape[1] < 2:
+            raise ValueError
+    except Exception:
+        # Fallback: comma separated
+        df = pd.read_csv(path, sep=",", engine="python", header=None)
+        if df.shape[1] < 2:
+            raise ValueError("Experimental file must have at least 2 columns: nm, intensity")
+
+    df = df.iloc[:, :2].copy()
+    df.columns = ["nm", "Iexp"]
+    df["nm"] = pd.to_numeric(df["nm"], errors="coerce")
+    df["Iexp"] = pd.to_numeric(df["Iexp"], errors="coerce")
+    df = df.dropna().sort_values("nm").reset_index(drop=True)
+    return df
+
+# ---------- Physics helpers ----------
+def nm_to_eV(nm: np.ndarray) -> np.ndarray:
+    nm = np.asarray(nm, dtype=float)
+    return HC_eV_nm / nm
+
+def normalize(y: np.ndarray) -> np.ndarray:
+    y = np.asarray(y, dtype=float)
+    m = np.nanmax(y) if y.size else 0.0
+    return y / m if (np.isfinite(m) and m > 0) else y
+
+def shifted_broadened_in_nm(
+    nm_axis: np.ndarray,
+    nm_src: np.ndarray,
+    I_lambda_src: np.ndarray,
+    shift_eV: float,
+    sigma_eV: float,
+    e_step: float = 0.001,
+    assume_per_nm: bool = True
+) -> np.ndarray:
+    """
+    Physics-correct shift + Gaussian broaden in energy domain, then return I_lambda vs nm_axis.
+
+    If assume_per_nm=True:
+      Treat input as spectral density per nm: I_lambda(λ).
+      Convert to per-eV density: I_E(E) = I_lambda(λ(E)) * |dλ/dE| = I_lambda * (hc / E^2)
+      After operations in E, convert back:
+        I_lambda(λ) = I_E(E(λ)) * |dE/dλ| = I_E * (hc / λ^2)
+
+    Also pads energy grid by |shift| + 6σ to avoid clipping.
+    """
+    nm_src = np.asarray(nm_src, dtype=float)
+    I_lambda_src = np.asarray(I_lambda_src, dtype=float)
+    nm_axis = np.asarray(nm_axis, dtype=float)
+
+    # Convert source to energy axis
+    E_src = nm_to_eV(nm_src)
+    order = np.argsort(E_src)
+    Es = E_src[order]          # ascending energy
+    I_lambda = I_lambda_src[order]
+
+    # Convert I_lambda -> I_E if needed
+    if assume_per_nm:
+        # I_E(E) = I_lambda(λ(E)) * (hc / E^2)
+        I_E = I_lambda * (HC_eV_nm / (Es**2))
+    else:
+        I_E = I_lambda
+
+    Emin, Emax = float(Es.min()), float(Es.max())
+
+    # Pad grid to avoid truncation after shift/broadening
+    pad = abs(float(shift_eV)) + 6.0 * float(max(sigma_eV, 0.0))
+    Egrid = np.arange(Emin - pad, Emax + pad + e_step, e_step)
+
+    # Shift in energy: I_shift(E) = I_orig(E - shift)
+    I_shift = np.interp(Egrid - shift_eV, Es, I_E, left=0.0, right=0.0)
+
+    # Gaussian broadening in energy
+    sigma = float(sigma_eV)
+    if sigma <= 0.0:
+        I_broaden = I_shift
+    else:
+        half_width = int(np.ceil(4.0 * sigma / e_step))
+        x = (np.arange(-half_width, half_width + 1) * e_step)
+        kernel = np.exp(-0.5 * (x / sigma) ** 2)
+        kernel /= kernel.sum()
+        I_broaden = np.convolve(I_shift, kernel, mode="same")
+
+    # Sample back to nm_axis via energy mapping
+    E_axis = nm_to_eV(nm_axis)
+    I_on_nm_Edensity = np.interp(E_axis, Egrid, I_broaden, left=0.0, right=0.0)
+
+    # Convert back I_E -> I_lambda if needed
+    if assume_per_nm:
+        I_lambda_out = I_on_nm_Edensity * (HC_eV_nm / (nm_axis**2))
+    else:
+        I_lambda_out = I_on_nm_Edensity
+
+    return I_lambda_out
+
+# ---------- GUI ----------
+class SpectrumApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Single Spectrum: Shift + Broadening in eV → Plot in nm (Normalized) + Save")
+
+        # Data containers
+        self.sim_df = None
+        self.sim_path = None
+
+        self.exp_df = None
+        self.exp_path = None
+
+        # Latest computed arrays (for saving)
+        self.last_nm = None
+        self.last_I_orig = None
+        self.last_I_mod = None
+        self.last_I_orig_norm = None
+        self.last_I_mod_norm = None
+
+        # Plot window (nm)
+        self.xmin = 400
+        self.xmax = 800
+
+        # --- Row 1: load + save
+        row1 = ttk.Frame(root, padding=10)
+        row1.pack(side=tk.TOP, fill=tk.X)
+
+        ttk.Button(row1, text="Load simulation (.spectrum)...", command=self.pick_sim).pack(side=tk.LEFT)
+        self.sim_label = ttk.Label(row1, text="(no simulation loaded)")
+        self.sim_label.pack(side=tk.LEFT, padx=10)
+
+        ttk.Button(row1, text="Load experimental (txt/csv)...", command=self.pick_exp).pack(side=tk.LEFT, padx=(20, 0))
+        self.exp_label = ttk.Label(row1, text="(no experimental loaded)")
+        self.exp_label.pack(side=tk.LEFT, padx=10)
+
+        self.save_btn = ttk.Button(row1, text="Save processed data...", command=self.save_data, state=tk.DISABLED)
+        self.save_btn.pack(side=tk.RIGHT)
+
+        # --- Row 2: shift slider
+        row2 = ttk.Frame(root, padding=(10, 0, 10, 10))
+        row2.pack(side=tk.TOP, fill=tk.X)
+
+        ttk.Label(row2, text="Shift (eV):").pack(side=tk.LEFT)
+        self.shift_var = tk.DoubleVar(value=0.50)
+        self.shift_slider = ttk.Scale(
+            row2, from_=-1.0, to=1.0, orient=tk.HORIZONTAL,
+            variable=self.shift_var, command=lambda _=None: self.update_plot()
+        )
+        self.shift_slider.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=6)
+        self.shift_val_label = ttk.Label(row2, width=8)
+        self.shift_val_label.pack(side=tk.LEFT)
+
+        # --- Row 3: sigma slider
+        row3 = ttk.Frame(root, padding=(10, 0, 10, 10))
+        row3.pack(side=tk.TOP, fill=tk.X)
+
+        ttk.Label(row3, text="Gaussian broadening σ (eV):").pack(side=tk.LEFT)
+        self.sigma_var = tk.DoubleVar(value=0.10)
+        self.sigma_slider = ttk.Scale(
+            row3, from_=0.0, to=0.35, orient=tk.HORIZONTAL,  # starts at 0.00 eV
+            variable=self.sigma_var, command=lambda _=None: self.update_plot()
+        )
+        self.sigma_slider.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=6)
+        self.sigma_val_label = ttk.Label(row3, width=8)
+        self.sigma_val_label.pack(side=tk.LEFT)
+
+        # --- Row 4: physics toggle (Jacobian)
+        row4 = ttk.Frame(root, padding=(10, 0, 10, 10))
+        row4.pack(side=tk.TOP, fill=tk.X)
+
+        self.assume_per_nm_var = tk.BooleanVar(value=True)
+        chk = ttk.Checkbutton(
+            row4,
+            text="Assume intensity is per nm (apply Jacobian for λ↔E conversion)",
+            variable=self.assume_per_nm_var,
+            command=self.update_plot
+        )
+        chk.pack(side=tk.LEFT)
+
+        # --- Plot
+        self.fig = plt.Figure(figsize=(9, 5.5))
+        self.ax = self.fig.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=root)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.draw_empty()
+
+    def draw_empty(self):
+        self.ax.clear()
+        self.ax.set_title("Load a simulation .spectrum file to begin")
+        self.ax.set_xlabel("Wavelength (nm)")
+        self.ax.set_ylabel("Normalized intensity (a.u.)")
+        self.ax.set_xlim(self.xmin, self.xmax)
+        self.ax.set_ylim(bottom=0)
+        self.fig.tight_layout()
+        self.canvas.draw()
+
+    def pick_sim(self):
+        path = filedialog.askopenfilename(
+            title="Select simulation spectrum (.spectrum)",
+            filetypes=[("Spectrum files", "*.spectrum"), ("All files", "*.*")]
+        )
+        if not path:
+            return
+        try:
+            self.sim_df = read_spectrum(path)
+            self.sim_path = path
+            self.sim_label.config(text=os.path.basename(path))
+            self.save_btn.config(state=tk.NORMAL)
+            self.update_plot()
+        except Exception as e:
+            messagebox.showerror("Simulation load error", str(e))
+
+    def pick_exp(self):
+        path = filedialog.askopenfilename(
+            title="Select experimental spectrum (2 columns: nm intensity)",
+            filetypes=[("Text/CSV", "*.txt *.csv *.dat"), ("All files", "*.*")]
+        )
+        if not path:
+            return
+        try:
+            self.exp_df = read_experimental(path)
+            self.exp_path = path
+            self.exp_label.config(text=os.path.basename(path))
+            self.update_plot()
+        except Exception as e:
+            messagebox.showerror("Experimental load error", str(e))
+
+    def update_plot(self):
+        shift_eV = float(self.shift_var.get())
+        sigma_eV = float(self.sigma_var.get())
+        self.shift_val_label.config(text=f"{shift_eV:+.3f}")
+        self.sigma_val_label.config(text=f"{sigma_eV:.3f}")
+
+        if self.sim_df is None:
+            self.draw_empty()
+            return
+
+        nm = self.sim_df["nm"].to_numpy()
+        I_orig = self.sim_df["TotalSpectrum"].to_numpy()
+
+        # Compute modified (raw, per-nm density if assume_per_nm is True)
+        I_mod = shifted_broadened_in_nm(
+            nm_axis=nm,
+            nm_src=nm,
+            I_lambda_src=I_orig,
+            shift_eV=shift_eV,
+            sigma_eV=sigma_eV,
+            e_step=0.001,
+            assume_per_nm=bool(self.assume_per_nm_var.get())
+        )
+
+        # Store raw results for saving
+        self.last_nm = nm
+        self.last_I_orig = I_orig
+        self.last_I_mod = I_mod
+
+        # Display-window normalization
+        mask = (nm >= self.xmin) & (nm <= self.xmax)
+        nm_plot = nm[mask]
+
+        I_orig_norm = normalize(I_orig[mask])
+        I_mod_norm = normalize(I_mod[mask])
+
+        self.last_I_orig_norm = I_orig_norm
+        self.last_I_mod_norm = I_mod_norm
+
+        # Plot
+        self.ax.clear()
+        base = os.path.basename(self.sim_path) if self.sim_path else "simulation"
+        self.ax.plot(nm_plot, I_orig_norm, label=f"{base} (original)")
+        self.ax.plot(nm_plot, I_mod_norm, label=f"{base} (shifted+broadened)")
+
+        # Experimental overlay (normalized within the same window)
+        if self.exp_df is not None and len(self.exp_df) > 0:
+            exp_nm = self.exp_df["nm"].to_numpy()
+            exp_I = self.exp_df["Iexp"].to_numpy()
+            em = (exp_nm >= self.xmin) & (exp_nm <= self.xmax)
+            if np.any(em):
+                self.ax.plot(exp_nm[em], normalize(exp_I[em]), label="experimental")
+
+        self.ax.set_xlabel("Wavelength (nm)")
+        self.ax.set_ylabel("Normalized intensity (a.u.)")
+        self.ax.set_title("Shift + Gaussian broadening in eV → replot in nm (normalized display)")
+        self.ax.legend()
+        self.ax.set_xlim(self.xmin, self.xmax)
+        self.ax.set_ylim(bottom=0)
+        self.fig.tight_layout()
+        self.canvas.draw()
+
+    def save_data(self):
+        if self.sim_df is None or self.last_nm is None or self.last_I_mod is None:
+            messagebox.showerror("Nothing to save", "Load a simulation file first.")
+            return
+
+        out_path = filedialog.asksaveasfilename(
+            title="Save processed data",
+            defaultextension=".csv",
+            filetypes=[("CSV", "*.csv"), ("Tab-delimited", "*.txt"), ("All files", "*.*")]
+        )
+        if not out_path:
+            return
+
+        sep = "\t" if out_path.lower().endswith(".txt") else ","
+
+        # Normalized columns correspond to DISPLAY WINDOW only; save with NaN elsewhere for clarity
+        nm = self.last_nm
+        mask = (nm >= self.xmin) & (nm <= self.xmax)
+
+        orig_norm_full = np.full_like(nm, np.nan, dtype=float)
+        mod_norm_full = np.full_like(nm, np.nan, dtype=float)
+        orig_norm_full[mask] = self.last_I_orig_norm
+        mod_norm_full[mask] = self.last_I_mod_norm
+
+        df_out = pd.DataFrame({
+            "nm": nm,
+            "I_original_raw": self.last_I_orig,
+            "I_modified_raw": self.last_I_mod,
+            f"I_original_norm_{self.xmin}-{self.xmax}nm": orig_norm_full,
+            f"I_modified_norm_{self.xmin}-{self.xmax}nm": mod_norm_full,
+        })
+
+        # Add metadata as a small header (commented) by writing manually then appending CSV
+        shift_eV = float(self.shift_var.get())
+        sigma_eV = float(self.sigma_var.get())
+        jac = bool(self.assume_per_nm_var.get())
+
+        header_lines = [
+            f"# simulation_file: {self.sim_path}",
+            f"# shift_eV: {shift_eV}",
+            f"# sigma_eV: {sigma_eV}",
+            f"# assume_per_nm_apply_jacobian: {jac}",
+            f"# display_window_nm: {self.xmin}-{self.xmax}",
+        ]
+        if self.exp_path:
+            header_lines.append(f"# experimental_file: {self.exp_path}")
+
+        try:
+            with open(out_path, "w", encoding="utf-8") as f:
+                for line in header_lines:
+                    f.write(line + "\n")
+            # append data
+            df_out.to_csv(out_path, mode="a", index=False, sep=sep)
+            messagebox.showinfo("Saved", f"Saved to:\n{out_path}")
+        except Exception as e:
+            messagebox.showerror("Save error", str(e))
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SpectrumApp(root)
+    root.mainloop()
+```
 

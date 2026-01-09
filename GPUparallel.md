@@ -64,6 +64,9 @@ for step in range(1000):
     x *= 1.01   # stays on GPU
 ```
 
+
+How to use torch 
+
 ### 3) Example: Projectile ensemble (ballistics / kinematics) as vectorized GPU math
 
 Physics idea: simulate millions of projectiles with different initial velocities/angles and compute range/time-of-flight quickly.
@@ -155,7 +158,7 @@ I /= I.max()
 print("central intensity:", float(I[N//2, N//2]))
 ```
 
-7) Example: Finite-difference heat equation (PDE) on GPU
+### 7) Example: Finite-difference heat equation (PDE) on GPU
 
 Physics idea: solve diffusion/heat equation in 2D:
 
@@ -384,7 +387,8 @@ plt.show()
 
 ### Animation
 
-```
+```python
+
 # =========================
 # Quantum tunneling animation (GPU if available)
 # Split-operator FFT for 1D TDSE

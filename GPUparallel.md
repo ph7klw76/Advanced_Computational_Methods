@@ -536,4 +536,26 @@ print("Saved GIF:", gif_name)
 
 plt.show()
 ```
+# When PyTorch is the Better Pick
 
+- The code is already written in torch (`torch.fft`, complex tensors, easy device handling).
+- Extend it to inverse problems (fit barrier height, optimize initial packet, learn potentials) using autograd later.
+- A smooth path to more advanced GPU features (mixed precision, JIT/compile, batching, deep-learning-style tooling).
+
+**In this example**: PyTorch is very natural because `torch.fft.fft`/`ifft` + complex tensors are straightforward.
+
+---
+
+#  When CuPy is the Better Pick
+
+-  NumPy-like code (nearly drop-in replacement): `cp.exp`, `cp.fft.fft`, slicing, etc.
+-  mainly doing scientific array computing and don’t need autograd.
+-  Have a NumPy-based codebase and want minimal rewrites.
+
+
+---
+
+# Performance Reality for Your Tunneling Sim
+
+- The time evolution step is dominated by FFTs, so Torch vs CuPy often ends up close.
+- The animation forces you to copy frames back to CPU for Matplotlib anyway (`.cpu().numpy()` or `.get()`), so the GPU part mostly speeds up the simulation, not the plotting.

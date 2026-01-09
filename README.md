@@ -200,17 +200,7 @@ Build a hierarchical model for parameters shared across samples or devices. Use 
 
 [GPU Programming](https://www.youtube.com/watch?v=c8mQYGbT310&list=PL5XwKDZZlwaY7t0M5OLprpkJUIrF8Lc9j&index=1)
 
-1. Introduction to GPU Programming
-2. Basics of Parallel Computing
-3. Setting Up the Environment
-4. Introduction to CUDA
-5. Python Libraries for GPU Programming
-6. Writing GPU Kernels
-7. Performance Optimization
-8. Advanced GPU Programming Techniques
-9. Real-World Applications
-10. Best Practices and Common Pitfalls
-11. Future Trends in GPU Programming
+1. [GPU Programming](GPUparallel.md)
 
 ## Advanced Numerical Methods
 

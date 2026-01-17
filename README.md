@@ -107,6 +107,7 @@ where magic happens
 3. [Microwave](micorwave.md)
 4. [Double_slit](doubleslit.py)
 5. [Visualizing molecule](trimesh.md)
+6. [Python interface with Microphone to study damped resonance](resonance.md)
 
 ## Concurrency and Parallelism
 

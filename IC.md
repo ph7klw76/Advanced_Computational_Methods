@@ -282,3 +282,31 @@ Device relevance. OLEDs and bio-imaging probes excited electrically or by two-ph
 Vavilov’s rule is the norm, but it is not inviolable. If extra photon energy lets the excited molecule reach a low-lying conical intersection or a higher electronic state with faster non-radiative decay, the PLQY becomes excitation-energy dependent. The direction of the effect is unambiguous: shorter, higher-energy wavelengths lower $\Phi_{PL}$, whereas longer wavelengths leave it at its intrinsic value. Understanding the height and accessibility of the relevant CI seams is therefore essential for predicting—and engineering—excitation-dependent photoluminescence.
 
 
+ORCA
+```text
+! DEF2-SVP CPCM(Toluene) ESD(IC)
+%TDDFT
+        tda False # Full TDDFT is recommended over TDA
+	NROOTS 1
+	IROOT 1
+        nacme true # Calculate the NACME between the iroot-th root with the ground state
+        etf true # Use electron translation factor (recommended)
+END
+%cis 
+      MaxIter 1000
+end
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.045
+END
+%esd
+      gshessian "vib5.hess" # Ground state Hessian (B3LYP-D3/def2-SVP)
+      eshessian "S1vib5.hess" # Excited state Hessian (TD-B3LYP-D3/def2-SVP)
+      usej true # Use Duschinsky rotation (recommended)
+end
+%maxcore 6000
+%pal nprocs 32 end
+* xyzfile 0 1 vib5-S0.xyz  # must be the final state
+```
+

@@ -456,6 +456,9 @@ Energy Barriers for Rotation and Conformational Isomerism
 
 ## Molecular Dynamics
 
+### Tools
+1. [Update the itp file from resp data from terachem](itp.md)
+
 [Molecular Dynamics](https://www.youtube.com/watch?v=BnT6Onll1eQ&list=PLm8ZSArAXicKIzMfkR0Y0GVx9AA1zge-P)
 [Molecular Dynamics in Python](https://www.youtube.com/watch?v=6gVoPVosXRs&list=PLP_iHNbRbB3eN3VhO76qiZlDZEyrU88rJ&index=1)
 

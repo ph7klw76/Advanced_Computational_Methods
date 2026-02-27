@@ -115,6 +115,8 @@ where magic happens
 
 1. [Speeding up calculation using Numba libraries with example in Physics](Numba.md)
 2. [Automating Task Using Snakemake](https://www.youtube.com/watch?v=tUTcfoMQl98)
+[GPU Programming](https://www.youtube.com/watch?v=c8mQYGbT310&list=PL5XwKDZZlwaY7t0M5OLprpkJUIrF8Lc9j&index=1)
+3. [GPU Programming](GPUparallel.md)
    
 ## Important mathematics, computer science to build model thinking
 
@@ -196,12 +198,6 @@ Build a hierarchical model for parameters shared across samples or devices. Use 
 7. Real-World Applications
 8. Advanced Topics 
 
-
-## GPU Programming in Python
-
-[GPU Programming](https://www.youtube.com/watch?v=c8mQYGbT310&list=PL5XwKDZZlwaY7t0M5OLprpkJUIrF8Lc9j&index=1)
-
-1. [GPU Programming](GPUparallel.md)
 
 ## Advanced Numerical Methods
 

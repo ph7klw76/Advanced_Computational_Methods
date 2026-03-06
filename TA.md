@@ -96,7 +96,7 @@ The sum of these contributions (GSB, SE, and ESA) leads to the transient absorpt
 To calculate ESA for singlet using ORCA
 
 ```text
-! DEF2-SVP CPCM(Toluene)
+! DEF2-SVP CPCM(Toluene) RIJCOSX 
 %TDDFT
 	NROOTS 100
 	IROOT 1
@@ -116,7 +116,7 @@ END
 To calculate ESA for Triplet using ORCA
 
 ```text
-! DEF2-SVP CPCM(Toluene)
+! DEF2-SVP CPCM(Toluene) RIJCOSX 
 %SCF
 	HFTYP UKS
 END

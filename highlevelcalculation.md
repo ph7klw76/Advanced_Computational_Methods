@@ -5,7 +5,7 @@ Ground State
 %pal nprocs 32 end
 * XYZFILE 0 1 174-2PTZBN.xyz
 
-! SOS-WB2GP-PLYP DEF2-TZVP(-f) def2-TZVP/C tightSCF
+! SOS-WB2GP-PLYP DEF2-TZVP(-f) def2-TZVP/C tightSCF Opt NumGrad
 %tddft
    nroots 2
    iroot 1

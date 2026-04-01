@@ -550,3 +550,345 @@ This derivation is compact, but the logic is simple:
 **$T_m$ wins when optical pumping into $T_m$ is faster than relaxation out of $T_m$. But in this case $T_1$ can access $T_m$ for bond breakage**
 
 The cycle-averaged fraction is just the normalized competition between those two rates.
+
+
+```python
+#!/usr/bin/env python3
+"""
+triplet_fraction_calculator.py
+
+Compute the cycle-averaged fraction of triplet population in Tm and the
+complementary fraction in T1.
+
+Model:
+    Photon fluence per pulse:
+        Fgamma = Ep * wavelength / (h * c * Aeff)
+
+    Exact per-pulse excitation probability from T1 -> Tm:
+        q1m = 1 - exp(-sigma1m * Fgamma)
+
+    Low-fluence approximation:
+        q1m_low = sigma1m * Fgamma
+
+    Cycle-averaged pumping rate:
+        k1m = frep * q1m
+
+    Total depopulation rate out of Tm:
+        k_m_tot = 1 / taum
+
+    Quasi-steady ratio:
+        tm_over_t1 = k1m / k_m_tot = k1m * taum
+
+    Cycle-averaged triplet-manifold fractions:
+        fTm = k1m / (k1m + k_m_tot)
+        fT1 = 1 - fTm
+
+Interpretation:
+    q1m = per-pulse probability that a molecule already in T1 is promoted to Tm
+    fTm = cycle-averaged fraction of the triplet-manifold population in Tm
+    fT1 = cycle-averaged fraction of the triplet-manifold population in T1
+
+Important:
+    This is a cycle-averaged, quasi-steady model.
+    It is NOT a pulse-resolved transient simulation.
+
+Units:
+    Ep [J]
+    frep [Hz = s^-1]
+    wavelength [m]
+    Aeff [m^2]
+    sigma1m [m^2]
+    taum [s]
+
+Usage examples:
+    python triplet_fraction_calculator.py
+    python triplet_fraction_calculator.py --Ep 100e-12 --frep 80e6 \
+        --wavelength 800e-9 --spot-radius 1e-6 --sigma1m 1e-22 --taum 1e-9
+    python triplet_fraction_calculator.py --Ep 100e-12 --frep 80e6 \
+        --wavelength 800e-9 --Aeff 3.14159e-12 --sigma1m 1e-22 --taum 1e-9
+"""
+
+from __future__ import annotations
+
+import argparse
+import math
+from dataclasses import dataclass
+from typing import Dict, Optional
+
+# Physical constants (SI)
+H = 6.62607015e-34  # Planck constant [J*s]
+C = 2.99792458e8  # Speed of light [m/s]
+
+
+@dataclass
+class Inputs:
+    """Input parameters in SI units."""
+
+    Ep: float  # pulse energy [J]
+    frep: float  # repetition rate [Hz]
+    wavelength: float  # wavelength [m]
+    sigma1m: float  # T1 -> Tm absorption cross section [m^2]
+    taum: float  # effective Tm residence time [s]
+    Aeff: Optional[float] = None  # effective illuminated area [m^2]
+    spot_radius: Optional[float] = None  # spot radius [m], if Aeff not supplied
+
+
+def validate_inputs(inp: Inputs) -> None:
+    """Validate all physical inputs."""
+    if inp.Ep <= 0:
+        raise ValueError("Ep must be > 0 J")
+    if inp.frep <= 0:
+        raise ValueError("frep must be > 0 Hz")
+    if inp.wavelength <= 0:
+        raise ValueError("wavelength must be > 0 m")
+    if inp.sigma1m < 0:
+        raise ValueError("sigma1m must be >= 0 m^2")
+    if inp.taum <= 0:
+        raise ValueError("taum must be > 0 s")
+    if inp.Aeff is None and inp.spot_radius is None:
+        raise ValueError("Provide either Aeff or spot_radius")
+    if inp.Aeff is not None and inp.Aeff <= 0:
+        raise ValueError("Aeff must be > 0 m^2")
+    if inp.spot_radius is not None and inp.spot_radius <= 0:
+        raise ValueError("spot_radius must be > 0 m")
+
+
+def get_effective_area(inp: Inputs) -> float:
+    """
+    Return effective illuminated area [m^2].
+
+    Priority:
+        1) Use Aeff directly if supplied
+        2) Otherwise use Aeff = pi * r^2 from spot_radius
+    """
+    if inp.Aeff is not None:
+        return inp.Aeff
+    assert inp.spot_radius is not None
+    return math.pi * inp.spot_radius**2
+
+
+def photon_fluence_per_pulse(Ep: float, wavelength: float, Aeff: float) -> float:
+    """
+    Photon fluence per pulse [photons / m^2].
+
+    Fgamma = Ep * wavelength / (h * c * Aeff)
+    """
+    return Ep * wavelength / (H * C * Aeff)
+
+
+def q1m_exact(sigma1m: float, Fgamma: float) -> float:
+    """
+    Exact per-pulse T1 -> Tm excitation probability.
+
+    q1m = 1 - exp(-sigma1m * Fgamma)
+
+    Uses expm1 for improved numerical stability when sigma1m*Fgamma is small.
+    """
+    x = sigma1m * Fgamma
+    return -math.expm1(-x)
+
+
+def q1m_low_fluence(sigma1m: float, Fgamma: float) -> float:
+    """
+    Low-fluence approximation for q1m.
+
+    q1m ≈ sigma1m * Fgamma
+
+    This is only valid when sigma1m * Fgamma << 1.
+    """
+    return sigma1m * Fgamma
+
+
+def compute_cycle_averaged_triplet_fractions(inp: Inputs) -> Dict[str, float]:
+    """
+    Compute exact and low-fluence quantities.
+
+    Returns:
+        dict of derived quantities
+    """
+    validate_inputs(inp)
+    Aeff = get_effective_area(inp)
+    Fgamma = photon_fluence_per_pulse(inp.Ep, inp.wavelength, Aeff)
+
+    q_exact = q1m_exact(inp.sigma1m, Fgamma)
+    q_low = q1m_low_fluence(inp.sigma1m, Fgamma)
+
+    k1m_exact = inp.frep * q_exact
+    k1m_low = inp.frep * q_low
+    k_m_tot = 1.0 / inp.taum
+
+    tm_over_t1_exact = k1m_exact / k_m_tot
+    tm_over_t1_low = k1m_low / k_m_tot
+
+    fTm_exact = k1m_exact / (k1m_exact + k_m_tot)
+    fTm_low = k1m_low / (k1m_low + k_m_tot)
+
+    fT1_exact = 1.0 - fTm_exact
+    fT1_low = 1.0 - fTm_low
+
+    return {
+        "Aeff": Aeff,
+        "Fgamma": Fgamma,
+        "q1m_exact": q_exact,
+        "q1m_low": q_low,
+        "k1m_exact": k1m_exact,
+        "k1m_low": k1m_low,
+        "k_m_tot": k_m_tot,
+        "tm_over_t1_exact": tm_over_t1_exact,
+        "tm_over_t1_low": tm_over_t1_low,
+        "fTm_exact": fTm_exact,
+        "fTm_low": fTm_low,
+        "fT1_exact": fT1_exact,
+        "fT1_low": fT1_low,
+        "Lambda_exact": tm_over_t1_exact,
+        "Lambda_low": tm_over_t1_low,
+    }
+
+
+def low_fluence_warning_level(q_low: float) -> str:
+    """
+    Return a warning string describing the reliability of the low-fluence
+    approximation.
+    """
+    if q_low > 1.0:
+        return (
+            "WARNING: q1m_low > 1, so the low-fluence approximation is unphysical here. "
+            "Use the exact result."
+        )
+    if q_low > 0.1:
+        return (
+            "WARNING: sigma1m * Fgamma is not very small, so the low-fluence approximation "
+            "may be inaccurate."
+        )
+    return "Low-fluence approximation appears reasonable."
+
+
+def print_report(inp: Inputs, res: Dict[str, float]) -> None:
+    """Print a formatted report."""
+    print("\nCycle-averaged T1 -> Tm calculation")
+    print("=" * 60)
+
+    print("\nInputs (SI units)")
+    print(f"Ep = {inp.Ep:.6e} J")
+    print(f"frep = {inp.frep:.6e} Hz")
+    print(f"wavelength = {inp.wavelength:.6e} m")
+    print(f"sigma1m = {inp.sigma1m:.6e} m^2")
+    print(f"taum = {inp.taum:.6e} s")
+    print(f"Aeff = {res['Aeff']:.6e} m^2")
+    if inp.spot_radius is not None and inp.Aeff is None:
+        print(f"spot_radius = {inp.spot_radius:.6e} m")
+
+    print("\nDerived quantities")
+    print(f"Fgamma = {res['Fgamma']:.6e} photons/m^2")
+    print(f"k_m_tot = {res['k_m_tot']:.6e} s^-1")
+
+    print("\nExact result")
+    print(f"q1m_exact = {res['q1m_exact']:.6e} per pulse")
+    print(f"k1m_exact = {res['k1m_exact']:.6e} s^-1")
+    print(f"tm_over_t1_exact = {res['tm_over_t1_exact']:.6e}")
+    print(f"fTm_exact = {res['fTm_exact']:.6e}")
+    print(f"fT1_exact = {res['fT1_exact']:.6e}")
+    print(f"Lambda_exact = {res['Lambda_exact']:.6e}")
+
+    print("\nLow-fluence approximation")
+    print(f"q1m_low = {res['q1m_low']:.6e} per pulse")
+    print(f"k1m_low = {res['k1m_low']:.6e} s^-1")
+    print(f"tm_over_t1_low = {res['tm_over_t1_low']:.6e}")
+    print(f"fTm_low = {res['fTm_low']:.6e}")
+    print(f"fT1_low = {res['fT1_low']:.6e}")
+    print(f"Lambda_low = {res['Lambda_low']:.6e}")
+
+    print("\nLow-fluence check")
+    print(low_fluence_warning_level(res["q1m_low"]))
+
+    print("\nInterpretation")
+    print(" q1m : per-pulse probability that a molecule already in T1 is promoted to Tm")
+    print(" fTm : cycle-averaged fraction of triplet-manifold population residing in Tm")
+    print(" fT1 : cycle-averaged fraction of triplet-manifold population residing in T1")
+    print(" Lambda: quasi-steady ratio tm/t1")
+
+    print("\nModel scope")
+    print(" This is a quasi-steady, cycle-averaged model.")
+    print(" It does not resolve pulse-by-pulse transient dynamics inside each repetition period.")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build CLI parser."""
+    parser = argparse.ArgumentParser(
+        description="Calculate the cycle-averaged fraction of triplet population in Tm."
+    )
+    parser.add_argument("--Ep", type=float, help="Pulse energy [J]")
+    parser.add_argument("--frep", type=float, help="Repetition rate [Hz]")
+    parser.add_argument("--wavelength", type=float, help="Laser wavelength [m]")
+    parser.add_argument(
+        "--sigma1m", type=float, help="T1 -> Tm absorption cross section [m^2]"
+    )
+    parser.add_argument("--taum", type=float, help="Effective Tm residence time [s]")
+
+    area_group = parser.add_mutually_exclusive_group()
+    area_group.add_argument("--Aeff", type=float, help="Effective illuminated area [m^2]")
+    area_group.add_argument(
+        "--spot-radius",
+        dest="spot_radius",
+        type=float,
+        help="Spot radius [m], using Aeff = pi * r^2",
+    )
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    cli_used = any(
+        value is not None
+        for value in (
+            args.Ep,
+            args.frep,
+            args.wavelength,
+            args.sigma1m,
+            args.taum,
+            args.Aeff,
+            args.spot_radius,
+        )
+    )
+
+    if cli_used:
+        required = {
+            "Ep": args.Ep,
+            "frep": args.frep,
+            "wavelength": args.wavelength,
+            "sigma1m": args.sigma1m,
+            "taum": args.taum,
+        }
+        missing = [name for name, value in required.items() if value is None]
+        if missing:
+            parser.error(f"Missing required arguments: {', '.join(missing)}")
+
+        inp = Inputs(
+            Ep=args.Ep,
+            frep=args.frep,
+            wavelength=args.wavelength,
+            sigma1m=args.sigma1m,
+            taum=args.taum,
+            Aeff=args.Aeff,
+            spot_radius=args.spot_radius,
+        )
+    else:
+        # Example defaults; edit as needed
+        inp = Inputs(
+            Ep=100e-12,  # 100 pJ
+            frep=80e6,  # 80 MHz
+            wavelength=800e-9,  # 800 nm
+            sigma1m=1e-22,  # 1e-22 m^2 = 1e-18 cm^2
+            taum=1e-9,  # 1 ns
+            spot_radius=1e-6,  # 1 um
+        )
+
+    results = compute_cycle_averaged_triplet_fractions(inp)
+    print_report(inp, results)
+
+
+if __name__ == "__main__":
+    main()
+```

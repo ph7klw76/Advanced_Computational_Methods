@@ -1,6 +1,6 @@
 # Unlocking Micro-3D Printing: The Hidden Mechanism of Two-Photon Photoinitiators
 
-In the rapidly advancing world of multiphoton lithography—often referred to as two-photon induced polymerization (2PP)—engineers are printing incredible 3D structures with sub-micrometer resolution.The key to this technology lies in the chemistry of two-photon absorption (2PA) photoinitiators[cite: 31, 53]. 
+In the rapidly advancing world of multiphoton lithography—often referred to as two-photon induced polymerization (2PP)—engineers are printing incredible 3D structures with sub-micrometer resolution.The key to this technology lies in the chemistry of two-photon absorption (2PA) photoinitiators.
 Recently, a highly efficient class of these molecules has caught the attention of materials scientists: symmetric triphenylamine (TPA)-substituted thiophenes. While their ability to initiate polymerization is well-documented, the exact *mechanism* of how they generate the necessary radicals has been a puzzle. Do they simply tear themselves apart upon absorbing light? 
 Let's dive into the quantum chemical reality of how these molecules actually kickstart the 3D printing process.
 

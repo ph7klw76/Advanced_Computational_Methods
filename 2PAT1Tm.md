@@ -1,4 +1,4 @@
-# Deriving the Cycle-Averaged Fraction of Triplet Population undergoing $T_1$->T_m$
+# Deriving the Cycle-Averaged Fraction of Triplet Population undergoing $T_1$->$T_m$
 
 When a molecule is repeatedly excited by a high-repetition-rate pulsed laser, the lowest triplet state $T_1$ can be re-excited into a higher triplet manifold, which I will call $T_m$ (with $m \ge 2$). In many practical cases, the quantity of interest is not the instantaneous population right after a pulse, but the **cycle-averaged fraction of the triplet population that resides in $T_m$**.
 

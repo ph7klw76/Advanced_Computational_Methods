@@ -37,3 +37,5 @@ As the thiophene ring breaks open and the monomer's double bond is split, a lone
 The efficiency of TPA-substituted thiophenes as 2PA photoinitiators is not due to them being fragile and easily broken by light.Instead, their power comes from their ability to concentrate reactivity (spin density) into a single, targeted atom while remaining structurally intact. 
 
 By understanding this bimolecular addition mechanism, computational chemists can intentionally design organic molecules with even more reactive triplet states, expanding the structural versatility of materials used in functional organic applications and advanced multiphoton lithography.
+
+Mol. Syst. Des. Eng., 2019, 4, 437–448

@@ -435,3 +435,124 @@ Each of these **parameters** contributes to **increasing the 2PA amplitude $M^{(
 Ultimately, this **leads to a higher two-photon absorption cross-section**, making the molecule more **efficient** for **nonlinear optical applications**.
 
 
+## code to calculate 2PA cross section
+```text
+import matplotlib.pyplot as plt
+import daltonproject as dp
+
+molecule = dp.Molecule(input_file='PI50.049821859524808616.xyz')
+basis = dp.Basis(basis='def2-SVPD')
+
+dft = dp.QCMethod('DFT', 'CAMB3LYP')
+prop = dp.Property()
+prop.two_photon_absorption(states=6)
+
+settings = dp.ComputeSettings(
+    mpi_num_procs=16,
+    omp_num_threads=1,
+    mpi_command='srun --cpu-bind=none --mpi=pmix -n',
+    scratch_dir='dalton_scratch',
+    memory=64000,
+)
+
+result = dp.dalton.compute(
+    molecule,
+    basis,
+    dft,
+    prop,
+    compute_settings=settings,
+)
+
+print('Excitation energies =', result.excitation_energies)
+print('Two-photon cross-sections =', result.two_photon_cross_sections)
+
+ax = dp.spectrum.plot_two_photon_spectrum(result, color='k')
+plt.savefig('2pa.svg')
+```
+
+
+###output
+
+```text
+     *******************************************************************
+       ************ FINAL RESULTS FROM TWO-PHOTON CALCULATION ************
+       *******************************************************************
+
+ The two-photon absorption strength for an average molecular  
+ orientation is computed according to formulas given by       
+ P.R. Monson and W.M. McClain in J. Chem. Phys. 53:29, 1970   
+ and W.M. McClain in J. Chem. Phys. 55:2789, 1971.            
+ The absorption depends on the light polarization.            
+ A monochromatic light source is assumed.                     
+
+ All results are presented in atomic units, except the        
+ excitation energy which is given in eV and two-photon cross  
+ section which is given in GM. A FWHM of 0.1 eV is assumed.   
+
+   Conversion factors:
+      1 a.u. = 1.896788 10^{-50} cm^4 s/photon
+      1 GM = 10^{-50} cm^4 s/photon
+
+
+                  +--------------------------------+
+                  | Two-photon transition tensor S |
+                  +--------------------------------+
+     ---------------------------------------------------------------------------------
+     Sym  No  Energy        Sxx        Syy        Szz        Sxy        Sxz        Syz
+     ---------------------------------------------------------------------------------
+       1   1    3.89    -0.0     0.0     0.0     0.0    -0.0     0.0
+       1   2    3.96    27.8    25.8     0.1    -0.5     1.0    -0.6
+       1   3    3.97    -0.2    -0.2    -0.0     0.0    -0.0     0.0
+       1   4    4.35  -314.9     8.4     0.7     1.6    -0.2     0.7
+       1   5    4.46     5.8    -0.8     0.3    13.0    -1.1     0.1
+       1   6    4.47    -0.0     0.0    -0.0    -0.0     0.0     0.0
+     ------------------------------------------------------------------------
+
+
+                    Transition probabilities (a.u.)         
+                   -----------------------------------------
+                    D  =  2*Df + 4*Dg, Linear   polarization
+                    D  = -2*Df + 6*Dg, Circular polarization
+                    Df = sum(i,j){ S_ii * S_jj }/30         
+                    Dg = sum(i,j){ S_ij * S_ij }/30         
+
+                   Two-photon cross sections                
+         ---------------------------------------------------
+          sigma  =  8*pi^3*alpha^2*hbar/e^4 * E^2*D   (a.u.)
+
+                             Polarization ratio      
+                      -------------------------------
+                          R  = (-Df+3*Dg)/(Df+2*Dg)  
+
+
+                   +-----------------------------------+
+                   |   Two-photon absorption summary   |
+                   +-----------------------------------+
+   ---------------------------------------------------------------------------------
+   Sym  No  Energy  Polarization         Df         Dg          D      sigma       R
+   ---------------------------------------------------------------------------------
+     1   1    3.89   Linear       0.567E-05  0.199E-04  0.911E-04  0.101E-05    1.19
+     1   1    3.89   Circular     0.567E-05  0.199E-04  0.108E-03  0.120E-05    1.19
+     1   2    3.96   Linear       0.962E+02  0.481E+02  0.385E+03  0.443E+01    0.25
+     1   2    3.96   Circular     0.962E+02  0.481E+02  0.963E+02  0.111E+01    0.25
+     1   3    3.97   Linear       0.332E-02  0.166E-02  0.133E-01  0.153E-03    0.25
+     1   3    3.97   Circular     0.332E-02  0.166E-02  0.330E-02  0.381E-04    0.25
+     1   4    4.35   Linear       0.312E+04  0.331E+04  0.195E+05  0.270E+03    0.70
+     1   4    4.35   Circular     0.312E+04  0.331E+04  0.136E+05  0.189E+03    0.70
+     1   5    4.46   Linear       0.925E+00  0.125E+02  0.520E+02  0.757E+00    1.41
+     1   5    4.46   Circular     0.925E+00  0.125E+02  0.733E+02  0.107E+01    1.41
+     1   6    4.47   Linear       0.797E-05  0.418E-04  0.183E-03  0.268E-05    1.28
+     1   6    4.47   Circular     0.797E-05  0.418E-04  0.235E-03  0.344E-05    1.28
+   ---------------------------------------------------------------------------------
+
+  Total CPU  time used in RESPONSE:  16 hours 57 minutes 43 seconds
+  Total wall time used in RESPONSE:  17 hours  4 minutes 59 seconds
+
+
+                   .-------------------------------------------.
+                   | End of Dynamic Property Section (RESPONS) |
+                   `-------------------------------------------'
+
+  Total CPU  time used in DALTON:  19 hours 17 minutes 12 seconds
+  Total wall time used in DALTON:  19 hours 25 minutes 44 seconds
+```

@@ -39,3 +39,26 @@ The efficiency of TPA-substituted thiophenes as 2PA photoinitiators is not due t
 By understanding this bimolecular addition mechanism, computational chemists can intentionally design organic molecules with even more reactive triplet states, expanding the structural versatility of materials used in functional organic applications and advanced multiphoton lithography.
 
 Mol. Syst. Des. Eng., 2019, 4, 437–448
+
+```text
+! def2-SVP Opt CPCM(Toluene) TIGHTSCF RIJCOSX
+%method
+        method dft
+        functional HYB_GGA_XC_LRC_WPBEH
+        ExtParamXC "_omega" 0.049821859524808616
+END
+%scf
+    MaxIter 500
+    Convergence TIGHT
+END
+%basis
+    AuxJ  "def2/J"
+END
+%geom Scan
+        B 8 13 = 1.38, 2.38, 21  # C[8]-N[13] D-A bond, 0.05 A/step, 20 intervals ORCA index start from 0
+        end
+end
+%maxcore 4000
+%pal nprocs 16 end
+* XYZFILE 0 3 minT1PI5.xyz  
+```

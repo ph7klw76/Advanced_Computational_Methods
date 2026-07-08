@@ -1929,4 +1929,156 @@ if __name__ == "__main__":
     app = SpectrumApp(root)
     root.mainloop()
 ```
+I will upload ORCA ESD output files and corresponding `.spectrum` files for several molecules. Please perform the same full analysis workflow as before.
+
+For each molecule, use the uploaded `.out` and `.spectrum` files to analyze the emission spectrum, mode-resolved reorganization energy, Huang–Rhys factors, dominant vibrational modes, and structural/vibrational origin of the strongest reorganization-energy peaks.
+
+Please do the following:
+
+1. **File and Hessian consistency check**
+
+   * Identify the molecule number from the file names.
+   * Extract the molecular formula and atom count from the Cartesian coordinates.
+   * Check the expected number of vibrational modes using (3N - 6).
+   * Compare this with the reported number of nonzero excited-state vibrational frequencies.
+   * Report whether the Hessian and molecular structure appear consistent.
+   * Identify any imaginary excited-state frequencies.
+   * If imaginary modes are present, state whether they are likely numerical/flat-mode artifacts or serious saddle-point problems.
+
+2. **Mode-resolved reorganization-energy analysis**
+
+   * Extract the Huang–Rhys factor, frequency, and reorganization energy for every vibrational mode.
+   * Calculate total reorganization energy in cm⁻¹ and eV.
+   * Rank the molecules by total reorganization energy.
+   * Identify the top 10 contributing modes for each molecule.
+   * For each molecule, report:
+
+     * total λ in cm⁻¹,
+     * total λ in eV,
+     * largest single-mode contribution,
+     * percentage contribution of the largest mode,
+     * number of modes needed to reach 50%, 80%, and 90% of total λ.
+
+3. **Graph plotting**
+   Please generate and save the following plots:
+
+   * Mode-resolved reorganization energy versus mode number for all molecules.
+   * Reorganization-energy contribution by frequency region for all molecules.
+   * Cumulative contribution plot showing how many modes dominate total λ.
+   * Separate plot for each molecule showing:
+
+     * x-axis: frequency in cm⁻¹,
+     * left y-axis: Huang–Rhys factor,
+     * right y-axis: reorganization energy in cm⁻¹,
+     * blue bars for Huang–Rhys factor,
+     * red bars for reorganization energy,
+     * x-axis range from 0 to 2000 cm⁻¹.
+   * Molecular structure drawings from Cartesian coordinates.
+   * Motion maps for the top 3 λ-contributing vibrational modes of each molecule.
+
+4. **Frequency-region analysis**
+   Group the reorganization-energy contribution into these frequency regions:
+
+   * <200 cm⁻¹
+   * 200–500 cm⁻¹
+   * 500–800 cm⁻¹
+   * 800–1200 cm⁻¹
+   * 1200–1600 cm⁻¹
+   * 1600–2000 cm⁻¹
+   * 2000–3500 cm⁻¹
+   * > 3500 cm⁻¹
+
+   For each molecule, report:
+
+   * summed λ contribution in each region,
+   * percentage of total λ in each region,
+   * the dominant frequency region,
+   * physical interpretation of the dominant region.
+
+5. **Emission spectrum analysis**
+   From each `.spectrum` file:
+
+   * Treat the first column as wavelength in nm if the ESD calculation used `UNIT NM`.
+   * Plot total emission spectra for all molecules.
+   * Plot spectra from 400–600 nm.
+   * Plot normalized spectra from 400–600 nm.
+   * Extract:
+
+     * peak wavelength,
+     * maximum total intensity,
+     * integrated total intensity,
+     * Franck–Condon contribution percentage,
+     * Herzberg–Teller contribution percentage,
+     * FC peak wavelength,
+     * HT peak wavelength.
+
+6. **Emission intensity comparison**
+   Explain why one molecule emits more strongly or weakly than another.
+   Discuss:
+
+   * oscillator strength, if available in the output,
+   * transition dipole moment or transition dipole squared, if available,
+   * fluorescence rate, if available,
+   * Franck–Condon versus Herzberg–Teller contribution,
+   * whether lower reorganization energy also corresponds to stronger emission,
+   * whether the electronic transition appears more locally excited or charge-transfer-like.
+
+7. **Top 3 peak vibration assignment**
+   For each molecule, identify the top 3 most intense reorganization-energy peaks.
+   For each of these peaks, report:
+
+   * vibrational mode number,
+   * corresponding normal-mode column, remembering that ORCA ESD HR/reorganization mode indices usually exclude the first six translational/rotational modes, so the normal-mode column may be mode + 6,
+   * frequency in cm⁻¹,
+   * Huang–Rhys factor,
+   * reorganization energy in cm⁻¹,
+   * percentage of total λ,
+   * likely vibration assignment,
+   * most important bonds involved,
+   * whether the motion is mainly C=C stretching, C–C skeletal stretching, C–N/C–B stretching, C–H bending, ring breathing, torsion, or collective deformation.
+
+   For the bond/vibration assignment, inspect the normal-mode displacement vectors and identify the heavy-atom bonds with the largest stretching component. Prioritize heavy-atom bonds such as C–C, C–N, C–B, B–N, and avoid assigning a mode as primarily C–H motion unless the frequency and displacement clearly support that.
+
+8. **Chemical interpretation**
+   Compare the molecules chemically and physically.
+   Explain:
+
+   * why some molecules have larger or smaller λ,
+   * whether λ is localized into a few modes or distributed over many modes,
+   * how heteroatom substitution affects the reorganization energy,
+   * whether BN, N, B, or donor–acceptor character redistributes excited-state relaxation,
+   * whether the dominant vibrations suggest bond-length alternation, skeletal deformation, or soft torsional relaxation,
+   * which molecule is best for low reorganization energy,
+   * which molecule is best for strong emission,
+   * which molecule gives the best compromise between low λ and strong emission.
+
+9. **Output files**
+   Save all generated plots and CSV files with clear names.
+   Provide download links for:
+
+   * mode-resolved λ data,
+   * top modes,
+   * total λ summary,
+   * frequency-region contribution in cm⁻¹,
+   * frequency-region contribution in percent,
+   * Hessian/mode consistency check,
+   * spectrum summary,
+   * top 3 vibration assignment,
+   * heavy-bond details for the top modes,
+   * all generated plots.
+
+10. **Final answer format**
+    Present the final analysis in a clear report format with:
+
+* a short executive summary,
+* tables for λ and spectra,
+* interpretation of dominant modes,
+* explanation of emission intensity differences,
+* caution about imaginary modes,
+* final ranking of the molecules.
+
+Be careful not to overinterpret results if there are imaginary excited-state modes or Hessian/mode-count inconsistencies. If the Hessian count does not match (3N - 6), clearly state that the ESD result may be unreliable before giving chemical interpretation.
+
+
+After completing the analysis, compile the results into a PowerPoint presentation. Include slides for: objective, molecular structures, Hessian consistency check, total reorganization energy ranking, mode-resolved λ plot, frequency-region contribution plot, HR factor and λ versus frequency plots, emission spectra, normalized spectra, top 3 vibration assignments, why emission intensity differs, final ranking, and recommendations.
 
